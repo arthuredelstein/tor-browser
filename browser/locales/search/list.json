@@ -8,7 +8,7 @@
     "en-US": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo", "amazondotcom", "bing", "ddg", "twitter", "wikipedia"
+          "ddg", "ddg-onion", "google", "yahoo", "twitter", "wikipedia", "disconnect", "youtube", "startpage"
         ]
       },
       "US": {
