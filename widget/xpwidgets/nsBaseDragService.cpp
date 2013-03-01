@@ -33,6 +33,7 @@
 #include "nsMenuPopupFrame.h"
 #include "mozilla/MouseEvents.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/Services.h"
 #include "mozilla/gfx/2D.h"
 
 #include "gfxContext.h"
@@ -52,6 +53,7 @@ nsBaseDragService::nsBaseDragService()
     mImageX(0), mImageY(0), mScreenX(-1), mScreenY(-1), mSuppressLevel(0),
     mInputSource(nsIDOMMouseEvent::MOZ_SOURCE_MOUSE)
 {
+    mObserverService = mozilla::services::GetObserverService();
 }
 
 nsBaseDragService::~nsBaseDragService()
@@ -205,6 +207,12 @@ nsBaseDragService::InvokeDragSession(nsIDOMNode *aDOMNode,
 {
   NS_ENSURE_TRUE(aDOMNode, NS_ERROR_INVALID_ARG);
   NS_ENSURE_TRUE(mSuppressLevel == 0, NS_ERROR_FAILURE);
+
+  // Emit observer event to allow addons to modify the transfer array.
+  if (mObserverService)
+    mObserverService->NotifyObservers(aTransferableArray,
+                                      "on-modify-drag-list",
+                                      nullptr);
 
   // stash the document of the dom node
   aDOMNode->GetOwnerDocument(getter_AddRefs(mSourceDocument));
