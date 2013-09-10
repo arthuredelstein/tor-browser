@@ -66,6 +66,7 @@
 #include "nsPIWindowRoot.h"
 #include "mozilla/Preferences.h"
 #include "gfxTextRun.h"
+#include "nsUnicharUtils.h"
 
 // Needed for Start/Stop of Image Animation
 #include "imgIContainer.h"
@@ -778,6 +779,12 @@ nsPresContext::GetUserPreferences()
   mUseDocumentFonts =
     Preferences::GetInt("browser.display.use_document_fonts") != 0;
 
+  mMaxFonts =
+    Preferences::GetInt("browser.display.max_font_count", -1);
+
+  mMaxFontAttempts =
+    Preferences::GetInt("browser.display.max_font_attempts", -1);
+
   mPrefScrollbarSide = Preferences::GetInt("layout.scrollbar.side");
 
   ResetCachedFontPrefs();
@@ -1476,6 +1483,84 @@ nsPresContext::GetDefaultFont(uint8_t aFontID, nsIAtom *aLanguage) const
       break;
   }
   return font;
+}
+
+PRBool
+nsPresContext::FontUseCountReached(const nsAString &font) {
+  if (mMaxFonts < 0) {
+    return PR_FALSE;
+  }
+
+  for (PRUint32 i = 0; i < mFontsUsed.Length(); i++) {
+    if (mFontsUsed[i].Equals(font, nsCaseInsensitiveStringComparator())) {
+      return PR_FALSE;
+    }
+  }
+
+  if (mFontsUsed.Length() >= (unsigned) mMaxFonts) {
+    return PR_TRUE;
+  }
+
+  return PR_FALSE;
+}
+
+PRBool
+nsPresContext::FontAttemptCountReached(const nsAString &font) {
+  if (mMaxFontAttempts < 0) {
+    return PR_FALSE;
+  }
+
+  for (PRUint32 i = 0; i < mFontsTried.Length(); i++) {
+    if (mFontsTried[i].Equals(font, nsCaseInsensitiveStringComparator())) {
+      return PR_FALSE;
+    }
+  }
+
+  if (mFontsTried.Length() >= (unsigned) mMaxFontAttempts) {
+    return PR_TRUE;
+  }
+
+  return PR_FALSE;
+}
+
+void
+nsPresContext::AddFontUse(const nsAString &font) {
+  if (mMaxFonts < 0) {
+    return;
+  }
+
+  for (PRUint32 i = 0; i < mFontsUsed.Length(); i++) {
+    if (mFontsUsed[i].Equals(font, nsCaseInsensitiveStringComparator())) {
+      return;
+    }
+  }
+
+  if (mFontsUsed.Length() >= (unsigned) mMaxFonts) {
+    return;
+  }
+   
+  mFontsUsed.AppendElement(font);
+  return;
+}
+
+void
+nsPresContext::AddFontAttempt(const nsAString &font) {
+  if (mMaxFontAttempts < 0) {
+    return;
+  }
+
+  for (PRUint32 i = 0; i < mFontsTried.Length(); i++) {
+    if (mFontsTried[i].Equals(font, nsCaseInsensitiveStringComparator())) {
+      return;
+    }
+  }
+
+  if (mFontsTried.Length() >= (unsigned) mMaxFontAttempts) {
+    return;
+  }
+   
+  mFontsTried.AppendElement(font);
+  return;
 }
 
 void

@@ -109,7 +109,7 @@ public:
 
   bool UpdateRules(const nsTArray<nsFontFaceRuleContainer>& aRules);
 
-  nsPresContext* GetPresContext() { return mPresContext; }
+  virtual nsPresContext* GetPresContext() { return mPresContext; }
 
   // search for @font-face rule that matches a platform font entry
   nsCSSFontFaceRule* FindRuleForEntry(gfxFontEntry* aFontEntry);

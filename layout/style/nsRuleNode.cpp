@@ -32,6 +32,7 @@
 #include "nsStyleStruct.h"
 #include "nsSize.h"
 #include "nsRuleData.h"
+#include "gfxUserFontSet.h"
 #include "nsIStyleRule.h"
 #include "nsBidiUtils.h"
 #include "nsStyleStructInlines.h"
@@ -3300,6 +3301,7 @@ nsRuleNode::SetFont(nsPresContext* aPresContext, nsStyleContext* aContext,
     aPresContext->GetDefaultFont(kPresContext_DefaultVariableFont_ID,
                                  aFont->mLanguage);
 
+  // XXX: Bleh. Disable these somehow?
   // -moz-system-font: enum (never inherit!)
   static_assert(
     NS_STYLE_FONT_CAPTION        == LookAndFeel::eFont_Caption &&
@@ -3908,6 +3910,31 @@ nsRuleNode::SetGenericFont(nsPresContext* aPresContext,
   }
 }
 
+struct smugglerStruct {
+  nsStyleFont *font;
+  gfxUserFontSet *userFonts;
+};
+
+/* This function forces the use of the first @font-face font we find */
+static bool ForceFirstWebFont(const nsString& aFamily, bool aGeneric,
+                              void *smuggled)
+{
+  smugglerStruct *sm = static_cast<smugglerStruct*>(smuggled);
+
+  if (aGeneric) {
+    return true;
+  }
+
+  if (sm->userFonts->HasFamily(aFamily)) {
+    // Force use of this exact @font-face font since we have it.
+    sm->font->mFont.name = aFamily;
+
+    return false; // Stop enumeration.
+  }
+
+  return true;
+}
+
 const void*
 nsRuleNode::ComputeFontData(void* aStartStruct,
                             const nsRuleData* aRuleData,
@@ -3931,14 +3958,16 @@ nsRuleNode::ComputeFontData(void* aStartStruct,
 
   bool useDocumentFonts =
     mPresContext->GetCachedBoolPref(kPresContext_UseDocumentFonts);
+  bool isXUL = PR_FALSE;
+  bool forcedWebFont = false;
 
   // See if we are in the chrome
   // We only need to know this to determine if we have to use the
   // document fonts (overriding the useDocumentFonts flag).
-  if (!useDocumentFonts && mPresContext->IsChrome()) {
+  if (mPresContext->IsChrome()) {
     // if we are not using document fonts, but this is a XUL document,
     // then we use the document fonts anyway
-    useDocumentFonts = true;
+    isXUL = true;
   }
 
   // Figure out if we are a generic font
@@ -3980,9 +4009,29 @@ nsRuleNode::ComputeFontData(void* aStartStruct,
       }
     }
 
+    if (!isXUL) {
+      gfxUserFontSet *userFonts = mPresContext->GetUserFontSet();
+      if (userFonts) {
+        smugglerStruct sm;
+        sm.userFonts = userFonts;
+        sm.font = font;
+
+        if (!sm.font->mFont.EnumerateFamilies(ForceFirstWebFont, &sm)) {
+          isXUL = true; // Always allow WebFont use.
+          forcedWebFont = true;
+        }
+      }
+    }
+
+    if (!forcedWebFont && generic == kGenericFont_NONE) {
+      mPresContext->AddFontAttempt(font->mFont);
+    }
+
     // If we aren't allowed to use document fonts, then we are only entitled
     // to use the user's default variable-width font and fixed-width font
-    if (!useDocumentFonts) {
+    if (!isXUL && (!useDocumentFonts ||
+                    mPresContext->FontAttemptCountReached(font->mFont) ||
+                    mPresContext->FontUseCountReached(font->mFont))) {
       switch (fontType) {
         case eFamily_monospace:
           fl = FontFamilyList(eFamily_monospace);
@@ -4014,6 +4063,8 @@ nsRuleNode::ComputeFontData(void* aStartStruct,
                                font);
   }
 
+  if (!forcedWebFont && font->mGenericID == kGenericFont_NONE)
+    mPresContext->AddFontUse(font->mFont);
   COMPUTE_END_INHERITED(Font, font)
 }
 

@@ -6,6 +6,7 @@
 #include "prlog.h"
 
 #include "gfxUserFontSet.h"
+#include "nsFont.h"
 #include "gfxPlatform.h"
 #include "nsUnicharUtils.h"
 #include "nsNetUtil.h"
@@ -402,6 +403,19 @@ gfxUserFontEntry::LoadNextSrc()
         mSrcIndex++;
     }
 
+    /* If there are any url- or ArrayBuffer-derived fonts, prefer them to local */
+    bool listHasURL = false;
+    for (uint32_t i = mSrcIndex; i < numSrc; i++) {
+        const gfxFontFaceSrc& currSrc = mSrcList[i];
+        if (currSrc.mSourceType != gfxFontFaceSrc::eSourceType_Local) {
+            listHasURL = true;
+            break;
+        }
+    }
+    nsPresContext *pres = mFontSet->GetPresContext();
+    /* If we have no pres context, simply fail this load */
+    if (!pres) listHasURL = true;
+
     // load each src entry in turn, until a local face is found
     // or a download begins successfully
     while (mSrcIndex < numSrc) {
@@ -409,14 +423,23 @@ gfxUserFontEntry::LoadNextSrc()
 
         // src local ==> lookup and load immediately
 
-        if (currSrc.mSourceType == gfxFontFaceSrc::eSourceType_Local) {
+        if (!listHasURL && currSrc.mSourceType == gfxFontFaceSrc::eSourceType_Local) {
             gfxFontEntry* fe =
                 gfxPlatform::GetPlatform()->LookupLocalFont(currSrc.mLocalName,
                                                             mWeight,
                                                             mStretch,
                                                             mItalic);
+            pres->AddFontAttempt(currSrc.mLocalName);
+
+            /* No more fonts for you */
+            if (pres->FontAttemptCountReached(currSrc.mLocalName) ||
+                pres->FontUseCountReached(currSrc.mLocalName)) {
+                break;
+            }
+
             mFontSet->SetLocalRulesUsed();
             if (fe) {
+                pres->AddFontUse(currSrc.mLocalName);
                 LOG(("userfonts (%p) [src %d] loaded local: (%s) for (%s) gen: %8.8x\n",
                      mFontSet, mSrcIndex,
                      NS_ConvertUTF16toUTF8(currSrc.mLocalName).get(),
