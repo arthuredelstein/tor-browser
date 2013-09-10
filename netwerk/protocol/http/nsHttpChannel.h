@@ -353,6 +353,7 @@ private:
     nsCOMPtr<nsICacheEntry> mOfflineCacheEntry;
     uint32_t                          mOfflineCacheLastModifiedTime;
     nsCOMPtr<nsIApplicationCache>     mApplicationCacheForWrite;
+    nsCString                         mCacheDomain;
 
     // auth specific data
     nsCOMPtr<nsIHttpChannelAuthProvider> mAuthProvider;
