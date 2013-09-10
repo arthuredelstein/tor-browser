@@ -3257,6 +3257,12 @@ nsHttpChannel::AssembleCacheKey(const char *spec, uint32_t postID,
         cacheKey.Append(buf);
     }
 
+    if (strlen(mCacheDomain.get()) > 0) {
+        cacheKey.AppendLiteral("domain=");
+        cacheKey.Append(mCacheDomain.get());
+        cacheKey.AppendLiteral("&");
+    }
+
     if (!cacheKey.IsEmpty()) {
         cacheKey.AppendLiteral("uri=");
     }
@@ -5539,6 +5545,23 @@ nsHttpChannel::SetCacheTokenCachedCharset(const nsACString &aCharset)
 
     return mCacheEntry->SetMetaDataElement("charset",
                                            PromiseFlatCString(aCharset).get());
+}
+
+
+NS_IMETHODIMP
+nsHttpChannel::GetCacheDomain(nsACString &value)
+{
+    value = mCacheDomain;
+
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsHttpChannel::SetCacheDomain(const nsACString &value)
+{
+    mCacheDomain = value;
+
+    return NS_OK;
 }
 
 //-----------------------------------------------------------------------------
