@@ -79,6 +79,7 @@ private:
     nsCString                                 mForceResolve;
     bool                                      mDisableIPv6;
     bool                                      mDisablePrefetch;
+    bool                                      mDisableDNS;
     bool                                      mBlockDotOnion;
     bool                                      mNotifyResolution;
     bool                                      mOfflineLocalhost;
