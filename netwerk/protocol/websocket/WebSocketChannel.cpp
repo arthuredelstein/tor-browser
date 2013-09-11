@@ -2292,6 +2292,19 @@ WebSocketChannel::ApplyForAdmission()
 
   MOZ_ASSERT(!mCancelable);
 
+/*
+The following snippet was in the ESR24 branch of TorBrowser. Can this be dropped
+or does it need to be ported here somehow?
+`
+    rv = dns->AsyncResolve(hostName, 0, this, mainThread, getter_AddRefs(mDNSRequest));
+    if (NS_FAILED(rv)) {
+        // Fall back to hostname on dispatch failure
+      mDNSRequest = nullptr;
+      OnLookupComplete(nullptr, nullptr, rv);
+    }
+`
+*/
+
   return pps->AsyncResolve(mURI,
                            nsIProtocolProxyService::RESOLVE_PREFER_HTTPS_PROXY |
                            nsIProtocolProxyService::RESOLVE_ALWAYS_TUNNEL,
