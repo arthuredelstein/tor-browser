@@ -486,6 +486,7 @@ nsDNSService::Init()
     uint32_t lifetimeGracePeriod = 60; // seconds
     bool     disableIPv6      = false;
     bool     disablePrefetch  = false;
+    bool     disableDNS       = false;
     int      proxyType        = nsIProtocolProxyService::PROXYCONFIG_DIRECT;
     bool     notifyResolution = false;
 
@@ -511,6 +512,11 @@ nsDNSService::Init()
 
         // If a manual proxy is in use, disable prefetch implicitly
         prefs->GetIntPref("network.proxy.type", &proxyType);
+
+        // If the user wants remote DNS, we should fail any lookups that still
+        // make it here.
+        prefs->GetBoolPref("network.proxy.socks_remote_dns", &disableDNS);
+
         prefs->GetBoolPref(kPrefDnsNotifyResolution, &notifyResolution);
     }
 
@@ -530,7 +536,7 @@ nsDNSService::Init()
 
             // Monitor these to see if there is a change in proxy configuration
             // If a manual proxy is in use, disable prefetch implicitly
-            prefs->AddObserver("network.proxy.type", this, false);
+            prefs->AddObserver("network.proxy.", this, false);
         }
 
         nsresult rv;
@@ -565,6 +571,7 @@ nsDNSService::Init()
         mIDN = idn;
         mIPv4OnlyDomains = ipv4OnlyDomains; // exchanges buffer ownership
         mDisableIPv6 = disableIPv6;
+        mDisableDNS = disableDNS;
 
         // Disable prefetching either by explicit preference or if a manual proxy is configured 
         mDisablePrefetch = disablePrefetch || (proxyType == nsIProtocolProxyService::PROXYCONFIG_MANUAL);
@@ -657,6 +664,14 @@ nsDNSService::AsyncResolve(const nsACString  &hostname,
         if (mDisablePrefetch && (flags & RESOLVE_SPECULATE))
             return NS_ERROR_DNS_LOOKUP_QUEUE_FULL;
 
+        PRNetAddr tempAddr;
+        if (mDisableDNS) {
+            // Allow IP lookups through, but nothing else.
+            if (PR_StringToNetAddr(hostname.BeginReading(), &tempAddr) != PR_SUCCESS) {
+                return NS_ERROR_UNKNOWN_PROXY_HOST; // XXX: NS_ERROR_NOT_IMPLEMENTED?
+            }
+        }
+
         res = mResolver;
         idn = mIDN;
         localDomain = mLocalDomains.GetEntry(hostname);
@@ -672,6 +687,14 @@ nsDNSService::AsyncResolve(const nsACString  &hostname,
 
     if (mOffline)
         flags |= RESOLVE_OFFLINE;
+
+    PRNetAddr tempAddr;
+    if (mDisableDNS) {
+        // Allow IP lookups through, but nothing else.
+        if (PR_StringToNetAddr(hostname.BeginReading(), &tempAddr) != PR_SUCCESS) {
+            return NS_ERROR_UNKNOWN_PROXY_HOST; // XXX: NS_ERROR_NOT_IMPLEMENTED?
+        }
+    }
 
     const nsACString *hostPtr = &hostname;
 
