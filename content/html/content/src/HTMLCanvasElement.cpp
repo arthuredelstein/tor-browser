@@ -31,6 +31,7 @@
 #include "nsMathUtils.h"
 #include "nsNetUtil.h"
 #include "nsStreamUtils.h"
+#include "CanvasUtils.h"
 #include "ActiveLayerTracker.h"
 
 #ifdef MOZ_WEBGL
@@ -384,10 +385,13 @@ HTMLCanvasElement::ExtractData(nsAString& aType,
                                const nsAString& aOptions,
                                nsIInputStream** aStream)
 {
+  // Check site-speciifc permission and display prompt if appropriate.
+  // If no permission, return all-black, opaque image data.
+  bool usePlaceholder = !CanvasUtils::IsImageExtractionAllowed(OwnerDoc());
   return ImageEncoder::ExtractData(aType,
                                    aOptions,
                                    GetSize(),
-                                   mCurrentContext,
+                                   usePlaceholder ? nullptr : mCurrentContext,
                                    aStream);
 }
 
@@ -522,9 +526,13 @@ HTMLCanvasElement::ToBlob(JSContext* aCx,
   nsCOMPtr<nsIScriptContext> scriptContext =
     GetScriptContextFromJSContext(nsContentUtils::GetCurrentJSContext());
 
+  // Check site-specific permission and display prompt if appropriate.
+  // If no permission, return all-black, opaque image data.
+  bool usePlaceholder = !CanvasUtils::IsImageExtractionAllowed(OwnerDoc());
+
   uint8_t* imageBuffer = nullptr;
   int32_t format = 0;
-  if (mCurrentContext) {
+  if (mCurrentContext && !usePlaceholder) {
     mCurrentContext->GetImageBuffer(&imageBuffer, &format);
   }
 
@@ -534,7 +542,7 @@ HTMLCanvasElement::ToBlob(JSContext* aCx,
                                        imageBuffer,
                                        format,
                                        GetSize(),
-                                       mCurrentContext,
+                                       mCurrentContext, // ignored
                                        scriptContext,
                                        aCallback);
 }
