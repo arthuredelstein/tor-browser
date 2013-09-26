@@ -350,7 +350,8 @@ protected:
   virtual already_AddRefed<nsICanvasRenderingContextInternal>
   CreateContext(CanvasContextType aContextType) override;
 
-  nsresult ExtractData(nsAString& aType,
+  nsresult ExtractData(JSContext* aCx,
+                       nsAString& aType,
                        const nsAString& aOptions,
                        nsIInputStream** aStream);
   nsresult ToDataURLImpl(JSContext* aCx,
