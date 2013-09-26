@@ -40,6 +40,7 @@
 #include "nsNetUtil.h"
 #include "nsRefreshDriver.h"
 #include "nsStreamUtils.h"
+#include "CanvasUtils.h"
 #include "ActiveLayerTracker.h"
 #include "WebGL1Context.h"
 #include "WebGL2Context.h"
@@ -687,13 +688,18 @@ HTMLCanvasElement::CaptureStream(const Optional<double>& aFrameRate,
 }
 
 nsresult
-HTMLCanvasElement::ExtractData(nsAString& aType,
+HTMLCanvasElement::ExtractData(JSContext* aCx,
+                               nsAString& aType,
                                const nsAString& aOptions,
                                nsIInputStream** aStream)
 {
+  // Check site-speciifc permission and display prompt if appropriate.
+  // If no permission, return all-white, opaque image data.
+  bool usePlaceholder = !CanvasUtils::IsImageExtractionAllowed(OwnerDoc(), aCx);
   return ImageEncoder::ExtractData(aType,
                                    aOptions,
                                    GetSize(),
+                                   usePlaceholder,
                                    mCurrentContext,
                                    mAsyncCanvasRenderer,
                                    aStream);
@@ -723,12 +729,12 @@ HTMLCanvasElement::ToDataURLImpl(JSContext* aCx,
   }
 
   nsCOMPtr<nsIInputStream> stream;
-  rv = ExtractData(type, params, getter_AddRefs(stream));
+  rv = ExtractData(aCx, type, params, getter_AddRefs(stream));
 
   // If there are unrecognized custom parse options, we should fall back to
   // the default values for the encoder without any options at all.
   if (rv == NS_ERROR_INVALID_ARG && usingCustomParseOptions) {
-    rv = ExtractData(type, EmptyString(), getter_AddRefs(stream));
+    rv = ExtractData(aCx, type, EmptyString(), getter_AddRefs(stream));
   }
 
   NS_ENSURE_SUCCESS(rv, rv);
@@ -760,9 +766,11 @@ HTMLCanvasElement::ToBlob(JSContext* aCx,
   nsCOMPtr<nsIGlobalObject> global = OwnerDoc()->GetScopeObject();
   MOZ_ASSERT(global);
 
+  // Check site-speciifc permission and display prompt if appropriate.
+  // If no permission, return all-white, opaque image data.
+  bool usePlaceholder = !CanvasUtils::IsImageExtractionAllowed(OwnerDoc(), aCx);
   CanvasRenderingContextHelper::ToBlob(aCx, global, aCallback, aType,
-                                       aParams, aRv);
-
+                                       aParams, usePlaceholder, aRv);
 }
 
 OffscreenCanvas*
@@ -833,7 +841,8 @@ HTMLCanvasElement::MozGetAsBlobImpl(const nsAString& aName,
 {
   nsCOMPtr<nsIInputStream> stream;
   nsAutoString type(aType);
-  nsresult rv = ExtractData(type, EmptyString(), getter_AddRefs(stream));
+  nsresult rv = ExtractData(nsContentUtils::GetCurrentJSContext(),
+                            type, EmptyString(), getter_AddRefs(stream));
   NS_ENSURE_SUCCESS(rv, rv);
 
   uint64_t imgSize;
