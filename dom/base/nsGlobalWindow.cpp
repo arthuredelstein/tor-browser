@@ -4861,6 +4861,12 @@ nsGlobalWindow::GetOuterSize(ErrorResult& aError)
 {
   MOZ_ASSERT(IsOuterWindow());
 
+  if (!IsChrome()) {
+    CSSIntSize size;                                                                                                                                                                                       
+    aError = GetInnerSize(size);                                                                                                                                                                           
+    return nsIntSize(size.width, size.height);  
+  }
+
   nsCOMPtr<nsIBaseWindow> treeOwnerAsWin = GetTreeOwnerWindow();
   if (!treeOwnerAsWin) {
     aError.Throw(NS_ERROR_FAILURE);
@@ -4992,6 +4998,11 @@ nsGlobalWindow::GetScreenXY(ErrorResult& aError)
 {
   MOZ_ASSERT(IsOuterWindow());
 
+  // For non-chrome callers, always return (0,0) to prevent fingerprinting.
+  if (!IsChrome()) {
+    return nsIntPoint(0, 0);
+  }
+
   nsCOMPtr<nsIBaseWindow> treeOwnerAsWin = GetTreeOwnerWindow();
   if (!treeOwnerAsWin) {
     aError.Throw(NS_ERROR_FAILURE);
@@ -5056,6 +5067,9 @@ nsGlobalWindow::GetMozInnerScreenX(ErrorResult& aError)
 {
   FORWARD_TO_OUTER_OR_THROW(GetMozInnerScreenX, (aError), aError, 0);
 
+  // For non-chrome callers, always return 0 to prevent fingerprinting.
+  if (!IsChrome()) return 0.0;
+
   nsRect r = GetInnerScreenRect();
   return nsPresContext::AppUnitsToFloatCSSPixels(r.x);
 }
@@ -5073,6 +5087,9 @@ float
 nsGlobalWindow::GetMozInnerScreenY(ErrorResult& aError)
 {
   FORWARD_TO_OUTER_OR_THROW(GetMozInnerScreenY, (aError), aError, 0);
+
+  // For non-chrome callers, always return 0 to prevent fingerprinting.
+  if (!IsChrome()) return 0.0;
 
   nsRect r = GetInnerScreenRect();
   return nsPresContext::AppUnitsToFloatCSSPixels(r.y);
@@ -5410,6 +5427,20 @@ nsGlobalWindow::SetScreenY(int32_t aScreenY)
   SetScreenY(aScreenY, rv);
 
   return rv.ErrorCode();
+}
+
+bool
+nsGlobalWindow::IsChrome() const
+{
+  bool isChrome = false;
+
+  if (mDocShell) {
+    nsRefPtr<nsPresContext> presContext;
+    mDocShell->GetPresContext(getter_AddRefs(presContext));
+    isChrome = (presContext && presContext->IsChrome());
+  }
+
+  return isChrome;
 }
 
 // NOTE: Arguments to this function should have values scaled to
