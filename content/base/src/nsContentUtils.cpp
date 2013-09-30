@@ -176,6 +176,7 @@
 #include "xpcprivate.h" // nsXPConnect
 #include "HTMLSplitOnSpacesTokenizer.h"
 #include "nsContentTypeParser.h"
+#include "mozIThirdPartyUtil.h"
 
 #include "nsIBidiKeyboard.h"
 
@@ -2723,8 +2724,6 @@ nsContentUtils::LoadImage(nsIURI* aURI, nsIDocument* aLoadingDocument,
 
   nsCOMPtr<nsILoadGroup> loadGroup = aLoadingDocument->GetDocumentLoadGroup();
 
-  nsIURI *documentURI = aLoadingDocument->GetDocumentURI();
-
   NS_ASSERTION(loadGroup || IsFontTableURI(documentURI),
                "Could not get loadgroup; onload may fire too early");
 
@@ -2744,11 +2743,15 @@ nsContentUtils::LoadImage(nsIURI* aURI, nsIDocument* aLoadingDocument,
     
   // Make the URI immutable so people won't change it under us
   NS_TryToSetImmutable(aURI);
+ 
+  nsCOMPtr<nsIURI> firstPartyURI;
+  nsCOMPtr<mozIThirdPartyUtil> thirdPartySvc
+                               = do_GetService(THIRDPARTYUTIL_CONTRACTID);
+  thirdPartySvc->GetFirstPartyURI(nullptr, aLoadingDocument,
+                                  getter_AddRefs(firstPartyURI));
 
-  // XXXbz using "documentURI" for the initialDocumentURI is not quite
-  // right, but the best we can do here...
   return imgLoader->LoadImage(aURI,                 /* uri to load */
-                              documentURI,          /* initialDocumentURI */
+                              firstPartyURI,        /* firstPartyURI */
                               aReferrer,            /* referrer */
                               aLoadingPrincipal,    /* loading principal */
                               loadGroup,            /* loadgroup */
