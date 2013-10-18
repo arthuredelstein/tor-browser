@@ -34,7 +34,8 @@ WriteConsoleLog()
     if (!gLogConsoleErrors)
       return;
 
-    rv = nsXREDirProvider::GetUserAppDataDirectory(getter_AddRefs(lfile));
+    rv = nsXREDirProvider::GetSingleton()->
+           GetUserAppDataDirectory(getter_AddRefs(lfile));
     if (NS_FAILED(rv))
       return;
 
