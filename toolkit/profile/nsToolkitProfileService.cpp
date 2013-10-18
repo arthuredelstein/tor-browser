@@ -406,10 +406,12 @@ nsToolkitProfileService::Init()
     NS_ASSERTION(gDirServiceProvider, "No dirserviceprovider!");
     nsresult rv;
 
-    rv = nsXREDirProvider::GetUserAppDataDirectory(getter_AddRefs(mAppData));
+    rv = nsXREDirProvider::GetSingleton()->
+           GetUserAppDataDirectory(getter_AddRefs(mAppData));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    rv = nsXREDirProvider::GetUserLocalDataDirectory(getter_AddRefs(mTempData));
+    rv = nsXREDirProvider::GetSingleton()->
+           GetUserLocalDataDirectory(getter_AddRefs(mTempData));
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = mAppData->Clone(getter_AddRefs(mListFile));
