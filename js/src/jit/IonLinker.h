@@ -63,6 +63,7 @@ class Linker
             return nullptr;
         if (masm.oom())
             return fail(cx);
+        AutoWritableJitCode awjc(result, bytesNeeded);
         code->copyFrom(masm);
         masm.link(code);
 #ifdef JSGC_GENERATIONAL

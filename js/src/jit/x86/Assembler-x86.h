@@ -148,6 +148,7 @@ PatchJump(CodeLocationJump jump, CodeLocationLabel label)
     JS_ASSERT(((*x >= 0x80 && *x <= 0x8F) && *(x - 1) == 0x0F) ||
               (*x == 0xE9));
 #endif
+    AutoWritableJitCode awjc(jump.raw() - 8, 8);
     JSC::X86Assembler::setRel32(jump.raw(), label.raw());
 }
 

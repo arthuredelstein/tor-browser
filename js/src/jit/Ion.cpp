@@ -749,8 +749,10 @@ JitCode::finalize(FreeOp *fop)
     // Buffer can be freed at any time hereafter. Catch use-after-free bugs.
     // Don't do this if the Ion code is protected, as the signal handler will
     // deadlock trying to reacquire the interrupt lock.
-    if (fop->runtime()->jitRuntime() && !fop->runtime()->jitRuntime()->ionCodeProtected())
-        memset(code_, JS_SWEPT_CODE_PATTERN, bufferSize_);
+    if (fop->runtime()->jitRuntime() && !fop->runtime()->jitRuntime()->ionCodeProtected()) {
+       AutoWritableJitCode awjc(this);
+       memset(code_, JS_SWEPT_CODE_PATTERN, bufferSize_);
+    }
     code_ = nullptr;
 
     // Code buffers are stored inside JSC pools.
@@ -767,6 +769,7 @@ JitCode::finalize(FreeOp *fop)
 void
 JitCode::togglePreBarriers(bool enabled)
 {
+    AutoWritableJitCode awjc(this);
     uint8_t *start = code_ + preBarrierTableOffset();
     CompactBufferReader reader(start, start + preBarrierTableBytes_);
 
@@ -2602,6 +2605,7 @@ InvalidateActivation(FreeOp *fop, uint8_t *ionTop, bool invalidateAll)
         // the call sequence causing the safepoint being >= the size of
         // a uint32, which is checked during safepoint index
         // construction.
+        AutoWritableJitCode awjc(ionCode);
         CodeLocationLabel dataLabelToMunge(it.returnAddressToFp());
         ptrdiff_t delta = ionScript->invalidateEpilogueDataOffset() -
                           (it.returnAddressToFp() - ionCode->raw());

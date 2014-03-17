@@ -2080,6 +2080,29 @@ class RuntimeAllocPolicy
 
 extern const JSSecurityCallbacks NullSecurityCallbacks;
 
+//XXX: fix interaction with Ion mprotect interrupts
+//XXX: add guard macros
+class MOZ_STACK_CLASS AutoWritableJitCode
+{
+    void *addr_;
+    size_t size_;
+
+  public:
+    AutoWritableJitCode(void *addr, size_t size)
+      : addr_(addr), size_(size)
+    {
+        JSC::ExecutableAllocator::makeWritable(addr_, size_);
+    }
+    explicit AutoWritableJitCode(jit::JitCode *code)
+      : addr_(code->raw()), size_(code->bufferSize())
+    {
+        JSC::ExecutableAllocator::makeWritable(addr_, size_);
+    }
+    ~AutoWritableJitCode() {
+        JSC::ExecutableAllocator::makeExecutable(addr_, size_);
+    }
+};
+
 } /* namespace js */
 
 #ifdef _MSC_VER

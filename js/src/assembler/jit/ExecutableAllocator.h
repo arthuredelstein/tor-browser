@@ -65,13 +65,9 @@ extern  "C" void sync_instruction_memory(caddr_t v, u_int len);
 #include <sys/cachectl.h>
 #endif
 
-#if ENABLE_ASSEMBLER_WX_EXCLUSIVE
 #define PROTECTION_FLAGS_RW (PROT_READ | PROT_WRITE)
 #define PROTECTION_FLAGS_RX (PROT_READ | PROT_EXEC)
 #define INITIAL_PROTECTION_FLAGS PROTECTION_FLAGS_RX
-#else
-#define INITIAL_PROTECTION_FLAGS (PROT_READ | PROT_WRITE | PROT_EXEC)
-#endif
 
 namespace JSC {
   enum CodeKind { ION_CODE = 0, BASELINE_CODE, REGEXP_CODE, OTHER_CODE };
@@ -398,7 +394,6 @@ public:
         return pool;
     }
 
-#if ENABLE_ASSEMBLER_WX_EXCLUSIVE
     static void makeWritable(void* start, size_t size)
     {
         reprotectRegion(start, size, Writable);
@@ -408,10 +403,6 @@ public:
     {
         reprotectRegion(start, size, Executable);
     }
-#else
-    static void makeWritable(void*, size_t) {}
-    static void makeExecutable(void*, size_t) {}
-#endif
 
 
 #if WTF_CPU_X86 || WTF_CPU_X86_64
@@ -503,9 +494,7 @@ public:
 
 private:
 
-#if ENABLE_ASSEMBLER_WX_EXCLUSIVE
     static void reprotectRegion(void*, size_t, ProtectionSetting);
-#endif
 
     // These are strong references;  they keep pools alive.
     static const size_t maxSmallPools = 4;

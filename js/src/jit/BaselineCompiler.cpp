@@ -212,7 +212,9 @@ BaselineCompiler::compile()
     // Adopt fallback stubs from the compiler into the baseline script.
     baselineScript->adoptFallbackStubs(&stubSpace_);
 
-    // Patch IC loads using IC entries
+    // Patch IC loads using IC entries.
+    AutoWritableJitCode awjc(code);
+
     for (size_t i = 0; i < icLoadLabels_.length(); i++) {
         CodeOffsetLabel label = icLoadLabels_[i].label;
         label.fixup(&masm);
