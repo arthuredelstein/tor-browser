@@ -2744,23 +2744,23 @@ nsContentUtils::LoadImage(nsIURI* aURI, nsIDocument* aLoadingDocument,
   // Make the URI immutable so people won't change it under us
   NS_TryToSetImmutable(aURI);
  
-  nsCOMPtr<nsIURI> firstPartyURI;
+  nsCOMPtr<nsIURI> firstPartyIsolationURI;
   nsCOMPtr<mozIThirdPartyUtil> thirdPartySvc
                                = do_GetService(THIRDPARTYUTIL_CONTRACTID);
   thirdPartySvc->GetFirstPartyURI(nullptr, aLoadingDocument,
-                                  getter_AddRefs(firstPartyURI));
+                                  getter_AddRefs(firstPartyIsolationURI));
 
-  return imgLoader->LoadImage(aURI,                 /* uri to load */
-                              firstPartyURI,        /* firstPartyURI */
-                              aReferrer,            /* referrer */
-                              aLoadingPrincipal,    /* loading principal */
-                              loadGroup,            /* loadgroup */
-                              aObserver,            /* imgINotificationObserver */
-                              aLoadingDocument,     /* uniquification key */
-                              aLoadFlags,           /* load flags */
-                              nullptr,               /* cache key */
-                              channelPolicy,        /* CSP info */
-                              initiatorType,        /* the load initiator */
+  return imgLoader->LoadImage(aURI,                   /* uri to load */
+                              firstPartyIsolationURI, /* firstPartyIsolationURI, NULL if isolation is not activedom/base/nsGlobalWindow.cpp */
+                              aReferrer,              /* referrer */
+                              aLoadingPrincipal,      /* loading principal */
+                              loadGroup,              /* loadgroup */
+                              aObserver,              /* imgINotificationObserver */
+                              aLoadingDocument,       /* uniquification key */
+                              aLoadFlags,             /* load flags */
+                              nullptr,                /* cache key */
+                              channelPolicy,          /* CSP info */
+                              initiatorType,          /* the load initiator */
                               aRequest);
 }
 

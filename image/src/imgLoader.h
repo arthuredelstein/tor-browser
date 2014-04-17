@@ -327,12 +327,12 @@ public:
   // happens, by calling imgRequest::SetCacheEntry() when an entry with no
   // observers is re-requested.
   bool SetHasNoProxies(ImageURL *imgURI, imgCacheEntry *entry);
-  bool SetHasProxies(nsIURI *firstPartyURI, ImageURL *imgURI);
+  bool SetHasProxies(nsIURI *firstPartyIsolationURI, ImageURL *imgURI);
 
 private: // methods
 
   bool ValidateEntry(imgCacheEntry *aEntry, nsIURI *aURI,
-                       nsIURI *aFirstPartyURI, nsIURI *aReferrerURI,
+                       nsIURI *aFirstPartyIsolationURI, nsIURI *aReferrerURI,
                        nsILoadGroup *aLoadGroup,
                        imgINotificationObserver *aObserver, nsISupports *aCX,
                        nsLoadFlags aLoadFlags, bool aCanMakeNewChannel,

@@ -82,7 +82,7 @@ imgRequest::~imgRequest()
 
 nsresult imgRequest::Init(nsIURI *aURI,
                           nsIURI *aCurrentURI,
-                          nsIURI *aFirstPartyURI,
+                          nsIURI *aFirstPartyIsolationURI,
                           nsIRequest *aRequest,
                           nsIChannel *aChannel,
                           imgCacheEntry *aCacheEntry,
@@ -105,7 +105,7 @@ nsresult imgRequest::Init(nsIURI *aURI,
   // Use ImageURL to ensure access to URI data off main thread.
   mURI = new ImageURL(aURI);
   mCurrentURI = aCurrentURI;
-  mFirstPartyURI = aFirstPartyURI;
+  mFirstPartyIsolationURI = aFirstPartyIsolationURI;
   mRequest = aRequest;
   mChannel = aChannel;
   mTimedChannel = do_QueryInterface(mChannel);
@@ -170,7 +170,7 @@ void imgRequest::AddProxy(imgRequestProxy *proxy)
   nsRefPtr<imgStatusTracker> statusTracker = GetStatusTracker();
   if (statusTracker->ConsumerCount() == 0) {
     NS_ABORT_IF_FALSE(mURI, "Trying to SetHasProxies without key uri.");
-    mLoader->SetHasProxies(mFirstPartyURI, mURI);
+    mLoader->SetHasProxies(mFirstPartyIsolationURI, mURI);
   }
 
   statusTracker->AddConsumer(proxy);
@@ -337,7 +337,7 @@ void imgRequest::RemoveFromCache()
     else {
       mLoader->RemoveKeyFromCache(mLoader->GetCache(mURI),
                                   mLoader->GetCacheQueue(mURI),
-                                  mLoader->GetCacheKey(mFirstPartyURI, mURI, nullptr));
+                                  mLoader->GetCacheKey(mFirstPartyIsolationURI, mURI, nullptr));
     }
   }
 

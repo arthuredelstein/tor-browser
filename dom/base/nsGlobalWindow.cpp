@@ -2671,8 +2671,8 @@ nsGlobalWindow::PreloadLocalStorage()
   }
 
   nsresult rv;
-  nsCOMPtr<nsIURI> firstPartyURI;
-  rv = GetFirstPartyURI(getter_AddRefs(firstPartyURI));
+  nsCOMPtr<nsIURI> firstPartyIsolationURI;
+  rv = GetFirstPartyIsolationURI(getter_AddRefs(firstPartyIsolationURI));
   if (NS_FAILED(rv)) {
     return;
   }
@@ -2683,7 +2683,7 @@ nsGlobalWindow::PreloadLocalStorage()
     return;
   }
 
-  storageManager->PrecacheStorageForFirstParty(firstPartyURI, principal);
+  storageManager->PrecacheStorageForFirstParty(firstPartyIsolationURI, principal);
 }
 
 void
@@ -7712,7 +7712,7 @@ nsGlobalWindow::CallerInnerWindow()
 }
 
 nsresult
-nsGlobalWindow::GetFirstPartyURI(nsIURI** aFirstPartyURI)
+nsGlobalWindow::GetFirstPartyIsolationURI(nsIURI** aFirstPartyIsolationURI)
 {
   nsCOMPtr<mozIThirdPartyUtil> thirdPartyUtil =
                                do_GetService(THIRDPARTYUTIL_CONTRACTID);
@@ -7720,7 +7720,7 @@ nsGlobalWindow::GetFirstPartyURI(nsIURI** aFirstPartyURI)
     return NS_ERROR_FAILURE;
 
   nsCOMPtr<nsIDocument> doc = do_QueryInterface(mDoc);
-  return thirdPartyUtil->GetFirstPartyURI(NULL, doc, aFirstPartyURI);
+  return thirdPartyUtil->GetFirstPartyIsolationURI(NULL, doc, aFirstPartyIsolationURI);
 }
 
 
@@ -10289,11 +10289,11 @@ nsGlobalWindow::GetSessionStorage(ErrorResult& aError)
 
     nsCOMPtr<nsILoadContext> loadContext = do_QueryInterface(docShell);
 
-    nsCOMPtr<nsIURI> firstPartyURI;
-    rv = GetFirstPartyURI(getter_AddRefs(firstPartyURI));
+    nsCOMPtr<nsIURI> firstPartyIsolationURI;
+    rv = GetFirstPartyURI(getter_AddRefs(firstPartyIsolationURI));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    aError =  storageManager->CreateStorageForFirstParty(firstPartyURI, principal,
+    aError =  storageManager->CreateStorageForFirstParty(firstPartyIsolationURI, principal,
                                            documentURI,
                                            loadContext && loadContext->UsePrivateBrowsing(),
                                            getter_AddRefs(mSessionStorage));
@@ -10372,14 +10372,14 @@ nsGlobalWindow::GetLocalStorage(ErrorResult& aError)
       mDoc->GetDocumentURI(documentURI);
     }
 
-    nsCOMPtr<nsIURI> firstPartyURI;
-    rv = GetFirstPartyURI(getter_AddRefs(firstPartyURI));
+    nsCOMPtr<nsIURI> firstPartyIsolationURI;
+    rv = GetFirstPartyURI(getter_AddRefs(firstPartyIsolationURI));
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsIDocShell* docShell = GetDocShell();
     nsCOMPtr<nsILoadContext> loadContext = do_QueryInterface(docShell);
 
-    aError = storageManager->CreateStorageForFirstParty(firstPartyURI, principal,
+    aError = storageManager->CreateStorageForFirstParty(firstPartyIsolationURI, principal,
                                            documentURI,
                                            loadContext && loadContext->UsePrivateBrowsing(),
                                            getter_AddRefs(mLocalStorage));
@@ -11192,11 +11192,11 @@ nsGlobalWindow::Observe(nsISupports* aSubject, const char* aTopic,
       nsCOMPtr<nsIDOMStorageManager> storageManager = do_QueryInterface(GetDocShell());
       if (storageManager) {
         nsresult rv;
-        nsCOMPtr<nsIURI> firstPartyURI;
-        rv = GetFirstPartyURI(getter_AddRefs(firstPartyURI));
+        nsCOMPtr<nsIURI> firstPartyIsolationURI;
+        rv = GetFirstPartyURI(getter_AddRefs(firstPartyIsolationURI));
         NS_ENSURE_SUCCESS(rv, rv);
 
-        rv = storageManager->CheckStorageForFirstParty(firstPartyURI,
+        rv = storageManager->CheckStorageForFirstParty(firstPartyIsolationURI,
                                           principal, changingStorage, &check);
         if (NS_FAILED(rv)) {
           return rv;
