@@ -2795,16 +2795,9 @@ static bool
 ToLocaleStringHelper(JSContext *cx, HandleObject thisObj, MutableHandleValue rval)
 {
     /*
-     * Use '%#c' for windows, because '%c' is backward-compatible and non-y2k
-     * with msvc; '%#c' requests that a full year be used in the result string.
+     * Use the same formatting on all platforms.
      */
-    return ToLocaleFormatHelper(cx, thisObj,
-#if defined(_WIN32) && !defined(__MWERKS__)
-                          "%#c"
-#else
-                          "%c"
-#endif
-                         , rval);
+    return ToLocaleFormatHelper(cx, thisObj, "%Y-%m-%d %H:%M:%S", rval);
 }
 
 /* ES5 15.9.5.5. */
@@ -2831,19 +2824,10 @@ date_toLocaleDateString_impl(JSContext *cx, CallArgs args)
     JS_ASSERT(IsDate(args.thisv()));
 
     /*
-     * Use '%#x' for windows, because '%x' is backward-compatible and non-y2k
-     * with msvc; '%#x' requests that a full year be used in the result string.
+     * Use the same formatting on all platforms.
      */
-    static const char format[] =
-#if defined(_WIN32) && !defined(__MWERKS__)
-                                   "%#x"
-#else
-                                   "%x"
-#endif
-                                   ;
-
     RootedObject thisObj(cx, &args.thisv().toObject());
-    return ToLocaleFormatHelper(cx, thisObj, format, args.rval());
+    return ToLocaleFormatHelper(cx, thisObj, "%Y-%m-%d", args.rval());
 }
 
 static JSBool
@@ -2860,7 +2844,7 @@ date_toLocaleTimeString_impl(JSContext *cx, CallArgs args)
     JS_ASSERT(IsDate(args.thisv()));
 
     RootedObject thisObj(cx, &args.thisv().toObject());
-    return ToLocaleFormatHelper(cx, thisObj, "%X", args.rval());
+    return ToLocaleFormatHelper(cx, thisObj, "%H:%M:%S", args.rval());
 }
 
 static JSBool
@@ -2880,16 +2864,9 @@ date_toLocaleFormat_impl(JSContext *cx, CallArgs args)
 
     if (args.length() == 0) {
         /*
-         * Use '%#c' for windows, because '%c' is backward-compatible and non-y2k
-         * with msvc; '%#c' requests that a full year be used in the result string.
+         * Use the same formatting on all platforms.
          */
-        return ToLocaleFormatHelper(cx, thisObj,
-#if defined(_WIN32) && !defined(__MWERKS__)
-                              "%#c"
-#else
-                              "%c"
-#endif
-                             , args.rval());
+        return ToLocaleFormatHelper(cx, thisObj, "%Y-%m-%d %H:%M:%S", args.rval());
     }
 
     RootedString fmt(cx, ToString<CanGC>(cx, args.handleAt(0)));

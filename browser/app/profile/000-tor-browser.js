@@ -67,6 +67,7 @@ pref("general.useragent.override", "Mozilla/5.0 (Windows NT 6.1; rv:24.0) Gecko/
 pref("general.productSub.override", "20100101");
 pref("general.buildID.override", "20100101");
 pref("browser.startup.homepage_override.buildID", "20100101");
+pref("general.useragent.spoof_locale", true);
 pref("general.useragent.vendor", "");
 pref("general.useragent.vendorSub", "");
 pref("dom.enable_performance", false);
