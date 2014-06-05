@@ -215,6 +215,11 @@ pref("lightweightThemes.update.enabled", true);
 pref("keyword.enabled", true);
 
 pref("general.useragent.locale", "@AB_CD@");
+// The general.useragent.spoof_locale pref determines
+// whether we prevent JavaScript objects
+// from leaking locale information.
+pref("general.useragent.spoof_locale", false);
+
 pref("general.skins.selectedSkin", "classic/1.0");
 
 pref("general.smoothScroll", true);

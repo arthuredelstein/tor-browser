@@ -7,9 +7,10 @@
 #include "base/basictypes.h"
 
 #include "mozilla/Poison.h"
+#include "mozilla/Preferences.h" 
 #include "mozilla/XPCOM.h"
-#include "nsXULAppAPI.h"
 
+#include "nsXULAppAPI.h"
 #include "nsXPCOMPrivate.h"
 #include "nsXPCOMCIDInternal.h"
 
@@ -484,6 +485,11 @@ NS_InitXPCOM2(nsIServiceManager* *result,
     // to the directory service.
     nsDirectoryService::gService->RegisterCategoryProviders();
 
+    if (mozilla::Preferences::GetBool("general.useragent.spoof_locale")) {
+        // To avoid leaking the platform locale, set app to the "C" locale.
+        setlocale(LC_ALL, "C");
+    }
+    
     // Force layout to spin up so that nsContentUtils is available for cx stack
     // munging.
     nsCOMPtr<nsISupports> componentLoader = do_GetService("@mozilla.org/moz/jsloader;1");
@@ -509,6 +515,13 @@ NS_InitXPCOM2(nsIServiceManager* *result,
     mozilla::eventtracer::Init();
 #endif
 
+    
+    if (mozilla::Preferences::GetBool("general.useragent.spoof_locale")) {
+        // To avoid leaking the platform locale, set app to the "C" locale.
+        setlocale(LC_ALL, "C");
+    }
+    
+    
     return NS_OK;
 }
 

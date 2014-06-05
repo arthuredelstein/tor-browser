@@ -8,6 +8,8 @@
 #include <QtCore/QLocale>
 #endif
 
+#include "mozilla/Preferences.h"
+
 #include "nsCOMPtr.h"
 #include "nsAutoPtr.h"
 #include "nsILocale.h"
@@ -141,7 +143,8 @@ nsLocaleService::nsLocaleService(void)
     for( i = 0; i < LocaleListLength; i++ ) {
         nsresult result;
         // setlocale( , "") evaluates LC_* and LANG
-        char* lc_temp = setlocale(posix_locale_category[i], "");
+        const bool spoof = mozilla::Preferences::GetBool("general.useragent.spoof_locale");
+        char* lc_temp = setlocale(posix_locale_category[i], spoof ? "C" : "");
         CopyASCIItoUTF16(LocaleList[i], category);
         category_platform = category;
         category_platform.AppendLiteral("##PLATFORM");

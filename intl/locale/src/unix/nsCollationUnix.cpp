@@ -14,6 +14,8 @@
 #include "nsCOMPtr.h"
 #include "nsUnicharUtils.h"
 #include "nsCRT.h"
+
+#include "mozilla/Preferences.h"
 //#define DEBUG_UNIX_COLLATION
 
 inline void nsCollationUnix::DoSetLocale()
