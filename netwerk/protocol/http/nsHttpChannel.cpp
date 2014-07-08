@@ -1775,7 +1775,7 @@ nsHttpChannel::ResolveProxy()
     if (NS_FAILED(rv))
         return rv;
 
-    return pps->AsyncResolve(mProxyURI ? mProxyURI : mURI, mProxyResolveFlags,
+    return pps->AsyncResolve(this, mProxyResolveFlags,
                              this, getter_AddRefs(mProxyRequest));
 }
 
@@ -4585,7 +4585,7 @@ nsHttpChannel::SetPriority(int32_t value)
 //-----------------------------------------------------------------------------
 
 NS_IMETHODIMP
-nsHttpChannel::OnProxyAvailable(nsICancelable *request, nsIURI *uri,
+nsHttpChannel::OnProxyAvailable(nsICancelable *request, nsIChannel *channel,
                                 nsIProxyInfo *pi, nsresult status)
 {
     LOG(("nsHttpChannel::OnProxyAvailable [this=%p pi=%p status=%x mStatus=%x]\n",

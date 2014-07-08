@@ -13,6 +13,7 @@
 #include "nsIPrefBranch.h"
 #include "nsIProtocolProxyService2.h"
 #include "nsIProtocolProxyFilter.h"
+#include "nsIProtocolProxyChannelFilter.h"
 #include "nsISystemProxySettings.h"
 #include "nsIProxyInfo.h"
 #include "nsIObserver.h"
@@ -199,8 +200,8 @@ protected:
      * caller with either the proxy info result or a flag to instruct the
      * caller to use PAC instead.
      *
-     * @param uri
-     *        The URI to test.
+     * @param channel
+     *        The channel to test.
      * @param info
      *        Information about the URI's protocol.
      * @param flags
@@ -211,7 +212,7 @@ protected:
      * @param result
      *        The resulting proxy info or null.
      */
-    NS_HIDDEN_(nsresult) Resolve_Internal(nsIURI *uri,
+    NS_HIDDEN_(nsresult) Resolve_Internal(nsIChannel *channel,
                                           const nsProtocolInfo &info,
                                           uint32_t flags,
                                           bool *usePAC, 
@@ -228,19 +229,19 @@ protected:
      * @param proxyInfo
      *        The proxy info list to be modified.  This is an inout param.
      */
-    NS_HIDDEN_(void) ApplyFilters(nsIURI *uri, const nsProtocolInfo &info,
+    NS_HIDDEN_(void) ApplyFilters(nsIChannel *channel, const nsProtocolInfo &info,
                                   nsIProxyInfo **proxyInfo);
 
     /**
      * This method is a simple wrapper around ApplyFilters that takes the
      * proxy info list inout param as a nsCOMPtr.
      */
-    inline void ApplyFilters(nsIURI *uri, const nsProtocolInfo &info,
+    inline void ApplyFilters(nsIChannel *channel, const nsProtocolInfo &info,
                              nsCOMPtr<nsIProxyInfo> &proxyInfo)
     {
       nsIProxyInfo *pi = nullptr;
       proxyInfo.swap(pi);
-      ApplyFilters(uri, info, &pi);
+      ApplyFilters(channel, info, &pi);
       proxyInfo.swap(pi);
     }
 
@@ -287,7 +288,7 @@ protected:
 private:
     nsresult SetupPACThread();
     nsresult ResetPACThread();
-
+ 
 public:
     // The Sun Forte compiler and others implement older versions of the
     // C++ standard's rules on access and nested classes.  These structs
@@ -324,19 +325,26 @@ protected:
         }
     };
 
-    // This structure is allocated for each registered nsIProtocolProxyFilter.
+    // This structure is allocated for each registered nsIProtocolProxyChannelFilter.
     struct FilterLink {
       struct FilterLink                *next;
       uint32_t                          position;
-      nsCOMPtr<nsIProtocolProxyFilter>  filter;
-
+      nsCOMPtr<nsIProtocolProxyFilter> filter;
+      nsCOMPtr<nsIProtocolProxyChannelFilter> channelFilter;
       FilterLink(uint32_t p, nsIProtocolProxyFilter *f)
-        : next(nullptr), position(p), filter(f) {}
-
+        : next(nullptr), position(p), filter(f), channelFilter(nullptr) {}
+      FilterLink(uint32_t p, nsIProtocolProxyChannelFilter *cf)
+        : next(nullptr), position(p), filter(nullptr), channelFilter(cf) {}
       // Chain deletion to simplify cleaning up the filter links
       ~FilterLink() { if (next) delete next; }
     };
 
+private:
+    // Private methods to insert and remove FilterLinks from the FilterLink chain.
+    nsresult InsertFilterLink(FilterLink *link, uint32_t position);
+    nsresult RemoveFilterLink(nsISupports *givenObject);
+
+protected:
     // Indicates if local hosts (plain hostnames, no dots) should use the proxy
     bool mFilterLocalHosts;
 

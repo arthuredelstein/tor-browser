@@ -297,8 +297,8 @@ nsPACMan::Shutdown()
 }
 
 nsresult
-nsPACMan::AsyncGetProxyForURI(nsIURI *uri, nsPACManCallback *callback,
-                              bool mainThreadResponse)
+nsPACMan::AsyncGetProxyForChannel(nsIChannel *channel, nsPACManCallback *callback,
+                                  bool mainThreadResponse)
 {
   NS_ABORT_IF_FALSE(NS_IsMainThread(), "wrong thread");
   if (mShutdown)
@@ -308,6 +308,9 @@ nsPACMan::AsyncGetProxyForURI(nsIURI *uri, nsPACManCallback *callback,
   if (!mPACURISpec.IsEmpty() && !mScheduledReload.IsNull() &&
       TimeStamp::Now() > mScheduledReload)
     LoadPACFromURI(EmptyCString());
+
+  nsCOMPtr<nsIURI> uri;
+  channel->GetURI(getter_AddRefs(uri));
 
   nsRefPtr<PendingPACQuery> query =
     new PendingPACQuery(this, uri, callback, mainThreadResponse);
