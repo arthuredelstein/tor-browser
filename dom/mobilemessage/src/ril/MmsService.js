@@ -388,8 +388,8 @@ MmsProxyFilter.prototype = {
 
   // nsIProtocolProxyFilter
 
-  applyFilter: function applyFilter(proxyService, uri, proxyInfo) {
-    let url = uri.prePath + uri.path;
+  applyFilter: function applyFilter(proxyService, channel, proxyInfo) {
+    let url = channel.URI.prePath + channel.URI.path;
     if (url.endsWith("/")) {
       url = url.substr(0, url.length - 1);
     }

@@ -9,7 +9,7 @@
 /**
  * An extension of nsIProtocolProxyService
  */
-[scriptable, uuid(bed3702d-9374-4804-a20f-32baed8e2954)]
+[scriptable, uuid(c4b1cbe3-9c01-4b50-8139-62068267f171)]
 interface nsIProtocolProxyService2 : nsIProtocolProxyService
 {
   /**
@@ -25,5 +25,5 @@ interface nsIProtocolProxyService2 : nsIProtocolProxyService
    *
    * No documentation - it is deprecated!
    **/
-  nsIProxyInfo deprecatedBlockingResolve(in nsIURI aURI, in unsigned long aFlags);
+  nsIProxyInfo deprecatedBlockingResolve(in nsIChannel aChannel, in unsigned long aFlags);
 };

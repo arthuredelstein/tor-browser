@@ -111,7 +111,7 @@ TestFilter.prototype = {
       return this;
     throw Components.results.NS_ERROR_NO_INTERFACE;
   },
-  applyFilter: function(pps, uri, pi) {
+  applyFilter: function(pps, channel, pi) {
     var pi_tail = pps.newProxyInfo(this._type, this._host, this._port,
                                    this._flags, this._timeout, null);
     if (pi)
@@ -130,7 +130,7 @@ BasicFilter.prototype = {
       return this;
     throw Components.results.NS_ERROR_NO_INTERFACE;
   },
-  applyFilter: function(pps, uri, pi) {
+  applyFilter: function(pps, channel, pi) {
     return pps.newProxyInfo("http", "localhost", 8080, 0, 10,
            pps.newProxyInfo("direct", "", -1, 0, 0, null));
   }
@@ -148,18 +148,18 @@ resolveCallback.prototype = {
     return this;
   },
 
-  onProxyAvailable : function (req, uri, pi, status) {
+  onProxyAvailable : function (req, channel, pi, status) {
     this.nextFunction(pi);
   }
 };
 
 function run_filter_test() {
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
 
   // Verify initial state
   var cb = new resolveCallback();
   cb.nextFunction = filter_test0_1;
-  var req = pps.asyncResolve(uri, 0, cb);
+  var req = pps.asyncResolve(channel, 0, cb);
 }
 
 var filter01;
@@ -177,8 +177,8 @@ function filter_test0_1(pi) {
 
   var cb = new resolveCallback();
   cb.nextFunction = filter_test0_2;
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
-  var req = pps.asyncResolve(uri, 0, cb);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
+  var req = pps.asyncResolve(channel, 0, cb);
 }
 
 function filter_test0_2(pi)
@@ -190,8 +190,8 @@ function filter_test0_2(pi)
 
   var cb = new resolveCallback();
   cb.nextFunction = filter_test0_3;
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
-  var req = pps.asyncResolve(uri, 0, cb);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
+  var req = pps.asyncResolve(channel, 0, cb);
 }
 
 function filter_test0_3(pi)
@@ -205,8 +205,8 @@ function filter_test0_3(pi)
 
   var cb = new resolveCallback();
   cb.nextFunction = filter_test0_4;
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
-  var req = pps.asyncResolve(uri, 0, cb);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
+  var req = pps.asyncResolve(channel, 0, cb);
 }
 
 function filter_test0_4(pi)
@@ -228,8 +228,8 @@ function run_filter_test2() {
 
   var cb = new resolveCallback();
   cb.nextFunction = filter_test1_1;
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
-  var req = pps.asyncResolve(uri, 0, cb);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
+  var req = pps.asyncResolve(channel, 0, cb);
 }
 
 function filter_test1_1(pi) {
@@ -240,8 +240,8 @@ function filter_test1_1(pi) {
 
   var cb = new resolveCallback();
   cb.nextFunction = filter_test1_2;
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
-  var req = pps.asyncResolve(uri, 0, cb);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
+  var req = pps.asyncResolve(channel, 0, cb);
 }
 
 function filter_test1_2(pi) {
@@ -253,8 +253,8 @@ function filter_test1_2(pi) {
 
   var cb = new resolveCallback();
   cb.nextFunction = filter_test1_3;
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
-  var req = pps.asyncResolve(uri, 0, cb);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
+  var req = pps.asyncResolve(channel, 0, cb);
 }
 
 function filter_test1_3(pi) {
@@ -265,7 +265,7 @@ function filter_test1_3(pi) {
 var filter_3_1;
 
 function run_filter_test3() {
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
 
   // Push a filter and verify the results asynchronously
 
@@ -274,7 +274,7 @@ function run_filter_test3() {
 
   var cb = new resolveCallback();
   cb.nextFunction = filter_test3_1;
-  var req = pps.asyncResolve(uri, 0, cb);
+  var req = pps.asyncResolve(channel, 0, cb);
 }
 
 function filter_test3_1(pi) {
@@ -284,7 +284,7 @@ function filter_test3_1(pi) {
 }
 
 function run_pref_test() {
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
 
   // Verify 'direct' setting
 
@@ -292,7 +292,7 @@ function run_pref_test() {
 
   var cb = new resolveCallback();
   cb.nextFunction = pref_test1_1;
-  var req = pps.asyncResolve(uri, 0, cb);
+  var req = pps.asyncResolve(channel,  0, cb);
 }
 
 function pref_test1_1(pi)
@@ -304,8 +304,8 @@ function pref_test1_1(pi)
 
   var cb = new resolveCallback();
   cb.nextFunction = pref_test1_2;
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
-  var req = pps.asyncResolve(uri, 0, cb);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
+  var req = pps.asyncResolve(channel,  0, cb);
 }
 
 function pref_test1_2(pi)
@@ -319,8 +319,8 @@ function pref_test1_2(pi)
 
   var cb = new resolveCallback();
   cb.nextFunction = pref_test1_3;
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
-  var req = pps.asyncResolve(uri, 0, cb);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
+  var req = pps.asyncResolve(channel,  0, cb);
 }
 
 function pref_test1_3(pi)
@@ -336,8 +336,8 @@ function pref_test1_3(pi)
 
   var cb = new resolveCallback();
   cb.nextFunction = pref_test1_4;
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
-  var req = pps.asyncResolve(uri, 0, cb);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
+  var req = pps.asyncResolve(channel,  0, cb);
 }
 
 function pref_test1_4(pi)
@@ -347,11 +347,11 @@ function pref_test1_4(pi)
 }
 
 function run_protocol_handler_test() {
-  var uri = ios.newURI("moz-test:foopy", null, null);
+  var channel = ios.newChannel("moz-test:foopy", null, null);
 
   var cb = new resolveCallback();
   cb.nextFunction = protocol_handler_test_1;
-  var req = pps.asyncResolve(uri, 0, cb);
+  var req = pps.asyncResolve(channel,  0, cb);
 }
 
 function protocol_handler_test_1(pi)
@@ -395,14 +395,14 @@ function run_pac_test() {
             'function FindProxyForURL(url, host) {' +
             '  return "PROXY foopy:8080; DIRECT";' +
             '}';
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
 
   // Configure PAC
 
   prefs.setIntPref("network.proxy.type", 2);
   prefs.setCharPref("network.proxy.autoconfig_url", pac);
 
-  var req = pps.asyncResolve(uri, 0, new TestResolveCallback());
+  var req = pps.asyncResolve(channel, 0, new TestResolveCallback());
 }
 
 function TestResolveCancelationCallback() {
@@ -433,7 +433,7 @@ TestResolveCancelationCallback.prototype = {
 };
 
 function run_pac_cancel_test() {
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
 
   // Configure PAC
   var pac = 'data:text/plain,' +
@@ -443,7 +443,7 @@ function run_pac_cancel_test() {
   prefs.setIntPref("network.proxy.type", 2);
   prefs.setCharPref("network.proxy.autoconfig_url", pac);
 
-  var req = pps.asyncResolve(uri, 0, new TestResolveCancelationCallback());
+  var req = pps.asyncResolve(channel, 0, new TestResolveCancelationCallback());
   req.cancel(Components.results.NS_ERROR_ABORT);
 }
 
@@ -472,13 +472,12 @@ function check_host_filters_cb()
 }
 
 function check_host_filter(i) {
-  var uri;
   dump("*** uri=" + hostList[i] + " bShouldBeFiltered=" + bShouldBeFiltered + "\n");
-  uri = ios.newURI(hostList[i], null, null);
+  var channel = ios.newChannel(hostList[i], null, null);
 
   var cb = new resolveCallback();
   cb.nextFunction = host_filter_cb;
-  var req = pps.asyncResolve(uri, 0, cb);
+  var req = pps.asyncResolve(channel, 0, cb);
 }
 
 function host_filter_cb(proxy)
@@ -577,14 +576,14 @@ function run_myipaddress_test()
 
   // no traffic to this IP is ever sent, it is just a public IP that
   // does not require DNS to determine a route.
-  var uri = ios.newURI("http://192.0.43.10/", null, null);
+  var channel = ios.newChannel("http://192.0.43.10/", null, null);
 
   prefs.setIntPref("network.proxy.type", 2);
   prefs.setCharPref("network.proxy.autoconfig_url", pac);
 
   var cb = new resolveCallback();
   cb.nextFunction = myipaddress_callback;
-  var req = pps.asyncResolve(uri, 0, cb);
+  var req = pps.asyncResolve(channel, 0, cb);
 }
 
 function myipaddress_callback(pi)
@@ -612,13 +611,13 @@ function run_myipaddress_test_2()
             ' return "PROXY " + myaddr + ":5678";' +
             '}';
 
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
   prefs.setIntPref("network.proxy.type", 2);
   prefs.setCharPref("network.proxy.autoconfig_url", pac);
 
   var cb = new resolveCallback();
   cb.nextFunction = myipaddress2_callback;
-  var req = pps.asyncResolve(uri, 0, cb);
+  var req = pps.asyncResolve(channel, 0, cb);
 }
 
 function myipaddress2_callback(pi)
@@ -641,14 +640,14 @@ function run_failed_script_test()
   var pac = 'data:text/plain,' +
             '\nfor(;\n';
 
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
 
   prefs.setIntPref("network.proxy.type", 2);
   prefs.setCharPref("network.proxy.autoconfig_url", pac);
 
   var cb = new resolveCallback();
   cb.nextFunction = failed_script_callback;
-  var req = pps.asyncResolve(uri, 0, cb);
+  var req = pps.asyncResolve(channel, 0, cb);
 }
 
 var directFilter;
@@ -714,14 +713,14 @@ function run_isresolvable_test()
             ' return "PROXY 127.0.0.1:1234";' +
             '}';
 
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
 
   prefs.setIntPref("network.proxy.type", 2);
   prefs.setCharPref("network.proxy.autoconfig_url", pac);
 
   var cb = new resolveCallback();
   cb.nextFunction = isresolvable_callback;
-  var req = pps.asyncResolve(uri, 0, cb);
+  var req = pps.asyncResolve(channel, 0, cb);
 }
 
 function isresolvable_callback(pi)
@@ -737,12 +736,12 @@ function isresolvable_callback(pi)
 
 function run_deprecated_sync_test()
 {
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
+  var channel = ios.newChannel("http://www.mozilla.org/", null, null);
 
   pps.QueryInterface(Components.interfaces.nsIProtocolProxyService2);
 
   // Verify initial state
-  var pi = pps.deprecatedBlockingResolve(uri, 0);
+  var pi = pps.deprecatedBlockingResolve(channel, 0);
   do_check_eq(pi, null);
 
   // Push a filter and verify the results
@@ -751,18 +750,18 @@ function run_deprecated_sync_test()
   pps.registerFilter(filter1, 10);
   pps.registerFilter(filter2, 20);
 
-  pi = pps.deprecatedBlockingResolve(uri, 0);
+  pi = pps.deprecatedBlockingResolve(channel, 0);
   check_proxy(pi, "http", "localhost", 8080, 0, 10, true);
   check_proxy(pi.failoverProxy, "direct", "", -1, 0, 0, false);
 
   pps.unregisterFilter(filter2);
-  pi = pps.deprecatedBlockingResolve(uri, 0);
+  pi = pps.deprecatedBlockingResolve(channel, 0);
   check_proxy(pi, "http", "localhost", 8080, 0, 10, true);
   check_proxy(pi.failoverProxy, "direct", "", -1, 0, 0, false);
 
   // Remove filter and verify that we return to the initial state
   pps.unregisterFilter(filter1);
-  pi = pps.deprecatedBlockingResolve(uri, 0);
+  pi = pps.deprecatedBlockingResolve(channel, 0);
   do_check_eq(pi, null);
 }
 

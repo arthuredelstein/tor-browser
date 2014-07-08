@@ -100,14 +100,14 @@ public:
    * will queue up the request, and complete it once the PAC file has been
    * loaded.
    * 
-   * @param uri
-   *        The URI to query.
+   * @param channel
+   *        The channel to query.
    * @param callback
    *        The callback to run once the PAC result is available.
    * @param mustCallbackOnMainThread
    *        If set to false the callback can be made from the PAC thread
    */
-  nsresult AsyncGetProxyForURI(nsIURI *uri, nsPACManCallback *callback,
+  nsresult AsyncGetProxyForURI(nsIChannel *channel, nsPACManCallback *callback,
                                bool mustCallbackOnMainThread);
 
   /**

@@ -4000,7 +4000,7 @@ var BrowserEventHandler = {
     if (closest) {
       let uri = this._getLinkURI(closest);
       if (uri) {
-        Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null);
+        Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(Services.io.newChannel(uri, null, null), null);
       }
       this._doTapHighlight(closest);
     }

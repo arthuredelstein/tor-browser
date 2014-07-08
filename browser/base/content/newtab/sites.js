@@ -156,8 +156,8 @@ Site.prototype = {
    */
   _speculativeConnect: function Site_speculativeConnect() {
     let sc = Services.io.QueryInterface(Ci.nsISpeculativeConnect);
-    let uri = Services.io.newURI(this.url, null, null);
-    sc.speculativeConnect(uri, null);
+    let channel = Services.io.newChannel(this.url, null, null);
+    sc.speculativeConnect(channel, null);
   },
 
   /**
