@@ -177,15 +177,16 @@ private:
     char       **mTypes;
     uint32_t     mTypeCount;
     nsCString    mHost;
-    nsCString    mProxyHost;
     uint16_t     mPort;
-    uint16_t     mProxyPort;
-    bool mProxyTransparent;
-    bool mProxyTransparentResolvesHost;
+    nsCOMPtr<nsIProxyInfo> mProxyInfo;
+    bool         mProxyUse;
+    bool         mProxyTransparent;
+    bool         mProxyTransparentResolvesHost;
     uint32_t     mConnectionFlags;
     
-    uint16_t         SocketPort() { return (!mProxyHost.IsEmpty() && !mProxyTransparent) ? mProxyPort : mPort; }
-    const nsCString &SocketHost() { return (!mProxyHost.IsEmpty() && !mProxyTransparent) ? mProxyHost : mHost; }
+    uint16_t         SocketPort();
+    const nsCString &SocketHost();
+    nsCString        mProxyHostCache; // for SocketHost() only
 
     //-------------------------------------------------------------------------
     // members accessible only on the socket transport thread:
