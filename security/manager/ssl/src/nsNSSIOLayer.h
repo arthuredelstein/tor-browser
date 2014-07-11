@@ -14,6 +14,7 @@
 #include "nsDataHashtable.h"
 #include "nsTHashtable.h"
 #include "mozilla/TimeStamp.h"
+#include "nsIProxyInfo.h"
 
 namespace mozilla {
 namespace psm {
@@ -171,8 +172,7 @@ private:
 nsresult nsSSLIOLayerNewSocket(int32_t family,
                                const char *host,
                                int32_t port,
-                               const char *proxyHost,
-                               int32_t proxyPort,
+                               nsIProxyInfo *proxy,
                                PRFileDesc **fd,
                                nsISupports **securityInfo,
                                bool forSTARTTLS,
@@ -181,8 +181,7 @@ nsresult nsSSLIOLayerNewSocket(int32_t family,
 nsresult nsSSLIOLayerAddToSocket(int32_t family,
                                  const char *host,
                                  int32_t port,
-                                 const char *proxyHost,
-                                 int32_t proxyPort,
+                                 nsIProxyInfo *proxy,
                                  PRFileDesc *fd,
                                  nsISupports **securityInfo,
                                  bool forSTARTTLS,
