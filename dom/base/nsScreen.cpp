@@ -135,6 +135,9 @@ nsScreen::GetRect(nsRect& aRect)
 nsresult
 nsScreen::GetAvailRect(nsRect& aRect)
 {
+  // For non-chrome callers, return window inner rect to prevent fingerprinting.
+  if (!IsChrome()) return GetWindowInnerRect(aRect);
+
   nsDeviceContext *context = GetDeviceContext();
 
   if (!context) {
