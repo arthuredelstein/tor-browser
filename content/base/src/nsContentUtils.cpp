@@ -2724,6 +2724,8 @@ nsContentUtils::LoadImage(nsIURI* aURI, nsIDocument* aLoadingDocument,
 
   nsCOMPtr<nsILoadGroup> loadGroup = aLoadingDocument->GetDocumentLoadGroup();
 
+  nsIURI *documentURI = aLoadingDocument->GetDocumentURI();
+
   NS_ASSERTION(loadGroup || IsFontTableURI(documentURI),
                "Could not get loadgroup; onload may fire too early");
 
