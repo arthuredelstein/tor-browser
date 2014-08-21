@@ -323,7 +323,7 @@ DOMStorageManager::PutCache(const nsACString& aScope,
   case LocalStorage:
     // Lifetime handled by the manager, don't persist
     entry->HardRef();
-    cache->Init(nullptr, false, aFirstPartyIsolationURI, aPrincipal, quotaScope);
+    cache->Init(this, false, aFirstPartyIsolationURI, aPrincipal, quotaScope);
     break;
 
   default:
