@@ -13,6 +13,7 @@
 #include "nsIPipe.h"
 #include "nsCOMPtr.h"
 #include <algorithm>
+#include "nsHttpRequestHead.h"
 
 #ifdef DEBUG
 #include "prthread.h"

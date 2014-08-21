@@ -33,6 +33,7 @@
 #include "mozilla/ChaosMode.h"
 #include "mozilla/unused.h"
 #include <stdlib.h>
+#include "nsHttpRequestHead.h"
 
 // defined by the socket transport service while active
 extern PRThread *gSocketThread;
