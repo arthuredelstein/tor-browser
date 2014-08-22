@@ -330,7 +330,7 @@ def main():
         if options.uselist:
             args.makelist()
 
-        if True: #options.verbose:
+        if options.verbose:
             print_command(sys.stderr, args)
         try:
             proc = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
