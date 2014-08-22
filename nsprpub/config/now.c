@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <time.h>
 
-#define OMIT_LIB_BUILD_TIME
 int main(int argc, char **argv)
 {
 #if defined(OMIT_LIB_BUILD_TIME)
