@@ -272,7 +272,7 @@ else	# WINNT && !GCC
 	$(CC) -o $@ $(CFLAGS) $(OBJS) $(LDFLAGS) $(WRAP_LDFLAGS)
 endif	# WINNT && !GCC
 ifdef ENABLE_STRIP
-        $(STRIP) $(STRIP_FLAGS) $@
+	$(STRIP) $@
 endif
 
 $(LIBRARY): $(OBJS)
@@ -326,7 +326,7 @@ else	# WINNT && !GCC
 endif	# WINNT && !GCC
 endif	# AIX 4.1
 ifdef ENABLE_STRIP
-        $(STRIP) $(STRIP_FLAGS) $@
+	$(STRIP) $@
 endif
 
 ################################################################################
