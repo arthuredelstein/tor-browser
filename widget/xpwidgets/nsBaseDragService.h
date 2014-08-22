@@ -6,7 +6,6 @@
 #ifndef nsBaseDragService_h__
 #define nsBaseDragService_h__
 
-#include "nsIObserverService.h"
 #include "nsIDragService.h"
 #include "nsIDragSession.h"
 #include "nsITransferable.h"
@@ -123,7 +122,6 @@ protected:
 
   uint32_t mDragAction;
   nsSize mTargetSize;
-  nsCOMPtr<nsIObserverService> mObserverService;
   nsCOMPtr<nsIDOMNode> mSourceNode;
   nsCOMPtr<nsIDOMDocument> mSourceDocument;       // the document at the drag source. will be null
                                                   //  if it came from outside the app.
