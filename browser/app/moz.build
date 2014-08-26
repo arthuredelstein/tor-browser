@@ -51,3 +51,7 @@ if CONFIG['OS_ARCH'] == 'WINNT' and not CONFIG['GNU_CC']:
     LDFLAGS += ['/HEAP:0x40000']
 
 DISABLE_STL_WRAPPING = True
+
+BROWSER_CHROME_MANIFESTS += [
+    'test/browser.ini',
+]
