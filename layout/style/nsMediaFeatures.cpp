@@ -222,7 +222,7 @@ static nsresult
 GetColor(nsPresContext* aPresContext, const nsMediaFeature*,
          nsCSSValue& aResult)
 {
-    uint32_t depth = 24; // Always return 24 to non-chrome callers.
+    uint32_t depth = 24; // Always assume 24-bit depth for non-chrome callers.
 
     if (aPresContext->IsChrome()) {
         // FIXME:  This implementation is bogus.  nsDeviceContext
