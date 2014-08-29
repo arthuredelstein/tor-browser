@@ -94,7 +94,7 @@ static bool AllowedImageSize(int32_t aWidth, int32_t aHeight)
   }
 
   // check to make sure we don't overflow a 32-bit
-  CheckedInt32 requiredBytes = CheckedInt32(aWidth) * CheckedInt32(aHeight) * 4;
+  mozilla::CheckedInt32 requiredBytes = mozilla::CheckedInt32(aWidth) * mozilla::CheckedInt32(aHeight) * 4;
   if (MOZ_UNLIKELY(!requiredBytes.isValid())) {
     NS_WARNING("width or height too large");
     return false;
