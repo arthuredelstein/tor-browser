@@ -25,6 +25,7 @@ let expectedPrefs = [
    ["permissions.memory_only", true],
    ["network.cookie.lifetimePolicy", 2],
    ["browser.download.manager.retention", 1],
+   ["security.nocertdb", true],
 
    // Disk activity: TBB Directory Isolation
    ["browser.download.useDownloadDir", false],
