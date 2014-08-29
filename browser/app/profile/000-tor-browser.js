@@ -21,6 +21,7 @@ pref("dom.indexedDB.enabled", false);
 pref("permissions.memory_only", true);
 pref("network.cookie.lifetimePolicy", 2);
 pref("browser.download.manager.retention", 1);
+pref("security.nocertdb", true);
 
 // Disk activity: TBB Directory Isolation
 pref("browser.download.useDownloadDir", false);
