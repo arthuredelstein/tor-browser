@@ -858,6 +858,7 @@ static const bool FALSE_START_ENABLED_DEFAULT = true;
 static const bool NPN_ENABLED_DEFAULT = true;
 static const bool ALPN_ENABLED_DEFAULT = false;
 static const bool SECURITY_NOCERTDB_DEFAULT = false;
+static const bool DISABLE_SESSION_IDENTIFIERS_DEFAULT = false;
 
 namespace {
 
@@ -1194,7 +1195,11 @@ nsNSSComponent::InitializeNSS()
   InitCertVerifierLog();
   LoadLoadableRoots();
 
-  SSL_OptionSetDefault(SSL_ENABLE_SESSION_TICKETS, true);
+  bool disableSessionIdentifiers =
+    Preferences::GetBool("security.disable_session_identifiers",
+                         DISABLE_SESSION_IDENTIFIERS_DEFAULT);
+  SSL_OptionSetDefault(SSL_ENABLE_SESSION_TICKETS, !disableSessionIdentifiers);
+  SSL_OptionSetDefault(SSL_NO_CACHE, disableSessionIdentifiers);
 
   bool requireSafeNegotiation =
     Preferences::GetBool("security.ssl.require_safe_negotiation",
@@ -1600,6 +1605,12 @@ nsNSSComponent::Observe(nsISupports* aSubject, const char* aTopic,
     if (prefName.Equals("security.tls.version.min") ||
         prefName.Equals("security.tls.version.max")) {
       (void) setEnabledTLSVersions();
+    } else if (prefName.Equals("security.disable_session_identifiers")) {
+      bool disableSessionIdentifiers =
+        Preferences::GetBool("security.disable_session_identifiers",
+                             DISABLE_SESSION_IDENTIFIERS_DEFAULT);
+      SSL_OptionSetDefault(SSL_ENABLE_SESSION_TICKETS, !disableSessionIdentifiers);
+      SSL_OptionSetDefault(SSL_NO_CACHE, disableSessionIdentifiers);
     } else if (prefName.Equals("security.ssl.require_safe_negotiation")) {
       bool requireSafeNegotiation =
         Preferences::GetBool("security.ssl.require_safe_negotiation",
