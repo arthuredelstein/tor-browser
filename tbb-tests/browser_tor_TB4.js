@@ -109,7 +109,65 @@ let expectedPrefs = [
    ["network.protocol-handler.warn-external.nntp", true],
    ["network.protocol-handler.warn-external.snews", true],
    ["plugins.click_to_play", true],
+
+   // Network and performance
+   ["network.http.pipelining", true],
+   ["network.http.pipelining.aggressive", true],
+   ["network.http.pipelining.maxrequests", 12],
+   ["network.http.pipelining.ssl", true],
+   ["network.http.proxy.pipelining", true],
+   ["security.ssl.enable_false_start", true],
+   ["network.http.keep-alive.timeout", 20],
+   ["network.http.connection-retry-timeout", 0],
+   ["network.http.max-persistent-connections-per-proxy", 256],
+   ["network.http.pipelining.reschedule-timeout", 15000],
+   ["network.http.pipelining.read-timeout", 60000],
+   // Hacked pref: Now means "Attempt to pipeline at least this many requests together"
+   ["network.http.pipelining.max-optimistic-requests", 3],
+   ["security.disable_session_identifiers", true],
+
+   // Extension support
+   ["extensions.autoDisableScopes", 0],
+   ["extensions.bootstrappedAddons", "{}"],
+   ["extensions.checkCompatibility.4.*", false],
+   ["extensions.databaseSchema", 3],
+   ["extensions.enabledAddons", "https-everywhere%40eff.org:3.1.4,%7B73a6fe31-595d-460b-a920-fcc0f8843232%7D:2.6.6.1,torbutton%40torproject.org:1.5.2,ubufox%40ubuntu.com:2.6,tor-launcher%40torproject.org:0.1.1pre-alpha,%7B972ce4c6-7e08-4474-a285-3208198ce6fd%7D:17.0.5"],
+   ["extensions.enabledItems", "langpack-en-US@firefox.mozilla.org:,{73a6fe31-595d-460b-a920-fcc0f8843232}:1.9.9.57,{e0204bd5-9d31-402b-a99d-a6aa8ffebdca}:1.2.4,{972ce4c6-7e08-4474-a285-3208198ce6fd}:3.5.8"],
+   ["extensions.enabledScopes", 1],
+   ["extensions.pendingOperations", false],
+   ["xpinstall.whitelist.add", ""],
+   ["xpinstall.whitelist.add.36", ""],
+
+   // Omnibox settings
+   ["keyword.URL", "https://startpage.com/do/search?q="],
+
+   // Hacks/workarounds: Direct2D seems to crash w/ lots of video cards w/ MinGW?
+   // Nvida cards also experience crashes without the second pref set to disabled
+   ["gfx.direct2d.disabled", true],
+   ["layers.acceleration.disabled", true],
+
+   // Security enhancements
+   // https://trac.torproject.org/projects/tor/ticket/9387#comment:17
+   ["javascript.options.ion.content", false],
+   ["javascript.options.baselinejit.content", false],
+   ["javascript.options.asmjs", false],
+   ["javascript.options.typeinference", false],
+
+   // Audio_data is deprecated in future releases, but still present
+   // in FF24. This is a dangerous combination (spotted by iSec)
+   ["media.audio_data.enabled", false],
+
+   // Enable TLS 1.1 and 1.2:
+   // https://trac.torproject.org/projects/tor/ticket/11253
+   ["security.tls.version.max", 3],
+
+   // Version placeholder
+   ["torbrowser.version", "UNKNOWN"],
+
   ];
+
+
+
 
 let getPref = function (prefName) {
   let type = gPrefService.getPrefType(prefName);
