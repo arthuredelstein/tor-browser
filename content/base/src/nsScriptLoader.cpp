@@ -336,6 +336,10 @@ nsScriptLoader::StartLoad(nsScriptLoadRequest *aRequest, const nsAString &aType,
       internalHttpChannel->SetLoadAsBlocking(true);
   }
 
+  // set contentPolicyType and context on the channel to allow mixed content blocking
+  channel->SetContentPolicyType(nsIContentPolicy::TYPE_SCRIPT);
+  channel->SetRequestingContext(context);
+
   nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(channel));
   if (httpChannel) {
     // HTTP content negotation has little value in this context.

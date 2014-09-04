@@ -128,6 +128,10 @@ ChannelFromScriptURL(nsIPrincipal* principal,
                      flags, channelPolicy);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  // set contentPolicyType and context on the channel to allow mixed content blocking
+  channel->SetContentPolicyType(nsIContentPolicy::TYPE_SCRIPT);
+  channel->SetRequestingContext(parentDoc);
+
   channel.forget(aChannel);
   return rv;
 }

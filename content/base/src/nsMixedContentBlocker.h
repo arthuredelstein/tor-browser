@@ -22,16 +22,27 @@ enum MixedContentTypes {
   eMixedDisplay
 };
 
-#include "nsIContentPolicy.h"
+#include "nsISupports.h"
 
-class nsMixedContentBlocker : public nsIContentPolicy
+class nsIChannel;
+class nsIURI;
+
+class nsMixedContentBlocker : public nsISupports
 {
 public:
   NS_DECL_ISUPPORTS
-  NS_DECL_NSICONTENTPOLICY
 
   nsMixedContentBlocker();
   virtual ~nsMixedContentBlocker();
+
+  static NS_IMETHODIMP EvaluateMixedContent(nsIChannel *channel);
+
+private:
+  static NS_IMETHODIMP EvaluateMixedContent(uint32_t aContentType,
+                                            nsIURI* aContentLocation,
+                                            nsISupports* aRequestingContext,
+                                            int16_t* aDecision);
+
   static bool sBlockMixedScript;
   static bool sBlockMixedDisplay;
 };

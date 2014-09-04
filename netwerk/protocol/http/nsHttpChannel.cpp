@@ -66,6 +66,7 @@
 #include "nsPerformance.h"
 #include "CacheObserver.h"
 #include "mozilla/Telemetry.h"
+#include "nsMixedContentBlocker.h"
 
 namespace mozilla { namespace net {
 
@@ -4586,6 +4587,13 @@ nsHttpChannel::BeginConnect()
     if (mAPIRedirectToURI) {
         return AsyncCall(&nsHttpChannel::HandleAsyncAPIRedirect);
     }
+
+    nsCOMPtr<nsMixedContentBlocker> mcb = new nsMixedContentBlocker();
+    if (!mcb)
+        return NS_ERROR_OUT_OF_MEMORY;
+    rv = mcb->EvaluateMixedContent(this);
+    if (NS_FAILED(rv))
+        return rv;
 
     // If mTimingEnabled flag is not set after OnModifyRequest() then
     // clear the already recorded AsyncOpen value for consistency.

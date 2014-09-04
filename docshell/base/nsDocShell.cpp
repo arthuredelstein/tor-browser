@@ -9857,6 +9857,17 @@ nsDocShell::DoURILoad(nsIURI * aURI,
         }
     }
 
+    // set contentPolicyType and context on the channel to allow mixed content blocking
+    if (IsFrame()) {
+        channel->SetContentPolicyType(nsIContentPolicy::TYPE_SUBDOCUMENT);
+    } else {
+        channel->SetContentPolicyType(nsIContentPolicy::TYPE_DOCUMENT);
+    }
+    nsCOMPtr<nsISupports> context = mScriptGlobal->GetFrameElementInternal();
+    if (!context)
+        context = ToSupports(mScriptGlobal);
+    channel->SetRequestingContext(context);
+
     nsCOMPtr<nsIApplicationCacheChannel> appCacheChannel =
         do_QueryInterface(channel);
     if (appCacheChannel) {

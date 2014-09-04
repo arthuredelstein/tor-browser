@@ -1170,6 +1170,10 @@ nsresult HTMLMediaElement::LoadResource()
 
   channel->SetNotificationCallbacks(loadListener);
 
+  // set contentPolicyType and context on the channel to allow mixed content blocking
+  channel->SetContentPolicyType(nsIContentPolicy::TYPE_MEDIA);
+  channel->SetRequestingContext(static_cast<Element*>(this));
+
   nsCOMPtr<nsIStreamListener> listener;
   if (ShouldCheckAllowOrigin()) {
     nsRefPtr<nsCORSListenerProxy> corsListener =

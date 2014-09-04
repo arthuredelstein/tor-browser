@@ -4,6 +4,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsIRequest.idl"
+#include "nsIPrincipal.idl"
+#include "nsIContentPolicy.idl"
 
 interface nsIURI;
 interface nsIInterfaceRequestor;
@@ -24,7 +26,7 @@ interface nsIStreamListener;
  *
  * This interface must be used only from the XPCOM main thread.
  */
-[scriptable, uuid(2a8a7237-c1e2-4de7-b669-2002af29e42d)]
+[scriptable, uuid(63596055-88bb-422e-9521-48e083283557)]
 interface nsIChannel : nsIRequest
 {
     /**
@@ -108,6 +110,20 @@ interface nsIChannel : nsIRequest
      * Any implementation of nsIChannel must follow these rules.
      */
     attribute ACString contentType;
+
+    /**
+      * The content policy type of the channel's content.
+      *
+      * NOTE: The content type may not be set for all requests!
+      */
+    attribute nsContentPolicyType contentPolicyType;
+
+    /**
+      * The requesting context of the channel's content.
+      *
+      * NOTE: The requesting context may not be set for all requests!
+      */
+    attribute nsISupports requestingContext;
 
     /**
      * The character set of the channel's content if available and if applicable.

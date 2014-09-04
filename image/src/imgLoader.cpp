@@ -433,6 +433,11 @@ static nsresult NewImageChannel(nsIChannel **aResult,
   if (NS_FAILED(rv))
     return rv;
 
+  // set contentPolicyType and context on the channel to allow mixed content blocking
+  (*aResult)->SetContentPolicyType(nsIContentPolicy::TYPE_IMAGE);
+  // NEEDINFO: what context can we use here (mContext is not available)
+  // (*aResult)->SetRequestingContext(mContext);
+
   *aForcePrincipalCheckForCacheEntry = false;
 
   // Initialize HTTP-specific attributes

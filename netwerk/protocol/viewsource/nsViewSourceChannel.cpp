@@ -371,6 +371,30 @@ nsViewSourceChannel::SetContentCharset(const nsACString &aContentCharset)
     return mChannel->SetContentCharset(aContentCharset);
 }
 
+NS_IMETHODIMP
+nsViewSourceChannel::GetContentPolicyType(nsContentPolicyType *aType)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsViewSourceChannel::SetContentPolicyType(nsContentPolicyType aType)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsViewSourceChannel::GetRequestingContext(nsISupports **aRequestingContext)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsViewSourceChannel::SetRequestingContext(nsISupports *aRequestingContext)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 // We don't forward these methods becacuse content-disposition isn't whitelisted
 // (see GetResponseHeader/VisitResponseHeaders).
 NS_IMETHODIMP

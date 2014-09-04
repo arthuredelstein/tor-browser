@@ -212,6 +212,28 @@ NS_IMETHODIMP DummyChannel::SetContentType(const nsACString&)
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+NS_IMETHODIMP DummyChannel::GetContentPolicyType(nsContentPolicyType *aType)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP DummyChannel::SetContentPolicyType(nsContentPolicyType aType)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+DummyChannel::GetRequestingContext(nsISupports **aRequestingContext)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+DummyChannel::SetRequestingContext(nsISupports *aRequestingContext)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 NS_IMETHODIMP DummyChannel::GetContentCharset(nsACString&)
 {
   return NS_ERROR_NOT_IMPLEMENTED;

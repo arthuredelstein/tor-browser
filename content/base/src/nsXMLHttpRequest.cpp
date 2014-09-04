@@ -1707,6 +1707,10 @@ nsXMLHttpRequest::Open(const nsACString& inMethod, const nsACString& url,
   mState &= ~(XML_HTTP_REQUEST_USE_XSITE_AC |
               XML_HTTP_REQUEST_NEED_AC_PREFLIGHT);
 
+  // set contentPolicyType and context on the channel to allow mixed content blocking
+  mChannel->SetContentPolicyType(nsIContentPolicy::TYPE_XMLHTTPREQUEST);
+  mChannel->SetRequestingContext(doc);
+
   nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(mChannel));
   if (httpChannel) {
     rv = httpChannel->SetRequestMethod(method);

@@ -1532,6 +1532,13 @@ Loader::LoadSheet(SheetLoadData* aLoadData, StyleSheetState aSheetState)
     return rv;
   }
 
+  // set contentPolicyType and context on the channel to allow mixed content blocking
+  channel->SetContentPolicyType(nsIContentPolicy::TYPE_STYLESHEET);
+  // NEEDINFO: mDocument is not necessarily the right context here,
+  // might be aElement, see
+  // Loader::LoadStyleLink(nsIContent* aElement,
+  channel->SetRequestingContext(mDocument);
+
   nsCOMPtr<nsIHttpChannelInternal>
     internalHttpChannel(do_QueryInterface(channel));
   if (internalHttpChannel)

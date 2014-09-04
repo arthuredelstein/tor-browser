@@ -976,6 +976,30 @@ nsJSChannel::SetContentType(const nsACString &aContentType)
 }
 
 NS_IMETHODIMP
+nsJSChannel::GetContentPolicyType(nsContentPolicyType *aType)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsJSChannel::SetContentPolicyType(nsContentPolicyType aType)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsJSChannel::GetRequestingContext(nsISupports **aRequestingContext)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsJSChannel::SetRequestingContext(nsISupports *aRequestingContext)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 nsJSChannel::GetContentCharset(nsACString &aContentCharset)
 {
     return mStreamChannel->GetContentCharset(aContentCharset);

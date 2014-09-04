@@ -26,6 +26,8 @@
 #include "nsIWebNavigation.h"
 #include "nsLoadGroup.h"
 #include "nsIScriptError.h"
+#include "nsIContentPolicy.h"
+#include "nsIURI.h"
 
 #include "prlog.h"
 
@@ -150,7 +152,7 @@ nsMixedContentBlocker::~nsMixedContentBlocker()
 {
 }
 
-NS_IMPL_ISUPPORTS(nsMixedContentBlocker, nsIContentPolicy)
+NS_IMPL_ISUPPORTS(nsMixedContentBlocker, nsISupports)
 
 static void
 LogMixedContentMessage(MixedContentTypes aClassification,
@@ -191,14 +193,91 @@ LogMixedContentMessage(MixedContentTypes aClassification,
 }
 
 NS_IMETHODIMP
-nsMixedContentBlocker::ShouldLoad(uint32_t aContentType,
-                                  nsIURI* aContentLocation,
-                                  nsIURI* aRequestingLocation,
-                                  nsISupports* aRequestingContext,
-                                  const nsACString& aMimeGuess,
-                                  nsISupports* aExtra,
-                                  nsIPrincipal* aRequestPrincipal,
-                                  int16_t* aDecision)
+nsMixedContentBlocker::EvaluateMixedContent(nsIChannel *channel) 
+{
+  if (!channel) {
+    NS_ERROR("No channel when evaluating mixed content!");
+    return NS_OK;
+  }
+
+  uint32_t contentPolicyType;
+  nsresult rv = channel->GetContentPolicyType(&contentPolicyType);
+  if (NS_FAILED(rv)) {
+    NS_ERROR("No contentPolicyType when evaluating mixed content!");
+    return NS_OK;
+  }
+
+  // 1) try to get the requesting context from the channel
+  nsCOMPtr<nsISupports> requestingContext;
+  rv = channel->GetRequestingContext(getter_AddRefs(requestingContext));
+  if (NS_FAILED(rv)) {
+    NS_ERROR("No requestingContext when evaluating mixed content!");
+    return NS_OK;
+  }
+
+  // 2) if we do not have a context yet, try to get it from the window or the node
+  if(!requestingContext) {
+    nsCOMPtr<nsIInterfaceRequestor> callbacks;
+    channel->GetNotificationCallbacks(getter_AddRefs(callbacks));
+    if (!callbacks) {
+      nsCOMPtr<nsILoadGroup> loadGroup;
+      channel->GetLoadGroup(getter_AddRefs(loadGroup));
+      if (loadGroup) {
+       loadGroup->GetNotificationCallbacks(getter_AddRefs(callbacks));
+      }
+    }
+
+    if (callbacks) {
+      nsCOMPtr<nsIDOMWindow> domWin;
+      callbacks->GetInterface(NS_GET_IID(nsIDOMWindow), getter_AddRefs(domWin));
+      requestingContext = domWin;
+      if (!requestingContext) {
+        nsCOMPtr<nsINode> node;
+        callbacks->GetInterface(NS_GET_IID(nsINode), getter_AddRefs(node));
+        requestingContext = node;
+      }
+    }
+  }
+
+  // NEEDINFO: is it safe to assume this happens only
+  // for SafeBrowsing and also OCSP?
+  // currently this also returns for favicons
+  if (!requestingContext) {
+    return NS_OK;
+  }
+
+  nsCOMPtr<nsIURI> uri;
+  rv = channel->GetURI(getter_AddRefs(uri));
+  if (NS_FAILED(rv)) {
+    NS_ERROR("No uri when evaluating mixed content!");
+    return NS_OK;
+  }
+
+  int16_t decision = nsIContentPolicy::REJECT_REQUEST;
+  rv = EvaluateMixedContent(contentPolicyType,
+                            uri,
+                            requestingContext,
+                            &decision);
+
+  if (NS_FAILED(rv)) {
+    NS_ERROR("EvaluateMixedContent did not return a decision!");
+    return NS_OK;
+  }
+
+  // if the channel is about to load mixed content
+  // we cancel the request on the channel
+  if (decision != nsIContentPolicy::ACCEPT) {
+    channel->Cancel(NS_BINDING_ABORTED);
+  }
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsMixedContentBlocker::EvaluateMixedContent(uint32_t aContentType,
+                                            nsIURI* aContentLocation,
+                                            nsISupports* aRequestingContext,
+                                            int16_t* aDecision)
 {
   // Asserting that we are on the main thread here and hence do not have to lock
   // and unlock sBlockMixedScript and sBlockMixedDisplay before reading/writing
@@ -207,7 +286,6 @@ nsMixedContentBlocker::ShouldLoad(uint32_t aContentType,
 
   // Assume active (high risk) content and blocked by default
   MixedContentTypes classification = eMixedScript;
-
 
   // Notes on non-obvious decisions:
   //
@@ -264,47 +342,47 @@ nsMixedContentBlocker::ShouldLoad(uint32_t aContentType,
   // amplifies these concerns.
 
 
-  static_assert(TYPE_DATAREQUEST == TYPE_XMLHTTPREQUEST,
+  static_assert(nsIContentPolicy::TYPE_DATAREQUEST == nsIContentPolicy::TYPE_XMLHTTPREQUEST,
                 "TYPE_DATAREQUEST is not a synonym for "
                 "TYPE_XMLHTTPREQUEST");
 
   switch (aContentType) {
     // The top-level document cannot be mixed content by definition
-    case TYPE_DOCUMENT:
-      *aDecision = ACCEPT;
+    case nsIContentPolicy::TYPE_DOCUMENT:
+      *aDecision = nsIContentPolicy::ACCEPT;
       return NS_OK;
     // Creating insecure websocket connections in a secure page is blocked already
     // in the websocket constructor. We don't need to check the blocking here
     // and we don't want to un-block
-    case TYPE_WEBSOCKET:
-      *aDecision = ACCEPT;
+    case nsIContentPolicy::TYPE_WEBSOCKET:
+      *aDecision = nsIContentPolicy::ACCEPT;
       return NS_OK;
 
 
     // Static display content is considered moderate risk for mixed content so
     // these will be blocked according to the mixed display preference
-    case TYPE_IMAGE:
-    case TYPE_MEDIA:
-    case TYPE_OBJECT_SUBREQUEST:
-    case TYPE_PING:
-    case TYPE_BEACON:
+    case nsIContentPolicy::TYPE_IMAGE:
+    case nsIContentPolicy::TYPE_MEDIA:
+    case nsIContentPolicy::TYPE_OBJECT_SUBREQUEST:
+    case nsIContentPolicy::TYPE_PING:
+    case nsIContentPolicy::TYPE_BEACON:
       classification = eMixedDisplay;
       break;
 
     // Active content (or content with a low value/risk-of-blocking ratio)
     // that has been explicitly evaluated; listed here for documentation
     // purposes and to avoid the assertion and warning for the default case.
-    case TYPE_CSP_REPORT:
-    case TYPE_DTD:
-    case TYPE_FONT:
-    case TYPE_OBJECT:
-    case TYPE_SCRIPT:
-    case TYPE_STYLESHEET:
-    case TYPE_SUBDOCUMENT:
-    case TYPE_XBL:
-    case TYPE_XMLHTTPREQUEST:
-    case TYPE_XSLT:
-    case TYPE_OTHER:
+    case nsIContentPolicy::TYPE_CSP_REPORT:
+    case nsIContentPolicy::TYPE_DTD:
+    case nsIContentPolicy::TYPE_FONT:
+    case nsIContentPolicy::TYPE_OBJECT:
+    case nsIContentPolicy::TYPE_SCRIPT:
+    case nsIContentPolicy::TYPE_STYLESHEET:
+    case nsIContentPolicy::TYPE_SUBDOCUMENT:
+    case nsIContentPolicy::TYPE_XBL:
+    case nsIContentPolicy::TYPE_XMLHTTPREQUEST:
+    case nsIContentPolicy::TYPE_XSLT:
+    case nsIContentPolicy::TYPE_OTHER:
       break;
 
 
@@ -339,10 +417,12 @@ nsMixedContentBlocker::ShouldLoad(uint32_t aContentType,
       NS_FAILED(NS_URIChainHasFlags(aContentLocation, nsIProtocolHandler::URI_DOES_NOT_RETURN_DATA, &schemeNoReturnData)) ||
       NS_FAILED(NS_URIChainHasFlags(aContentLocation, nsIProtocolHandler::URI_INHERITS_SECURITY_CONTEXT, &schemeInherits)) ||
       NS_FAILED(NS_URIChainHasFlags(aContentLocation, nsIProtocolHandler::URI_SAFE_TO_LOAD_IN_SECURE_CONTEXT, &schemeSecure))) {
+    *aDecision = nsIContentPolicy::REJECT_REQUEST;
     return NS_ERROR_FAILURE;
   }
 
   if (schemeLocal || schemeNoReturnData || schemeInherits || schemeSecure) {
+     *aDecision = nsIContentPolicy::ACCEPT;
      return NS_OK;
   }
 
@@ -354,16 +434,7 @@ nsMixedContentBlocker::ShouldLoad(uint32_t aContentType,
   //    b) script object's principal.
   // 2) if aRequestingContext yields a principal but no location, we check
   //    if its the system principal. If it is, allow the load.
-  // 3) Special case handling for:
-  //    a) speculative loads, where shouldLoad is called twice (bug 839235)
-  //       and the first speculative load does not include a context.
-  //       In this case we use aRequestingLocation to set requestingLocation.
-  //    b) TYPE_CSP_REPORT which does not provide a context. In this case we
-  //       use aRequestingLocation to set requestingLocation.
-  //    c) content scripts from addon code that do not provide aRequestingContext
-  //       or aRequestingLocation, but do provide aRequestPrincipal.
-  //       If aRequestPrincipal is an expanded principal, we allow the load.
-  // 4) If we still end up not having a requestingLocation, we reject the load.
+  // 3) If we still end up not having a requestingLocation, we reject the load.
 
   nsCOMPtr<nsIPrincipal> principal;
   // 1a) Try to get the principal if aRequestingContext is a node.
@@ -388,34 +459,15 @@ nsMixedContentBlocker::ShouldLoad(uint32_t aContentType,
   // 2) if aRequestingContext yields a principal but no location, we check if its a system principal.
   if (principal && !requestingLocation) {
     if (nsContentUtils::IsSystemPrincipal(principal)) {
-      *aDecision = ACCEPT;
+      *aDecision = nsIContentPolicy::ACCEPT;
       return NS_OK;
     }
   }
 
-  // 3a,b) Special case handling for speculative loads and TYPE_CSP_REPORT. In
-  // such cases, aRequestingContext doesn't exist, so we use aRequestingLocation.
-  // Unfortunately we can not distinguish between speculative and normal loads here,
-  // otherwise we could special case this assignment.
-  if (!requestingLocation) {
-    requestingLocation = aRequestingLocation;
-  }
-
-  // 3c) Special case handling for content scripts from addons code, which only
-  // provide a aRequestPrincipal; aRequestingContext and aRequestingLocation are
-  // both null; if the aRequestPrincipal is an expandedPrincipal, we allow the load.
-  if (!principal && !requestingLocation && aRequestPrincipal) {
-    nsCOMPtr<nsIExpandedPrincipal> expanded = do_QueryInterface(aRequestPrincipal);
-    if (expanded) {
-      *aDecision = ACCEPT;
-      return NS_OK;
-    }
-  }
-
-  // 4) Giving up. We still don't have a requesting location, therefore we can't tell
+  // 3) Giving up. We still don't have a requesting location, therefore we can't tell
   //    if this is a mixed content load. Deny to be safe.
   if (!requestingLocation) {
-    *aDecision = REJECT_REQUEST;
+    *aDecision = nsIContentPolicy::REJECT_REQUEST;
     return NS_OK;
   }
 
@@ -425,11 +477,11 @@ nsMixedContentBlocker::ShouldLoad(uint32_t aContentType,
   nsresult rv = requestingLocation->SchemeIs("https", &parentIsHttps);
   if (NS_FAILED(rv)) {
     NS_ERROR("requestingLocation->SchemeIs failed");
-    *aDecision = REJECT_REQUEST;
+    *aDecision = nsIContentPolicy::REJECT_REQUEST;
     return NS_OK;
   }
   if (!parentIsHttps) {
-    *aDecision = ACCEPT;
+    *aDecision = nsIContentPolicy::ACCEPT;
     return NS_OK;
   }
 
@@ -441,9 +493,9 @@ nsMixedContentBlocker::ShouldLoad(uint32_t aContentType,
   bool isRootDocShell = false;
   rv = docShell->GetAllowMixedContentAndConnectionData(&rootHasSecureConnection, &allowMixedContent, &isRootDocShell);
   if (NS_FAILED(rv)) {
+     *aDecision = nsIContentPolicy::REJECT_REQUEST;
      return rv;
   }
-
 
   // Get the sameTypeRoot tree item from the docshell
   nsCOMPtr<nsIDocShellTreeItem> sameTypeRoot;
@@ -453,7 +505,7 @@ nsMixedContentBlocker::ShouldLoad(uint32_t aContentType,
   // When navigating an iframe, the iframe may be https
   // but its parents may not be.  Check the parents to see if any of them are https.
   // If none of the parents are https, allow the load.
-  if (aContentType == TYPE_SUBDOCUMENT && !rootHasSecureConnection) {
+  if (aContentType == nsIContentPolicy::TYPE_SUBDOCUMENT && !rootHasSecureConnection) {
 
     bool httpsParentExists = false;
 
@@ -590,33 +642,9 @@ nsMixedContentBlocker::ShouldLoad(uint32_t aContentType,
     // from within ShouldLoad
     nsContentUtils::AddScriptRunner(
       new nsMixedContentEvent(aRequestingContext, classification));
+    *aDecision = nsIContentPolicy::ACCEPT;
     return NS_OK;
   }
-
-  *aDecision = REJECT_REQUEST;
+  *aDecision = nsIContentPolicy::REJECT_REQUEST;
   return NS_OK;
-}
-
-NS_IMETHODIMP
-nsMixedContentBlocker::ShouldProcess(uint32_t aContentType,
-                                     nsIURI* aContentLocation,
-                                     nsIURI* aRequestingLocation,
-                                     nsISupports* aRequestingContext,
-                                     const nsACString& aMimeGuess,
-                                     nsISupports* aExtra,
-                                     nsIPrincipal* aRequestPrincipal,
-                                     int16_t* aDecision)
-{
-  if (!aContentLocation) {
-    // aContentLocation may be null when a plugin is loading without an associated URI resource
-    if (aContentType == TYPE_OBJECT) {
-       return NS_OK;
-    } else {
-       return NS_ERROR_FAILURE;
-    }
-  }
-
-  return ShouldLoad(aContentType, aContentLocation, aRequestingLocation,
-                    aRequestingContext, aMimeGuess, aExtra, aRequestPrincipal,
-                    aDecision);
 }

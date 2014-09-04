@@ -23,6 +23,7 @@
 #include "PrivateBrowsingChannel.h"
 #include "nsThreadUtils.h"
 #include "nsNetUtil.h"
+#include "nsIContentPolicy.h"
 
 class nsIInputStream;
 
@@ -221,6 +222,7 @@ private:
   void ChannelDone() {
       mListener = nullptr;
       mListenerContext = nullptr;
+      mRequestingContext = nullptr;
       OnChannelDone();
   }
 
@@ -280,6 +282,8 @@ protected:
   uint32_t                            mContentDispositionHint;
   nsAutoPtr<nsString>                 mContentDispositionFilename;
   int64_t                             mContentLength;
+  nsContentPolicyType                 mContentPolicyType;
+  nsCOMPtr<nsISupports>               mRequestingContext;
 
   friend class mozilla::net::PrivateBrowsingChannel<nsBaseChannel>;
 };

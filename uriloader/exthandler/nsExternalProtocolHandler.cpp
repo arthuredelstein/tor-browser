@@ -203,6 +203,28 @@ NS_IMETHODIMP nsExtProtocolChannel::SetContentType(const nsACString &aContentTyp
   return NS_ERROR_FAILURE;
 }
 
+NS_IMETHODIMP nsExtProtocolChannel::GetContentPolicyType(nsContentPolicyType *aType)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP nsExtProtocolChannel::SetContentPolicyType(nsContentPolicyType aType)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsExtProtocolChannel::GetRequestingContext(nsISupports **aRequestingContext)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsExtProtocolChannel::SetRequestingContext(nsISupports *aRequestingContext)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 NS_IMETHODIMP nsExtProtocolChannel::GetContentCharset(nsACString &aContentCharset)
 {
   return NS_ERROR_NOT_IMPLEMENTED;

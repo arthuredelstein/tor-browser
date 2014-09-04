@@ -67,6 +67,7 @@ HttpBaseChannel::HttpBaseChannel()
   , mProxyResolveFlags(0)
   , mContentDispositionHint(UINT32_MAX)
   , mHttpHandler(gHttpHandler)
+  , mContentPolicyType(nsIContentPolicy::TYPE_OTHER)
   , mRedirectCount(0)
 {
   LOG(("Creating HttpBaseChannel @%x\n", this));
@@ -348,6 +349,35 @@ HttpBaseChannel::SetContentType(const nsACString& aContentType)
                          &dummy);
   }
 
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::GetContentPolicyType(nsContentPolicyType *aType)
+{
+  *aType = mContentPolicyType;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::SetContentPolicyType(nsContentPolicyType aType)
+{
+  mContentPolicyType = aType;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::GetRequestingContext(nsISupports **aRequestingContext)
+{
+  NS_ENSURE_ARG_POINTER(aRequestingContext);
+  NS_IF_ADDREF(*aRequestingContext = mRequestingContext);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::SetRequestingContext(nsISupports *aRequestingContext)
+{
+  mRequestingContext = aRequestingContext;
   return NS_OK;
 }
 
@@ -1687,6 +1717,7 @@ HttpBaseChannel::ReleaseListeners()
   mListenerContext = nullptr;
   mCallbacks = nullptr;
   mProgressSink = nullptr;
+  mRequestingContext = nullptr;
 }
 
 void

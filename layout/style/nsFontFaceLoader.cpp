@@ -951,6 +951,11 @@ nsUserFontSet::SyncLoadFontData(gfxProxyFontEntry* aFontToLoad,
   rv = channel->Open(getter_AddRefs(stream));
   NS_ENSURE_SUCCESS(rv, rv);
 
+  // set contentPolicyType and context on the channel to allow mixed content blocking
+  channel->SetContentPolicyType(nsIContentPolicy::TYPE_FONT);
+  nsCOMPtr<nsIPresShell> ps = mPresContext->PresShell();
+  channel->SetRequestingContext(ps->GetDocument());
+
   uint64_t bufferLength64;
   rv = stream->Available(&bufferLength64);
   NS_ENSURE_SUCCESS(rv, rv);

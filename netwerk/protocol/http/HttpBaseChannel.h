@@ -36,6 +36,7 @@
 #include "mozilla/net/DNS.h"
 #include "nsITimedChannel.h"
 #include "nsISecurityConsoleMessage.h"
+#include "nsIContentPolicy.h"
 
 extern PRLogModuleInfo *gHttpLog;
 
@@ -94,6 +95,10 @@ public:
   NS_IMETHOD SetNotificationCallbacks(nsIInterfaceRequestor *aCallbacks);
   NS_IMETHOD GetContentType(nsACString& aContentType);
   NS_IMETHOD SetContentType(const nsACString& aContentType);
+  NS_IMETHOD GetContentPolicyType(nsContentPolicyType *aType);
+  NS_IMETHOD SetContentPolicyType(nsContentPolicyType aType);
+  NS_IMETHOD GetRequestingContext(nsISupports **aRequestingContext);
+  NS_IMETHOD SetRequestingContext(nsISupports *aRequestingContext);
   NS_IMETHOD GetContentCharset(nsACString& aContentCharset);
   NS_IMETHOD SetContentCharset(const nsACString& aContentCharset);
   NS_IMETHOD GetContentDisposition(uint32_t *aContentDisposition);
@@ -329,6 +334,8 @@ protected:
   nsAutoPtr<nsString>               mContentDispositionFilename;
 
   nsRefPtr<nsHttpHandler>           mHttpHandler;  // keep gHttpHandler alive
+  nsContentPolicyType               mContentPolicyType;
+  nsCOMPtr<nsISupports>             mRequestingContext;
 
   // Performance tracking
   // The initiator type (for this resource) - how was the resource referenced in
