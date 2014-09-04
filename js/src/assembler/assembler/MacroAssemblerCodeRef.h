@@ -201,9 +201,7 @@ public:
         if (!m_executablePool)
             return;
 
-        ExecutableAllocator::makeWritable(m_code.executableAddress(), m_allocSize); //XXX
         JS_POISON(m_code.executableAddress(), JS_SWEPT_CODE_PATTERN, m_allocSize);
-        ExecutableAllocator::makeExecutable(m_code.executableAddress(), m_allocSize);
 
         m_code = MacroAssemblerCodePtr();
 

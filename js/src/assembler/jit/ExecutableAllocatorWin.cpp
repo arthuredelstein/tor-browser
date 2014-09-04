@@ -95,11 +95,11 @@ ExecutablePool::Allocation ExecutableAllocator::systemAlloc(size_t n)
     if (!RandomizeIsBroken()) {
         void *randomAddress = computeRandomAllocationAddress();
         allocation = VirtualAlloc(randomAddress, n, MEM_COMMIT | MEM_RESERVE,
-                                  PAGE_EXECUTE_READ);
+                                  PAGE_EXECUTE_READWRITE);
     }
 #endif
     if (!allocation)
-        allocation = VirtualAlloc(0, n, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READ);
+        allocation = VirtualAlloc(0, n, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     ExecutablePool::Allocation alloc = { reinterpret_cast<char*>(allocation), n };
     return alloc;
 }
@@ -107,28 +107,6 @@ ExecutablePool::Allocation ExecutableAllocator::systemAlloc(size_t n)
 void ExecutableAllocator::systemRelease(const ExecutablePool::Allocation& alloc)
 {
     VirtualFree(alloc.pages, 0, MEM_RELEASE);
-}
-
-void
-ExecutableAllocator::reprotectRegion(void* start, size_t size, ProtectionSetting setting)
-{
-    MOZ_ASSERT(pageSize);
-
-    // Calculate the start of the page containing this region,
-    // and account for this extra memory within size.
-    intptr_t startPtr = reinterpret_cast<intptr_t>(start);
-    intptr_t pageStartPtr = startPtr & ~(pageSize - 1);
-    void* pageStart = reinterpret_cast<void*>(pageStartPtr);
-    size += (startPtr - pageStartPtr);
-
-    // Round size up
-    size += (pageSize - 1);
-    size &= ~(pageSize - 1);
-
-    DWORD oldProtect;
-    int flags = (setting == Writable) ? PAGE_READWRITE : PAGE_EXECUTE_READ;
-    if (!VirtualProtect(pageStart, size, flags, &oldProtect))
-        MOZ_CRASH();
 }
 
 void

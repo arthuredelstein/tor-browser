@@ -96,9 +96,6 @@ class JitCode : public gc::BarrieredCell<JitCode>
     size_t instructionsSize() const {
         return insnSize_;
     }
-    size_t bufferSize() const {
-        return bufferSize_;
-    }
     void trace(JSTracer *trc);
     void finalize(FreeOp *fop);
     void setInvalidated() {

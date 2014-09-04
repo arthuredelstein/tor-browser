@@ -56,9 +56,11 @@ void ExecutableAllocator::systemRelease(const ExecutablePool::Allocation& alloc)
     ASSERT_UNUSED(result, !result);
 }
 
+#if WTF_ENABLE_ASSEMBLER_WX_EXCLUSIVE
 void ExecutableAllocator::reprotectRegion(void* start, size_t size, ProtectionSetting setting)
 {
-    MOZ_ASSERT(pageSize);
+    if (!pageSize)
+        intializePageSize();
 
     // Calculate the start of the page containing this region,
     // and account for this extra memory within size.
@@ -73,6 +75,7 @@ void ExecutableAllocator::reprotectRegion(void* start, size_t size, ProtectionSe
 
     mprotect(pageStart, size, (setting == Writable) ? PROTECTION_FLAGS_RW : PROTECTION_FLAGS_RX);
 }
+#endif
 
 #if WTF_CPU_ARM_TRADITIONAL && WTF_OS_LINUX && WTF_COMPILER_RVCT
 __asm void ExecutableAllocator::cacheFlush(void* code, size_t size)

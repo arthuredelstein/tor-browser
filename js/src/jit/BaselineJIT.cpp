@@ -762,8 +762,6 @@ BaselineScript::toggleDebugTraps(JSScript *script, jsbytecode *pc)
 
     SrcNoteLineScanner scanner(script->notes(), script->lineno());
 
-    AutoWritableJitCode awjc(method());
-
     for (uint32_t i = 0; i < numPCMappingIndexEntries(); i++) {
         PCMappingIndexEntry &entry = pcMappingIndexEntry(i);
 
@@ -803,7 +801,6 @@ BaselineScript::toggleSPS(bool enable)
             enable ? "on" : "off", this);
 
     // Toggle the jump
-    AutoWritableJitCode awjc(method_);
     CodeLocationLabel pushToggleLocation(method_, CodeOffsetLabel(spsPushToggleOffset_));
     if (enable)
         Assembler::ToggleToCmp(pushToggleLocation);
@@ -901,7 +898,6 @@ jit::JitCompartment::toggleBaselineStubBarriers(bool enabled)
 {
     for (ICStubCodeMap::Enum e(*stubCodes_); !e.empty(); e.popFront()) {
         JitCode *code = *e.front().value().unsafeGet();
-        AutoWritableJitCode awjc(code);
         code->togglePreBarriers(enabled);
     }
 }

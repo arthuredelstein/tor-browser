@@ -6397,7 +6397,6 @@ CodeGenerator::link(JSContext *cx, types::CompilerConstraintList *constraints)
     if (!callTargets.empty())
         ionScript->setHasUncompiledCallTarget();
 
-    AutoWritableJitCode awjc(code);
     invalidateEpilogueData_.fixup(&masm);
     Assembler::patchDataWithValueCheck(CodeLocationLabel(code, invalidateEpilogueData_),
                                        ImmPtr(ionScript),
