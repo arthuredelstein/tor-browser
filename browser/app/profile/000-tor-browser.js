@@ -4,9 +4,8 @@
 
 // Please maintain unit tests at ./tbb-tests/browser_tor_TB4.js
 
-// Disable browser auto updaters and associated homepage notifications
+// Disable browser automatic updates and associated homepage notifications
 pref("app.update.auto", false);
-pref("app.update.enabled", false);
 pref("browser.search.update", false);
 pref("browser.rights.3.shown", true);
 pref("browser.startup.homepage_override.mstone", "ignore");
@@ -161,5 +160,6 @@ pref("media.audio_data.enabled", false);
 // https://trac.torproject.org/projects/tor/ticket/11253
 pref("security.tls.version.max", 3);
 
-// Version placeholder
-pref("torbrowser.version", "UNKNOWN");
+#ifdef TOR_BROWSER_VERSION
+#expand pref("torbrowser.version", __TOR_BROWSER_VERSION__);
+#endif
