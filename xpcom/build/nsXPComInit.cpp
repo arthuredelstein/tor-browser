@@ -8,6 +8,7 @@
 
 #include "mozilla/Atomics.h"
 #include "mozilla/Poison.h"
+#include "mozilla/Preferences.h"
 #include "mozilla/XPCOM.h"
 #include "nsXULAppAPI.h"
 
@@ -40,6 +41,8 @@
 #include "nsINIParserImpl.h"
 #include "nsSupportsPrimitives.h"
 #include "nsConsoleService.h"
+
+#include "nsIJSRuntimeService.h"
 
 #include "nsComponentManager.h"
 #include "nsCategoryManagerUtils.h"
@@ -443,6 +446,97 @@ NS_IMPL_ISUPPORTS(NesteggReporter, nsIMemoryReporter)
 /* static */ template<> Atomic<size_t> CountingAllocatorBase<NesteggReporter>::sAmount(0);
 #endif /* MOZ_WEBM */
 
+// Anonymous namespace for customizing the default locale that JavaScript
+// uses, according to the value of the "javascript.default_locale" pref.
+// The current default locale can be detected in JavaScript by calling
+// `Intl.DateTimeFormat().resolvedOptions().locale`
+namespace {
+
+#define DEFAULT_LOCALE_PREF "javascript.default_locale"
+
+class DefaultJSLocaleSetter : public nsIObserver
+{
+public:
+  DefaultJSLocaleSetter();
+  static DefaultJSLocaleSetter* newDefaultJSLocaleSetter();
+  const char* systemLocale;
+  const char* jsLocale;
+  NS_DECL_ISUPPORTS
+  NS_DECL_NSIOBSERVER
+  nsresult Run();
+  ~DefaultJSLocaleSetter(); 
+};
+
+NS_IMPL_ISUPPORTS(DefaultJSLocaleSetter, nsIObserver);
+
+// static
+nsresult
+DefaultJSLocaleSetter::Run() {
+  NS_ASSERTION(NS_IsMainThread(), "DefaultJSLocaleSetter::Observe can only be accessed in main thread");
+  // Read the pref, which may contain a custom locale to be used in JavaScript.
+  nsAutoCString prefLocale;
+  mozilla::Preferences::GetCString(DEFAULT_LOCALE_PREF, &prefLocale);
+  // Set the application-wide C-locale. Needed for Date.toLocaleFormat().
+  setlocale(LC_ALL, prefLocale.IsEmpty() ? systemLocale : prefLocale.get());
+  // Get a reference to the JavaScript Runtime object.
+  nsresult rv;
+  nsCOMPtr<nsIJSRuntimeService> rts = do_GetService("@mozilla.org/js/xpc/RuntimeService;1", &rv);
+  if (NS_FAILED(rv)) return rv;
+  JSRuntime *rt;
+  rts->GetRuntime(&rt);
+  if (!rt) return NS_ERROR_FAILURE;
+  // Now override the JavaScript Runtime Locale that is used by the Intl API
+  // as well as Date.toLocaleString, Number.toLocaleString, and String.localeCompare.
+  JS_SetDefaultLocale(rt, prefLocale.IsEmpty() ? jsLocale : prefLocale.get());
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+DefaultJSLocaleSetter::Observe(nsISupports* aSubject,
+                   const char* aTopic,
+                   const char16_t* someData) {
+  // Update the locale according to the latest pref value.
+  return Run();
+}
+
+DefaultJSLocaleSetter::DefaultJSLocaleSetter() {
+  // Get the default system locale. To be used if pref is not available.
+  systemLocale = setlocale(LC_ALL,NULL);
+  nsresult rv;
+  nsCOMPtr<nsIJSRuntimeService> rts = do_GetService("@mozilla.org/js/xpc/RuntimeService;1", &rv);
+  if (NS_FAILED(rv)) return;
+  JSRuntime *rt;
+  rts->GetRuntime(&rt);
+  jsLocale = JS_GetDefaultLocale(rt);
+  // Now update the locale according to the current pref value.
+  DefaultJSLocaleSetter::Run();
+}
+
+//static
+DefaultJSLocaleSetter*
+DefaultJSLocaleSetter::newDefaultJSLocaleSetter() {
+  DefaultJSLocaleSetter* setter = new DefaultJSLocaleSetter();
+  // Get a handle to the prefs service.
+  nsCOMPtr<nsIPrefBranch> prefs;
+  prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
+  // Watch the pref so we can update the locale whenever it changes.
+  prefs->AddObserver(DEFAULT_LOCALE_PREF, setter, false);
+  return setter;
+}
+
+DefaultJSLocaleSetter::~DefaultJSLocaleSetter() {
+  // Get a handle to the prefs service.
+  nsCOMPtr<nsIPrefBranch> prefs;
+  prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
+  // Stop watching the pref.
+  prefs->RemoveObserver(DEFAULT_LOCALE_PREF, this);
+}
+
+// The customizer is a singleton.
+static DefaultJSLocaleSetter* sDefaultJSLocaleSetter;
+
+} // anonymous namespace
+
 EXPORT_XPCOM_API(nsresult)
 NS_InitXPCOM2(nsIServiceManager* *result,
               nsIFile* binDirectory,
@@ -701,6 +795,11 @@ NS_InitXPCOM2(nsIServiceManager* *result,
     mozilla::eventtracer::Init();
 #endif
 
+    // Start watching the javascript.default_locale pref.
+    if (!sDefaultJSLocaleSetter) {
+      sDefaultJSLocaleSetter = DefaultJSLocaleSetter::newDefaultJSLocaleSetter();
+    }
+
     return NS_OK;
 }
 
@@ -755,6 +854,11 @@ ShutdownXPCOM(nsIServiceManager* servMgr)
 
     if (!NS_IsMainThread()) {
         NS_RUNTIMEABORT("Shutdown on wrong thread");
+    }
+
+    // Stop watching the javascript.default_locale pref
+    if (sDefaultJSLocaleSetter) {
+      delete sDefaultJSLocaleSetter;
     }
 
     nsresult rv;
