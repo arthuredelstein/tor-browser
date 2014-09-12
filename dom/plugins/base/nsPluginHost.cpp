@@ -589,7 +589,6 @@ nsresult nsPluginHost::FindProxyForURL(const char* url, char* *result)
   }
   nsresult res;
 
-  nsCOMPtr<nsIURI> uriIn;
   nsCOMPtr<nsIProtocolProxyService> proxyService;
   nsCOMPtr<nsIProtocolProxyService2> proxyService2;
   nsCOMPtr<nsIIOService> ioService;
@@ -606,15 +605,16 @@ nsresult nsPluginHost::FindProxyForURL(const char* url, char* *result)
   if (NS_FAILED(res) || !ioService)
     return res;
 
-  // make an nsURI from the argument url
-  res = ioService->NewURI(nsDependentCString(url), nullptr, nullptr, getter_AddRefs(uriIn));
+  // make a temporary channel from the argument url
+  nsCOMPtr<nsIChannel> tempChannel;
+  res = ioService->NewChannel(nsDependentCString(url), nullptr, nullptr, getter_AddRefs(tempChannel));
   if (NS_FAILED(res))
     return res;
 
   nsCOMPtr<nsIProxyInfo> pi;
 
   // Remove this with bug 778201
-  res = proxyService2->DeprecatedBlockingResolve(uriIn, 0, getter_AddRefs(pi));
+  res = proxyService2->DeprecatedBlockingResolve(tempChannel, 0, getter_AddRefs(pi));
   if (NS_FAILED(res))
     return res;
 

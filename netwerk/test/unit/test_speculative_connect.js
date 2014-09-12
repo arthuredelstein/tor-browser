@@ -144,9 +144,9 @@ TestOutputStreamCallback.prototype = {
  */
 function test_speculative_connect() {
     serv = new TestServer();
-    var URI = ios.newURI("http://localhost:" + serv.listener.port + "/just/a/test", null, null);
+    var channel = ios.newChannel("http://localhost:" + serv.listener.port + "/just/a/test", null, null);
     ios.QueryInterface(Ci.nsISpeculativeConnect)
-        .speculativeConnect(URI, null);
+        .speculativeConnect(channel, null);
 }
 
 /* Speculative connections should not be allowed for hosts with local IP

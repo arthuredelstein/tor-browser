@@ -1838,7 +1838,7 @@ nsHttpHandler::Observe(nsISupports *subject,
 // nsISpeculativeConnect
 
 NS_IMETHODIMP
-nsHttpHandler::SpeculativeConnect(nsIURI *aURI,
+nsHttpHandler::SpeculativeConnect(nsIChannel *aChannel,
                                   nsIInterfaceRequestor *aCallbacks)
 {
     if (!mHandlerActive)
@@ -1849,21 +1849,24 @@ nsHttpHandler::SpeculativeConnect(nsIURI *aURI,
     if (!sss)
         return NS_OK;
 
+    nsCOMPtr<nsIURI> uri;
+    aChannel->GetURI(getter_AddRefs(uri));
+
     nsCOMPtr<nsILoadContext> loadContext = do_GetInterface(aCallbacks);
     uint32_t flags = 0;
     if (loadContext && loadContext->UsePrivateBrowsing())
         flags |= nsISocketProvider::NO_PERMANENT_STORAGE;
     nsCOMPtr<nsIURI> clone;
     if (NS_SUCCEEDED(sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS,
-                                      aURI, flags, &isStsHost)) && isStsHost) {
-        if (NS_SUCCEEDED(aURI->Clone(getter_AddRefs(clone)))) {
+                                      uri, flags, &isStsHost)) && isStsHost) {
+        if (NS_SUCCEEDED(uri->Clone(getter_AddRefs(clone)))) {
             clone->SetScheme(NS_LITERAL_CSTRING("https"));
-            aURI = clone.get();
+            uri = clone.get();
         }
     }
 
     nsAutoCString scheme;
-    nsresult rv = aURI->GetScheme(scheme);
+    nsresult rv = uri->GetScheme(scheme);
     if (NS_FAILED(rv))
         return rv;
 
@@ -1881,22 +1884,22 @@ nsHttpHandler::SpeculativeConnect(nsIURI *aURI,
 
     // Construct connection info object
     bool usingSSL = false;
-    rv = aURI->SchemeIs("https", &usingSSL);
+    rv = uri->SchemeIs("https", &usingSSL);
     if (NS_FAILED(rv))
         return rv;
 
     nsAutoCString host;
-    rv = aURI->GetAsciiHost(host);
+    rv = uri->GetAsciiHost(host);
     if (NS_FAILED(rv))
         return rv;
 
     int32_t port = -1;
-    rv = aURI->GetPort(&port);
+    rv = uri->GetPort(&port);
     if (NS_FAILED(rv))
         return rv;
 
     nsAutoCString username;
-    aURI->GetUsername(username);
+    uri->GetUsername(username);
 
     nsHttpConnectionInfo *ci =
         new nsHttpConnectionInfo(host, port, username, nullptr, usingSSL);

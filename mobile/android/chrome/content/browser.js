@@ -4813,7 +4813,7 @@ var BrowserEventHandler = {
       let uri = this._getLinkURI(closest);
       if (uri) {
         try {
-          Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null);
+          Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(Services.io.newChannel(uri, null, null), null);
         } catch (e) {}
       }
       this._doTapHighlight(closest);
