@@ -1131,13 +1131,6 @@ pref("browser.zoom.updateBackgroundTabs", true);
 // The breakpad report server to link to in about:crashes
 pref("breakpad.reportURL", "https://crash-stats.mozilla.com/report/index/");
 
-#ifndef RELEASE_BUILD
-// Override submission of plugin hang reports to a different processing server
-// for the smaller-volume nightly/aurora populations.
-pref("toolkit.crashreporter.pluginHangSubmitURL",
-     "https://hang-reports.mozilla.org/submit");
-#endif
-
 // URL for "Learn More" for Crash Reporter
 pref("toolkit.crashreporter.infoURL",
      "https://www.mozilla.org/legal/privacy/firefox.html#crash-reporter");
@@ -1193,9 +1186,7 @@ pref("browser.tabs.remote.autostart", false);
 // This will probably require a restart.
 pref("browser.tabs.remote.sandbox", "off");
 
-// This is essentially the same logic that decides whether nsStackWalk.cpp gets
-// built, which we use for the stack trace. See xpcom/base/moz.build
-#if !defined(MOZ_OPTIMIZE) || defined(MOZ_PROFILING) || defined(DEBUG)
+#if defined(MOZ_STACKWALKING)
 // This controls the depth of stack trace that is logged when the warn only
 // sandbox reports that a resource access request has been blocked.
 // This does not require a restart to take effect.
@@ -1286,6 +1277,7 @@ pref("services.sync.prefs.sync.privacy.clearOnShutdown.siteSettings", true);
 pref("services.sync.prefs.sync.privacy.donottrackheader.enabled", true);
 pref("services.sync.prefs.sync.privacy.donottrackheader.value", true);
 pref("services.sync.prefs.sync.privacy.sanitize.sanitizeOnShutdown", true);
+pref("services.sync.prefs.sync.privacy.trackingprotection.enabled", true);
 pref("services.sync.prefs.sync.security.OCSP.enabled", true);
 pref("services.sync.prefs.sync.security.OCSP.require", true);
 pref("services.sync.prefs.sync.security.default_personal_cert", true);
@@ -1378,8 +1370,9 @@ pref("devtools.debugger.ui.variables-sorting-enabled", true);
 pref("devtools.debugger.ui.variables-only-enum-visible", false);
 pref("devtools.debugger.ui.variables-searchbox-visible", false);
 
-// Enable the Profiler
+// Enable the Profiler and the Timeline
 pref("devtools.profiler.enabled", true);
+pref("devtools.timeline.enabled", false);
 
 // The default Profiler UI settings
 pref("devtools.profiler.ui.show-platform-data", false);

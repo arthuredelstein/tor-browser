@@ -928,14 +928,12 @@ nsDisplayListBuilder::GetCaret() {
 }
 
 void
-nsDisplayListBuilder::EnterPresShell(nsIFrame* aReferenceFrame,
-                                     const nsRect& aDirtyRect) {
+nsDisplayListBuilder::EnterPresShell(nsIFrame* aReferenceFrame)
+{
   PresShellState* state = mPresShellStates.AppendElement();
   state->mPresShell = aReferenceFrame->PresContext()->PresShell();
   state->mCaretFrame = nullptr;
   state->mFirstFrameMarkedForDisplay = mFramesMarkedForDisplay.Length();
-  state->mPrevDirtyRect = mDirtyRect;
-  mDirtyRect = aDirtyRect;
 
   state->mPresShell->UpdateCanvasBackground();
 
@@ -968,12 +966,11 @@ nsDisplayListBuilder::EnterPresShell(nsIFrame* aReferenceFrame,
 }
 
 void
-nsDisplayListBuilder::LeavePresShell(nsIFrame* aReferenceFrame,
-                                     const nsRect& aDirtyRect) {
+nsDisplayListBuilder::LeavePresShell(nsIFrame* aReferenceFrame)
+{
   NS_ASSERTION(CurrentPresShellState()->mPresShell ==
       aReferenceFrame->PresContext()->PresShell(),
       "Presshell mismatch");
-  mDirtyRect = CurrentPresShellState()->mPrevDirtyRect;
   ResetMarkedFramesForDisplayList();
   mPresShellStates.SetLength(mPresShellStates.Length() - 1);
 }
@@ -2182,10 +2179,9 @@ nsDisplayBackgroundImage::ConfigureLayer(ImageLayer* aLayer, const nsIntPoint& a
   NS_ASSERTION(imageSize.width != 0 && imageSize.height != 0, "Invalid image size!");
 
   gfxPoint p = mDestRect.TopLeft() + aOffset;
-  gfx::Matrix transform;
-  transform.Translate(p.x, p.y);
-  transform.Scale(mDestRect.width/imageSize.width,
-                  mDestRect.height/imageSize.height);
+  Matrix transform = Matrix::Translation(p.x, p.y);
+  transform.PreScale(mDestRect.width / imageSize.width,
+                     mDestRect.height / imageSize.height);
   aLayer->SetBaseTransform(gfx::Matrix4x4::From2D(transform));
 }
 
@@ -2239,7 +2235,7 @@ nsDisplayBackgroundImage::GetInsideClipRegion(nsDisplayItem* aItem,
       clipRect = frame->GetPaddingRect() - frame->GetPosition() + aItem->ToReferenceFrame();
       break;
     case NS_STYLE_BG_CLIP_CONTENT:
-      clipRect = frame->GetContentRect() - frame->GetPosition() + aItem->ToReferenceFrame();
+      clipRect = frame->GetContentRectRelativeToSelf() + aItem->ToReferenceFrame();
       break;
     default:
       NS_NOTREACHED("Unknown clip type");
@@ -3035,11 +3031,11 @@ nsDisplayBoxShadowInner::Paint(nsDisplayListBuilder* aBuilder,
     js::ProfileEntry::Category::GRAPHICS);
 
   for (uint32_t i = 0; i < rects.Length(); ++i) {
-    aCtx->PushState();
+    aCtx->ThebesContext()->Save();
     aCtx->IntersectClip(rects[i]);
     nsCSSRendering::PaintBoxShadowInner(presContext, *aCtx, mFrame,
                                         borderRect, rects[i]);
-    aCtx->PopState();
+    aCtx->ThebesContext()->Restore();
   }
 }
 

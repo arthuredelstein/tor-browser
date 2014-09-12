@@ -340,8 +340,12 @@ DeleteArrayElement(JSContext *cx, HandleObject obj, double index, bool *succeede
             if (idx < obj->getDenseInitializedLength()) {
                 if (!obj->maybeCopyElementsForWrite(cx))
                     return false;
-                obj->markDenseElementsNotPacked(cx);
-                obj->setDenseElement(idx, MagicValue(JS_ELEMENTS_HOLE));
+                if (idx+1 == obj->getDenseInitializedLength()) {
+                    obj->setDenseInitializedLength(idx);
+                } else {
+                    obj->markDenseElementsNotPacked(cx);
+                    obj->setDenseElement(idx, MagicValue(JS_ELEMENTS_HOLE));
+                }
                 if (!js_SuppressDeletedElement(cx, obj, idx))
                     return false;
             }
@@ -1058,8 +1062,6 @@ js::ArrayJoin(JSContext *cx, HandleObject obj, HandleLinearString sepstr, uint32
 
     // Steps 1 to 6, should be done by the caller.
 
-    JS::Anchor<JSString*> anchor(sepstr);
-
     // Step 6 is implicit in the loops below.
 
     // An optimized version of a special case of steps 7-11: when length==1 and
@@ -1090,13 +1092,13 @@ js::ArrayJoin(JSContext *cx, HandleObject obj, HandleLinearString sepstr, uint32
         if (!ArrayJoinKernel<Locale>(cx, op, obj, length, sb))
             return nullptr;
     } else if (seplen == 1) {
-        jschar c = sepstr->latin1OrTwoByteChar(0);
+        char16_t c = sepstr->latin1OrTwoByteChar(0);
         if (c <= JSString::MAX_LATIN1_CHAR) {
             CharSeparatorOp<Latin1Char> op(c);
             if (!ArrayJoinKernel<Locale>(cx, op, obj, length, sb))
                 return nullptr;
         } else {
-            CharSeparatorOp<jschar> op(c);
+            CharSeparatorOp<char16_t> op(c);
             if (!ArrayJoinKernel<Locale>(cx, op, obj, length, sb))
                 return nullptr;
         }
@@ -2140,19 +2142,6 @@ js::array_pop(JSContext *cx, unsigned argc, Value *vp)
         /* Step 5c. */
         if (!hole && !DeletePropertyOrThrow(cx, obj, index))
             return false;
-    }
-
-    // If this was an array, then there are no elements above the one we just
-    // deleted (if we deleted an element).  Thus we can shrink the dense
-    // initialized length accordingly.  (This is fine even if the array length
-    // is non-writable: length-changing occurs after element-deletion effects.)
-    // Don't do anything if this isn't an array, as any deletion above has no
-    // effect on any elements after the "last" one indicated by the "length"
-    // property.
-    if (obj->is<ArrayObject>() && obj->getDenseInitializedLength() > index) {
-        if (!obj->maybeCopyElementsForWrite(cx))
-            return false;
-        obj->setDenseInitializedLength(index);
     }
 
     /* Steps 4a, 5d. */

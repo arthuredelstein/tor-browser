@@ -119,6 +119,8 @@ var legacyMozPrefixedInterfaces =
 var interfaceNamesInGlobalScope =
   [
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "MozAbortablePromise", pref: "dom.abortablepromise.enabled"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "AlarmsManager", pref: "dom.mozAlarms.enabled"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "AnalyserNode",
@@ -643,8 +645,6 @@ var interfaceNamesInGlobalScope =
     "MimeType",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MimeTypeArray",
-// IMPORTANT: Do not change this list without review from a DOM peer!
-    "ModalContentWindow",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MouseEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -1189,8 +1189,6 @@ var interfaceNamesInGlobalScope =
     "URL",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "URLSearchParams",
-// IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "UserDataHandler", xbl: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "UserProximityEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!

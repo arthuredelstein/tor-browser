@@ -175,7 +175,6 @@ JSRuntime::JSRuntime(JSRuntime *parentRuntime)
 #ifdef NIGHTLY_BUILD
     assertOnScriptEntryHook_(nullptr),
 #endif
-    debugMode(false),
     spsProfiler(thisFromCtor()),
     profilingScripts(false),
     suppressProfilerSampling(false),
@@ -191,6 +190,7 @@ JSRuntime::JSRuntime(JSRuntime *parentRuntime)
     destroyPrincipals(nullptr),
     structuredCloneCallbacks(nullptr),
     telemetryCallback(nullptr),
+    errorReporter(nullptr),
     propertyRemovals(0),
 #if !EXPOSE_INTL_API
     thousandsSeparator(0),

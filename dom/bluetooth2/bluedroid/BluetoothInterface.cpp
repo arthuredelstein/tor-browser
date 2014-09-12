@@ -4,24 +4,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "BluetoothInterface.h"
 #include <errno.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include "base/message_loop.h"
-#include "BluetoothInterface.h"
 #include "nsAutoPtr.h"
 #include "nsThreadUtils.h"
 #include "nsXULAppAPI.h"
-
-#if MOZ_IS_GCC && MOZ_GCC_VERSION_AT_LEAST(4, 7, 0)
-/* use designated array initializers if supported */
-#define CONVERT(in_, out_) \
-  [in_] = out_
-#else
-/* otherwise init array element by position */
-#define CONVERT(in_, out_) \
-  out_
-#endif
 
 #define MAX_UUID_SIZE 16
 
@@ -423,18 +413,18 @@ Convert(bt_acl_state_t aIn, bool& aOut)
 }
 
 static nsresult
-Convert(bt_device_type_t aIn, BluetoothDeviceType& aOut)
+Convert(bt_device_type_t aIn, BluetoothTypeOfDevice& aOut)
 {
-  static const BluetoothDeviceType sDeviceType[] = {
-    CONVERT(0, static_cast<BluetoothDeviceType>(0)), // invalid, required by gcc
-    CONVERT(BT_DEVICE_DEVTYPE_BREDR, DEVICE_TYPE_BREDR),
-    CONVERT(BT_DEVICE_DEVTYPE_BLE, DEVICE_TYPE_BLE),
-    CONVERT(BT_DEVICE_DEVTYPE_DUAL, DEVICE_TYPE_DUAL)
+  static const BluetoothTypeOfDevice sTypeOfDevice[] = {
+    CONVERT(0, static_cast<BluetoothTypeOfDevice>(0)), // invalid, required by gcc
+    CONVERT(BT_DEVICE_DEVTYPE_BREDR, TYPE_OF_DEVICE_BREDR),
+    CONVERT(BT_DEVICE_DEVTYPE_BLE, TYPE_OF_DEVICE_BLE),
+    CONVERT(BT_DEVICE_DEVTYPE_DUAL, TYPE_OF_DEVICE_DUAL)
   };
-  if (!aIn || aIn >= MOZ_ARRAY_LENGTH(sDeviceType)) {
+  if (!aIn || aIn >= MOZ_ARRAY_LENGTH(sTypeOfDevice)) {
     return NS_ERROR_ILLEGAL_VALUE;
   }
-  aOut = sDeviceType[aIn];
+  aOut = sTypeOfDevice[aIn];
   return NS_OK;
 }
 
@@ -1045,7 +1035,7 @@ Convert(const bt_property_t& aIn, BluetoothProperty& aOut)
       break;
     case PROPERTY_TYPE_OF_DEVICE:
       rv = Convert(*static_cast<bt_device_type_t*>(aIn.val),
-                   aOut.mDeviceType);
+                   aOut.mTypeOfDevice);
       break;
     case PROPERTY_SERVICE_RECORD:
       rv = Convert(*static_cast<bt_service_record_t*>(aIn.val),
@@ -2986,6 +2976,7 @@ struct interface_traits<BluetoothAvrcpInterface>
     return BT_PROFILE_AV_RC_ID;
   }
 };
+#endif
 
 typedef
   BluetoothInterfaceRunnable0<BluetoothAvrcpResultHandler, void>
@@ -3018,7 +3009,6 @@ DispatchBluetoothAvrcpResult(
   }
   return rv;
 }
-#endif
 
 // Notification handling
 //
@@ -3026,7 +3016,6 @@ DispatchBluetoothAvrcpResult(
 BluetoothAvrcpNotificationHandler::~BluetoothAvrcpNotificationHandler()
 { }
 
-#if ANDROID_VERSION >= 18
 static BluetoothAvrcpNotificationHandler* sAvrcpNotificationHandler;
 
 struct BluetoothAvrcpCallback
@@ -3092,7 +3081,6 @@ struct BluetoothAvrcpCallback
                                          BluetoothAvrcpEvent, uint32_t>
     RegisterNotificationNotification;
 
-#if ANDROID_VERSION >= 19
   typedef BluetoothNotificationRunnable2<AvrcpNotificationHandlerWrapper,
                                          void,
                                          nsString, unsigned long,
@@ -3108,10 +3096,10 @@ struct BluetoothAvrcpCallback
                                          void,
                                          int, int>
     PassthroughCmdNotification;
-#endif // ANDROID_VERSION >= 19
 
   // Bluedroid AVRCP callbacks
 
+#if ANDROID_VERSION >= 18
   static void
   GetPlayStatus()
   {
@@ -3181,6 +3169,7 @@ struct BluetoothAvrcpCallback
       &BluetoothAvrcpNotificationHandler::RegisterNotificationNotification,
       aEvent, aParam);
   }
+#endif // ANDROID_VERSION >= 18
 
 #if ANDROID_VERSION >= 19
   static void
@@ -3213,10 +3202,17 @@ struct BluetoothAvrcpCallback
 //
 
 BluetoothAvrcpInterface::BluetoothAvrcpInterface(
-  const btrc_interface_t* aInterface)
+#if ANDROID_VERSION >= 18
+  const btrc_interface_t* aInterface
+#endif
+  )
+#if ANDROID_VERSION >= 18
 : mInterface(aInterface)
+#endif
 {
+#if ANDROID_VERSION >= 18
   MOZ_ASSERT(mInterface);
+#endif
 }
 
 BluetoothAvrcpInterface::~BluetoothAvrcpInterface()
@@ -3227,6 +3223,7 @@ BluetoothAvrcpInterface::Init(
   BluetoothAvrcpNotificationHandler* aNotificationHandler,
   BluetoothAvrcpResultHandler* aRes)
 {
+#if ANDROID_VERSION >= 18
   static btrc_callbacks_t sCallbacks = {
     sizeof(sCallbacks),
 #if ANDROID_VERSION >= 19
@@ -3247,10 +3244,15 @@ BluetoothAvrcpInterface::Init(
     BluetoothAvrcpCallback::PassthroughCmd
 #endif
   };
+#endif // ANDROID_VERSION >= 18
 
   sAvrcpNotificationHandler = aNotificationHandler;
 
+#if ANDROID_VERSION >= 18
   bt_status_t status = mInterface->init(&sCallbacks);
+#else
+  bt_status_t status = BT_STATUS_UNSUPPORTED;
+#endif
 
   if (aRes) {
     DispatchBluetoothAvrcpResult(aRes, &BluetoothAvrcpResultHandler::Init,
@@ -3261,11 +3263,19 @@ BluetoothAvrcpInterface::Init(
 void
 BluetoothAvrcpInterface::Cleanup(BluetoothAvrcpResultHandler* aRes)
 {
+  bt_status_t status;
+
+#if ANDROID_VERSION >= 18
   mInterface->cleanup();
+
+  status = BT_STATUS_SUCCESS;
+#else
+  status = BT_STATUS_UNSUPPORTED;
+#endif
 
   if (aRes) {
     DispatchBluetoothAvrcpResult(aRes, &BluetoothAvrcpResultHandler::Cleanup,
-                                 STATUS_SUCCESS);
+                                 ConvertDefault(status, STATUS_FAIL));
   }
 }
 
@@ -3275,6 +3285,8 @@ BluetoothAvrcpInterface::GetPlayStatusRsp(ControlPlayStatus aPlayStatus,
                                           BluetoothAvrcpResultHandler* aRes)
 {
   bt_status_t status;
+
+#if ANDROID_VERSION >= 18
   btrc_play_status_t playStatus = BTRC_PLAYSTATE_STOPPED;
 
   if (!(NS_FAILED(Convert(aPlayStatus, playStatus)))) {
@@ -3282,6 +3294,9 @@ BluetoothAvrcpInterface::GetPlayStatusRsp(ControlPlayStatus aPlayStatus,
   } else {
     status = BT_STATUS_PARM_INVALID;
   }
+#else
+  status = BT_STATUS_UNSUPPORTED;
+#endif
 
   if (aRes) {
     DispatchBluetoothAvrcpResult(
@@ -3296,6 +3311,8 @@ BluetoothAvrcpInterface::ListPlayerAppAttrRsp(
   BluetoothAvrcpResultHandler* aRes)
 {
   bt_status_t status;
+
+#if ANDROID_VERSION >= 18
   ConvertArray<BluetoothAvrcpPlayerAttribute> pAttrsArray(aPAttrs, aNumAttr);
   nsAutoArrayPtr<btrc_player_attr_t> pAttrs;
 
@@ -3304,6 +3321,9 @@ BluetoothAvrcpInterface::ListPlayerAppAttrRsp(
   } else {
     status = BT_STATUS_PARM_INVALID;
   }
+#else
+  status = BT_STATUS_UNSUPPORTED;
+#endif
 
   if (aRes) {
     DispatchBluetoothAvrcpResult(
@@ -3316,7 +3336,11 @@ void
 BluetoothAvrcpInterface::ListPlayerAppValueRsp(
   int aNumVal, uint8_t* aPVals, BluetoothAvrcpResultHandler* aRes)
 {
+#if ANDROID_VERSION >= 18
   bt_status_t status = mInterface->list_player_app_value_rsp(aNumVal, aPVals);
+#else
+  bt_status_t status = BT_STATUS_UNSUPPORTED;
+#endif
 
   if (aRes) {
     DispatchBluetoothAvrcpResult(
@@ -3331,6 +3355,8 @@ BluetoothAvrcpInterface::GetPlayerAppValueRsp(
   BluetoothAvrcpResultHandler* aRes)
 {
   bt_status_t status;
+
+#if ANDROID_VERSION >= 18
   btrc_player_settings_t pVals;
 
   /* FIXME: you need to implement the missing conversion functions */
@@ -3341,6 +3367,9 @@ BluetoothAvrcpInterface::GetPlayerAppValueRsp(
   } else {
     status = BT_STATUS_PARM_INVALID;
   }
+#else
+  status = BT_STATUS_UNSUPPORTED;
+#endif
 
   if (aRes) {
     DispatchBluetoothAvrcpResult(
@@ -3355,6 +3384,8 @@ BluetoothAvrcpInterface::GetPlayerAppAttrTextRsp(
   BluetoothAvrcpResultHandler* aRes)
 {
   bt_status_t status;
+
+#if ANDROID_VERSION >= 18
   btrc_player_setting_text_t* aPAttrs;
 
   /* FIXME: you need to implement the missing conversion functions */
@@ -3365,6 +3396,9 @@ BluetoothAvrcpInterface::GetPlayerAppAttrTextRsp(
   } else {
     status = BT_STATUS_PARM_INVALID;
   }
+#else
+  status = BT_STATUS_UNSUPPORTED;
+#endif
 
   if (aRes) {
     DispatchBluetoothAvrcpResult(
@@ -3379,6 +3413,8 @@ BluetoothAvrcpInterface::GetPlayerAppValueTextRsp(
   BluetoothAvrcpResultHandler* aRes)
 {
   bt_status_t status;
+
+#if ANDROID_VERSION >= 18
   btrc_player_setting_text_t* pVals;
 
   /* FIXME: you need to implement the missing conversion functions */
@@ -3389,6 +3425,9 @@ BluetoothAvrcpInterface::GetPlayerAppValueTextRsp(
   } else {
     status = BT_STATUS_PARM_INVALID;
   }
+#else
+  status = BT_STATUS_UNSUPPORTED;
+#endif
 
   if (aRes) {
     DispatchBluetoothAvrcpResult(
@@ -3403,6 +3442,8 @@ BluetoothAvrcpInterface::GetElementAttrRsp(
   BluetoothAvrcpResultHandler* aRes)
 {
   bt_status_t status;
+
+#if ANDROID_VERSION >= 18
   ConvertArray<BluetoothAvrcpElementAttribute> pAttrsArray(aAttrs, aNumAttr);
   nsAutoArrayPtr<btrc_element_attr_val_t> pAttrs;
 
@@ -3411,6 +3452,9 @@ BluetoothAvrcpInterface::GetElementAttrRsp(
   } else {
     status = BT_STATUS_PARM_INVALID;
   }
+#else
+  status = BT_STATUS_UNSUPPORTED;
+#endif
 
   if (aRes) {
     DispatchBluetoothAvrcpResult(
@@ -3424,6 +3468,8 @@ BluetoothAvrcpInterface::SetPlayerAppValueRsp(
   BluetoothAvrcpStatus aRspStatus, BluetoothAvrcpResultHandler* aRes)
 {
   bt_status_t status;
+
+#if ANDROID_VERSION >= 18
   btrc_status_t rspStatus = BTRC_STS_BAD_CMD; // silences compiler warning
 
   if (NS_SUCCEEDED(Convert(aRspStatus, rspStatus))) {
@@ -3431,6 +3477,9 @@ BluetoothAvrcpInterface::SetPlayerAppValueRsp(
   } else {
     status = BT_STATUS_PARM_INVALID;
   }
+#else
+  status = BT_STATUS_UNSUPPORTED;
+#endif
 
   if (aRes) {
     DispatchBluetoothAvrcpResult(
@@ -3445,8 +3494,10 @@ BluetoothAvrcpInterface::RegisterNotificationRsp(
   const BluetoothAvrcpNotificationParam& aParam,
   BluetoothAvrcpResultHandler* aRes)
 {
-  nsresult rv;
   bt_status_t status;
+
+#if ANDROID_VERSION >= 18
+  nsresult rv;
   btrc_event_id_t event = { };
   btrc_notification_type_t type = BTRC_NOTIFICATION_TYPE_INTERIM;
   btrc_register_notification_t param;
@@ -3489,6 +3540,9 @@ BluetoothAvrcpInterface::RegisterNotificationRsp(
   } else {
     status = BT_STATUS_PARM_INVALID;
   }
+#else
+  status = BT_STATUS_UNSUPPORTED;
+#endif
 
   if (aRes) {
     DispatchBluetoothAvrcpResult(
@@ -3513,7 +3567,6 @@ BluetoothAvrcpInterface::SetVolume(uint8_t aVolume,
       ConvertDefault(status, STATUS_FAIL));
   }
 }
-#endif // ANDROID_VERSION >= 18
 
 //
 // Bluetooth Core Interface
@@ -4294,14 +4347,8 @@ BluetoothInterface::LeTestMode(uint16_t aOpcode, uint8_t* aBuf, uint8_t aLen,
 
 template <class T>
 T*
-BluetoothInterface::GetProfileInterface()
+BluetoothInterface::CreateProfileInterface()
 {
-  static T* sBluetoothProfileInterface;
-
-  if (sBluetoothProfileInterface) {
-    return sBluetoothProfileInterface;
-  }
-
   typename interface_traits<T>::const_interface_type* interface =
     reinterpret_cast<typename interface_traits<T>::const_interface_type*>(
       mInterface->get_profile_interface(interface_traits<T>::profile_id()));
@@ -4317,7 +4364,36 @@ BluetoothInterface::GetProfileInterface()
     return nullptr;
   }
 
-  sBluetoothProfileInterface = new T(interface);
+  return new T(interface);
+}
+
+#if ANDROID_VERSION < 18
+/*
+ * Bluedroid versions that don't support AVRCP will call this function
+ * to create an AVRCP interface. All interface methods will fail with
+ * the error constant STATUS_UNSUPPORTED.
+ */
+template <>
+BluetoothAvrcpInterface*
+BluetoothInterface::CreateProfileInterface<BluetoothAvrcpInterface>()
+{
+  BT_WARNING("Bluetooth profile 'avrcp' is not supported");
+
+  return new BluetoothAvrcpInterface();
+}
+#endif
+
+template <class T>
+T*
+BluetoothInterface::GetProfileInterface()
+{
+  static T* sBluetoothProfileInterface;
+
+  if (sBluetoothProfileInterface) {
+    return sBluetoothProfileInterface;
+  }
+
+  sBluetoothProfileInterface = CreateProfileInterface<T>();
 
   return sBluetoothProfileInterface;
 }
@@ -4343,11 +4419,7 @@ BluetoothInterface::GetBluetoothA2dpInterface()
 BluetoothAvrcpInterface*
 BluetoothInterface::GetBluetoothAvrcpInterface()
 {
-#if ANDROID_VERSION >= 18
   return GetProfileInterface<BluetoothAvrcpInterface>();
-#else
-  return nullptr;
-#endif
 }
 
 END_BLUETOOTH_NAMESPACE

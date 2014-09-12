@@ -88,6 +88,7 @@ public:
    * device DPI, before we start panning the screen. This is to prevent us from
    * accidentally processing taps as touch moves, and from very short/accidental
    * touches moving the screen.
+   * Note: this distance is in global screen coordinates.
    */
   static float GetTouchStartTolerance();
 
@@ -212,7 +213,7 @@ public:
   /**
    * Returns true if Destroy() has already been called on this APZC instance.
    */
-  bool IsDestroyed();
+  bool IsDestroyed() const;
 
   /**
    * Returns the incremental transformation corresponding to the async pan/zoom
@@ -220,14 +221,14 @@ public:
    * existing transform, it will make the layer appear with the desired pan/zoom
    * amount.
    */
-  ViewTransform GetCurrentAsyncTransform();
+  ViewTransform GetCurrentAsyncTransform() const;
 
   /**
    * Returns the part of the async transform that will remain once Gecko does a
    * repaint at the desired metrics. That is, in the steady state:
    * Matrix4x4(GetCurrentAsyncTransform()) === GetNontransientAsyncTransform()
    */
-  Matrix4x4 GetNontransientAsyncTransform();
+  Matrix4x4 GetNontransientAsyncTransform() const;
 
   /**
    * Returns the transform to take something from the coordinate space of the
@@ -236,7 +237,7 @@ public:
    * processed, this is needed to transform input events properly into a space
    * gecko will understand.
    */
-  Matrix4x4 GetTransformToLastDispatchedPaint();
+  Matrix4x4 GetTransformToLastDispatchedPaint() const;
 
   /**
    * Recalculates the displayport. Ideally, this should paint an area bigger
@@ -325,6 +326,28 @@ public:
    * only one touch.
    */
   int32_t GetLastTouchIdentifier() const;
+
+  /**
+   * Convert the vector |aVector|, rooted at the point |aAnchor|, from
+   * this APZC's local screen coordinates into global screen coordinates.
+   * The anchor is necessary because with 3D tranforms, the location of the
+   * vector can affect the result of the transform.
+   * To respect the lock ordering, mMonitor must NOT be held when calling
+   * this function (since this function acquires the tree lock).
+   */
+  void ToGlobalScreenCoordinates(ScreenPoint* aVector,
+                                 const ScreenPoint& aAnchor) const;
+
+  /**
+   * Convert the vector |aVector|, rooted at the point |aAnchor|, from
+   * global screen coordinates into this APZC's local screen coordinates .
+   * The anchor is necessary because with 3D tranforms, the location of the
+   * vector can affect the result of the transform.
+   * To respect the lock ordering, mMonitor must NOT be held when calling
+   * this function (since this function acquires the tree lock).
+   */
+  void ToLocalScreenCoordinates(ScreenPoint* aVector,
+                                const ScreenPoint& aAnchor) const;
 
 protected:
   enum PanZoomState {
@@ -462,9 +485,21 @@ protected:
    * Gets the displacement of the current touch since it began. That is, it is
    * the distance between the current position and the initial position of the
    * current touch (this only makes sense if a touch is currently happening and
-   * OnTouchMove() is being invoked).
+   * OnTouchMove() or the equivalent for pan gestures is being invoked).
+   * Note: This function returns a distance in global screen coordinates,
+   *       not the local screen coordinates of this APZC.
    */
-  float PanDistance();
+  float PanDistance() const;
+
+  /**
+   * Gets the start point of the current touch.
+   * Like PanDistance(), this only makes sense if a touch is currently
+   * happening and OnTouchMove() or the equivalent for pan gestures is
+   * being invoked.
+   * Unlikely PanDistance(), this function returns a point in local screen
+   * coordinates.
+   */
+  ScreenPoint PanStart() const;
 
   /**
    * Gets a vector of the velocities of each axis.
@@ -489,8 +524,9 @@ protected:
 
   /**
    * Update the panning state and axis locks.
+   * Note: |aDelta| is expected to be in global screen coordinates.
    */
-  void HandlePanningUpdate(float aDX, float aDY);
+  void HandlePanningUpdate(const ScreenPoint& aDelta);
 
   /**
    * Sets up anything needed for panning. This takes us out of the "TOUCHING"
@@ -535,6 +571,13 @@ protected:
    * layers code.
    */
   const FrameMetrics& GetFrameMetrics() const;
+
+  /**
+   * Gets the pointer to the apzc tree manager. All the access to tree manager
+   * should be made via this method and not via private variable since this method
+   * ensures that no lock is set.
+   */
+  APZCTreeManager* GetApzcTreeManager() const;
 
   /**
    * Timeout function for mozbrowserasyncscroll event. Because we throttle
@@ -1062,10 +1105,16 @@ public:
   static bool GetThreadAssertionsEnabled();
   /**
    * This can be used to assert that the current thread is the
-   * controller/UI thread (on which input events are received.
+   * controller/UI thread (on which input events are received).
    * This does nothing if thread assertions are disabled.
    */
   static void AssertOnControllerThread();
+  /**
+   * This can be used to assert that the current thread is the
+   * compositor thread (which applies the async transform).
+   * This does nothing if thread assertions are disabled.
+   */
+  static void AssertOnCompositorThread();
   /**
    * Set an extra offset for testing async scrolling.
    */
@@ -1074,9 +1123,22 @@ public:
     mTestAsyncScrollOffset = aPoint;
   }
 
+  void MarkAsyncTransformAppliedToContent()
+  {
+    mAsyncTransformAppliedToContent = true;
+  }
+
+  bool GetAsyncTransformAppliedToContent() const
+  {
+    return mAsyncTransformAppliedToContent;
+  }
+
 private:
   // Extra offset to add in SampleContentTransformForFrame for testing
   CSSPoint mTestAsyncScrollOffset;
+  // Flag to track whether or not the APZ transform is not used. This
+  // flag is recomputed for every composition frame.
+  bool mAsyncTransformAppliedToContent;
 };
 
 class AsyncPanZoomAnimation {

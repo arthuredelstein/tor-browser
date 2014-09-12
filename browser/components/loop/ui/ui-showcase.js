@@ -17,6 +17,9 @@
   var IncomingCallView = loop.conversation.IncomingCallView;
 
   // 2. Standalone webapp
+  var HomeView = loop.webapp.HomeView;
+  var UnsupportedBrowserView = loop.webapp.UnsupportedBrowserView;
+  var UnsupportedDeviceView = loop.webapp.UnsupportedDeviceView;
   var CallUrlExpiredView    = loop.webapp.CallUrlExpiredView;
   var StartConversationView = loop.webapp.StartConversationView;
 
@@ -58,7 +61,9 @@
   });
   mockConversationModel.startSession = noop;
 
-  var mockNotifier = {};
+  var notifications = new loop.shared.models.NotificationCollection();
+  var errNotifications = new loop.shared.models.NotificationCollection();
+  errNotifications.error("Error!");
 
   var Example = React.createClass({displayName: 'Example',
     render: function() {
@@ -117,11 +122,14 @@
               React.DOM.strong(null, "Note:"), " 332px wide."
             ), 
             Example({summary: "Call URL retrieved", dashed: "true", style: {width: "332px"}}, 
-              PanelView({client: mockClient, notifier: mockNotifier, 
+              PanelView({client: mockClient, notifications: notifications, 
                          callUrl: "http://invalid.example.url/"})
             ), 
             Example({summary: "Pending call url retrieval", dashed: "true", style: {width: "332px"}}, 
-              PanelView({client: mockClient, notifier: mockNotifier})
+              PanelView({client: mockClient, notifications: notifications})
+            ), 
+            Example({summary: "Error Notification", dashed: "true", style: {width: "332px"}}, 
+              PanelView({client: mockClient, notifications: errNotifications})
             )
           ), 
 
@@ -192,7 +200,7 @@
               React.DOM.div({className: "standalone"}, 
                 StartConversationView({model: mockConversationModel, 
                                        client: mockClient, 
-                                       notifier: mockNotifier, 
+                                       notifications: notifications, 
                                        showCallOptionsMenu: true})
               )
             )
@@ -307,6 +315,31 @@
                 React.DOM.p({className: "message"}, 
                   "The person you were calling has ended the conversation."
                 )
+              )
+            )
+          ), 
+
+          Section({name: "HomeView"}, 
+            Example({summary: "Standalone Home View"}, 
+              React.DOM.div({className: "standalone"}, 
+                HomeView(null)
+              )
+            )
+          ), 
+
+
+          Section({name: "UnsupportedBrowserView"}, 
+            Example({summary: "Standalone Unsupported Browser"}, 
+              React.DOM.div({className: "standalone"}, 
+                UnsupportedBrowserView(null)
+              )
+            )
+          ), 
+
+          Section({name: "UnsupportedDeviceView"}, 
+            Example({summary: "Standalone Unsupported Device"}, 
+              React.DOM.div({className: "standalone"}, 
+                UnsupportedDeviceView(null)
               )
             )
           )

@@ -191,13 +191,15 @@ public:
                                  JS::Handle<JS::Value> aOptions) MOZ_OVERRIDE;
 
     NS_IMETHOD SetIsIPC(bool b) MOZ_OVERRIDE { return NS_ERROR_NOT_IMPLEMENTED; }
-    NS_IMETHOD Redraw(const gfxRect&) { return NS_ERROR_NOT_IMPLEMENTED; }
-    NS_IMETHOD Swap(mozilla::ipc::Shmem& aBack,
-                    int32_t x, int32_t y, int32_t w, int32_t h)
-                    { return NS_ERROR_NOT_IMPLEMENTED; }
-    NS_IMETHOD Swap(uint32_t nativeID,
-                    int32_t x, int32_t y, int32_t w, int32_t h)
-                    { return NS_ERROR_NOT_IMPLEMENTED; }
+
+    /**
+     * An abstract base class to be implemented by callers wanting to be notified
+     * that a refresh has occurred. Callers must ensure an observer is removed
+     * before it is destroyed.
+     */
+    virtual void DidRefresh() MOZ_OVERRIDE;
+
+    NS_IMETHOD Redraw(const gfxRect&) MOZ_OVERRIDE { return NS_ERROR_NOT_IMPLEMENTED; }
 
     void SynthesizeGLError(GLenum err);
     void SynthesizeGLError(GLenum err, const char *fmt, ...);
@@ -360,7 +362,7 @@ public:
     already_AddRefed<WebGLActiveInfo> GetActiveUniform(WebGLProgram *prog,
                                                        GLuint index);
     void GetAttachedShaders(WebGLProgram* prog,
-                            dom::Nullable< nsTArray<WebGLShader*> > &retval);
+                            dom::Nullable<nsTArray<nsRefPtr<WebGLShader>>>& retval);
     GLint GetAttribLocation(WebGLProgram* prog, const nsAString& name);
     JS::Value GetBufferParameter(GLenum target, GLenum pname);
     void GetBufferParameter(JSContext* /* unused */, GLenum target,
@@ -534,15 +536,29 @@ public:
     // Allow whatever element types the bindings are willing to pass
     // us in TexSubImage2D
     template<class ElementType>
-    void TexSubImage2D(GLenum target, GLint level,
+    void TexSubImage2D(GLenum texImageTarget, GLint level,
                        GLint xoffset, GLint yoffset, GLenum format,
                        GLenum type, ElementType& elt, ErrorResult& rv)
     {
         if (IsContextLost())
             return;
 
+        const GLenum target = TexImageTargetToTexTarget(texImageTarget);
+        if (target == LOCAL_GL_NONE)
+            return ErrorInvalidEnumInfo("texSubImage2D: target", texImageTarget);
+
+        if (!ValidateTexImageFormatAndType(format, type, WebGLTexImageFunc::TexImage))
+            return;
+
+        if (level < 0)
+            return ErrorInvalidValue("texSubImage2D: level is negative");
+
+        const int32_t maxLevel = MaxTextureLevelForTexImageTarget(texImageTarget);
+        if (level > maxLevel)
+            return ErrorInvalidValue("texSubImage2D: level %d is too large, max is %d", level, maxLevel);
+
         // Trying to handle the video by GPU directly first
-        if (TexImageFromVideoElement(target, level, format, format, type, elt)) {
+        if (TexImageFromVideoElement(texImageTarget, level, format, format, type, elt)) {
             return;
         }
 
@@ -556,7 +572,7 @@ public:
 
         gfx::IntSize size = data->GetSize();
         uint32_t byteLength = data->Stride() * size.height;
-        return TexSubImage2D_base(target, level, xoffset, yoffset,
+        return TexSubImage2D_base(texImageTarget, level, xoffset, yoffset,
                                   size.width, size.height,
                                   data->Stride(), format, type,
                                   data->GetData(), byteLength,

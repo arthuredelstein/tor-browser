@@ -403,7 +403,7 @@ endif
 
 ifdef MOZ_OMX_PLUGIN
 DIST_FILES += libomxplugin.so libomxplugingb.so libomxplugingb235.so \
-              libomxpluginhc.so libomxpluginfroyo.so libomxpluginkk.so
+              libomxpluginhc.so libomxpluginkk.so
 endif
 
 SO_LIBRARIES := $(filter %.so,$(DIST_FILES))
@@ -753,7 +753,7 @@ endif # Darwin
 
 prepare-package: stage-package
 
-make-package-internal: prepare-package make-sourcestamp-file make-buildinfo-file
+make-package-internal: prepare-package make-sourcestamp-file make-buildinfo-file make-mozinfo-file
 	@echo 'Compressing...'
 	cd $(DIST) && $(MAKE_PACKAGE)
 
@@ -778,6 +778,10 @@ make-buildinfo-file:
 		$(addprefix MOZ_SOURCE_REPO=,MOZ_SOURCE_REPO=$(MOZ_SOURCE_REPO)) \
 		MOZ_SOURCE_STAMP=$(MOZ_SOURCE_STAMP) \
 		MOZ_PKG_PLATFORM=$(MOZ_PKG_PLATFORM)
+
+.PHONY: make-mozinfo-file
+make-mozinfo-file:
+	cp $(DEPTH)/mozinfo.json $(MOZ_MOZINFO_FILE)
 
 # The install target will install the application to prefix/lib/appname-version
 # In addition if INSTALL_SDK is set, it will install the development headers,
@@ -892,6 +896,7 @@ UPLOAD_FILES= \
   $(call QUOTED_WILDCARD,$(DIST)/$(SDK)) \
   $(call QUOTED_WILDCARD,$(MOZ_SOURCESTAMP_FILE)) \
   $(call QUOTED_WILDCARD,$(MOZ_BUILDINFO_FILE)) \
+  $(call QUOTED_WILDCARD,$(MOZ_MOZINFO_FILE)) \
   $(call QUOTED_WILDCARD,$(PKG_JSSHELL)) \
   $(if $(UPLOAD_EXTRA_FILES), $(foreach f, $(UPLOAD_EXTRA_FILES), $(wildcard $(DIST)/$(f))))
 

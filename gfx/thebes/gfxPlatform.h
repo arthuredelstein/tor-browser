@@ -31,7 +31,6 @@ class gfxFontGroup;
 struct gfxFontStyle;
 class gfxUserFontSet;
 class gfxFontEntry;
-class gfxProxyFontEntry;
 class gfxPlatformFontList;
 class gfxTextRun;
 class nsIURI;
@@ -320,8 +319,10 @@ public:
      * Ownership of the returned gfxFontEntry is passed to the caller,
      * who must either AddRef() or delete.
      */
-    virtual gfxFontEntry* LookupLocalFont(const gfxProxyFontEntry *aProxyEntry,
-                                          const nsAString& aFontName)
+    virtual gfxFontEntry* LookupLocalFont(const nsAString& aFontName,
+                                          uint16_t aWeight,
+                                          int16_t aStretch,
+                                          bool aItalic)
     { return nullptr; }
 
     /**
@@ -332,8 +333,11 @@ public:
      * Ownership of the returned gfxFontEntry is passed to the caller,
      * who must either AddRef() or delete.
      */
-    virtual gfxFontEntry* MakePlatformFont(const gfxProxyFontEntry *aProxyEntry,
-                                           const uint8_t *aFontData,
+    virtual gfxFontEntry* MakePlatformFont(const nsAString& aFontName,
+                                           uint16_t aWeight,
+                                           int16_t aStretch,
+                                           bool aItalic,
+                                           const uint8_t* aFontData,
                                            uint32_t aLength);
 
     /**
@@ -543,6 +547,7 @@ public:
 
     static bool UsesOffMainThreadCompositing();
 
+    bool HasEnoughTotalSystemMemoryForSkiaGL();
 protected:
     gfxPlatform();
     virtual ~gfxPlatform();
@@ -611,6 +616,8 @@ protected:
 
     // max number of entries in word cache
     int32_t mWordCacheMaxEntries;
+
+    uint32_t mTotalSystemMemory;
 
 private:
     /**

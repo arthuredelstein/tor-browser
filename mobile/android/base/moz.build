@@ -44,13 +44,6 @@ mgjar.generated_sources += [
 ]
 mgjar.javac_flags += ['-Xlint:all']
 
-wsjar = add_java_jar('websockets')
-wsjar.sources += [ thirdparty_source_dir + f for f in [
-    'com/codebutler/android_websockets/HybiParser.java',
-    'com/codebutler/android_websockets/WebSocketClient.java',
-] ]
-wsjar.javac_flags += ['-Xlint:all,-serial']
-
 gujar = add_java_jar('gecko-util')
 gujar.sources += [
     'util/ActivityResultHandler.java',
@@ -194,6 +187,8 @@ gbjar.sources += [
     'GeckoBatteryManager.java',
     'GeckoConnectivityReceiver.java',
     'GeckoEditable.java',
+    'GeckoEditableClient.java',
+    'GeckoEditableListener.java',
     'GeckoEvent.java',
     'GeckoHalDefines.java',
     'GeckoInputConnection.java',
@@ -331,6 +326,7 @@ gbjar.sources += [
     'menu/MenuPanel.java',
     'menu/MenuPopup.java',
     'MotionEventInterceptor.java',
+    'NewTabletUI.java',
     'NotificationClient.java',
     'NotificationHandler.java',
     'NotificationHelper.java',
@@ -374,6 +370,7 @@ gbjar.sources += [
     'ReaderModeUtils.java',
     'RemoteTabsExpandableListAdapter.java',
     'Restarter.java',
+    'RestrictedProfiles.java',
     'ScrollAnimator.java',
     'ServiceNotificationClient.java',
     'SessionParser.java',
@@ -396,8 +393,13 @@ gbjar.sources += [
     'tabs/RemoteTabsSetupPanel.java',
     'tabs/RemoteTabsVerificationPanel.java',
     'tabs/TabCurve.java',
+    'tabs/TabsLayoutAdapter.java',
+    'tabs/TabsLayoutItemView.java',
+    'tabs/TabsListLayout.java',
     'tabs/TabsPanel.java',
-    'tabs/TabsTray.java',
+    'tabs/TabStripAdapter.java',
+    'tabs/TabStripItemView.java',
+    'tabs/TabStripView.java',
     'TabsAccessor.java',
     'Telemetry.java',
     'TelemetryContract.java',
@@ -407,6 +409,12 @@ gbjar.sources += [
     'toolbar/AutocompleteHandler.java',
     'toolbar/BackButton.java',
     'toolbar/BrowserToolbar.java',
+    'toolbar/BrowserToolbarNewTablet.java',
+    'toolbar/BrowserToolbarPhone.java',
+    'toolbar/BrowserToolbarPhoneBase.java',
+    'toolbar/BrowserToolbarPreHC.java',
+    'toolbar/BrowserToolbarTablet.java',
+    'toolbar/BrowserToolbarTabletBase.java',
     'toolbar/CanvasDelegate.java',
     'toolbar/ForwardButton.java',
     'toolbar/PageActionLayout.java',
@@ -508,7 +516,6 @@ gbjar.extra_jars = [
     'nineoldandroids.jar',
     'squareup-picasso.jar',
     'sync-thirdparty.jar',
-    'websockets.jar',
 ]
 
 moz_native_devices_jars = [
@@ -518,6 +525,7 @@ moz_native_devices_jars = [
 ]
 moz_native_devices_sources = [
     'ChromeCast.java',
+    'GeckoMediaPlayer.java',
     'MediaPlayerManager.java',
 ]
 if CONFIG['MOZ_NATIVE_DEVICES']:

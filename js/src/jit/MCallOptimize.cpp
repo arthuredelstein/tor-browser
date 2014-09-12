@@ -1291,7 +1291,7 @@ IonBuilder::inlineConstantCharCodeAt(CallInfo &callInfo)
     callInfo.setImplicitlyUsedUnchecked();
 
     JSLinearString &linstr = str->asLinear();
-    jschar ch = linstr.latin1OrTwoByteChar(idx);
+    char16_t ch = linstr.latin1OrTwoByteChar(idx);
     MConstant *result = MConstant::New(alloc(), Int32Value(ch));
     current->add(result);
     current->push(result);
@@ -1982,9 +1982,9 @@ IonBuilder::inlineIsCallable(CallInfo &callInfo)
     } else {
         types::TemporaryTypeSet *types = callInfo.getArg(0)->resultTypeSet();
         const Class *clasp = types ? types->getKnownClass() : nullptr;
-        if (clasp) {
+        if (clasp && !clasp->isProxy()) {
             isCallableKnown = true;
-            isCallableConstant = clasp->isCallable();
+            isCallableConstant = clasp->nonProxyCallable();
         }
     }
 

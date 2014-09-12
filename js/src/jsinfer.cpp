@@ -698,8 +698,20 @@ TypeSet::cloneObjectsOnly(LifoAlloc *alloc)
     if (!res)
         return nullptr;
 
-    res->flags &= TYPE_FLAG_ANYOBJECT;
+    res->flags &= ~TYPE_FLAG_BASE_MASK | TYPE_FLAG_ANYOBJECT;
 
+    return res;
+}
+
+TemporaryTypeSet *
+TypeSet::cloneWithoutObjects(LifoAlloc *alloc)
+{
+    TemporaryTypeSet *res = alloc->new_<TemporaryTypeSet>();
+    if (!res)
+        return nullptr;
+
+    res->flags = flags & ~TYPE_FLAG_ANYOBJECT;
+    res->setBaseObjectCount(0);
     return res;
 }
 
@@ -719,6 +731,53 @@ TypeSet::unionSets(TypeSet *a, TypeSet *b, LifoAlloc *alloc)
         for (size_t i = 0; i < b->getObjectCount() && !res->unknownObject(); i++) {
             if (TypeObjectKey *key = b->getObject(i))
                 res->addType(Type::ObjectType(key), alloc);
+        }
+    }
+
+    return res;
+}
+
+/* static */ TemporaryTypeSet *
+TypeSet::intersectSets(TemporaryTypeSet *a, TemporaryTypeSet *b, LifoAlloc *alloc)
+{
+    TemporaryTypeSet *res;
+    res = alloc->new_<TemporaryTypeSet>(a->baseFlags() & b->baseFlags(),
+                static_cast<TypeObjectKey**>(nullptr));
+    if (!res)
+        return nullptr;
+
+    res->setBaseObjectCount(0);
+    if (res->unknownObject())
+        return res;
+
+    MOZ_ASSERT(!a->unknownObject() || !b->unknownObject());
+
+    if (a->unknownObject()) {
+        for (size_t i = 0; i < b->getObjectCount(); i++) {
+            if (b->getObject(i))
+                res->addType(Type::ObjectType(b->getObject(i)), alloc);
+        }
+        return res;
+    }
+
+    if (b->unknownObject()) {
+        for (size_t i = 0; i < a->getObjectCount(); i++) {
+            if (b->getObject(i))
+                res->addType(Type::ObjectType(a->getObject(i)), alloc);
+        }
+        return res;
+    }
+
+    MOZ_ASSERT(!a->unknownObject() && !b->unknownObject());
+
+    for (size_t i = 0; i < a->getObjectCount(); i++) {
+        for (size_t j = 0; j < b->getObjectCount(); j++) {
+            if (b->getObject(j) != a->getObject(i))
+                continue;
+            if (!b->getObject(j))
+                continue;
+            res->addType(Type::ObjectType(b->getObject(j)), alloc);
+            break;
         }
     }
 
@@ -1191,7 +1250,7 @@ types::FinishCompilation(JSContext *cx, HandleScript script, ExecutionMode execu
 
     if (!succeeded || types.compilerOutputs->back().pendingInvalidation()) {
         types.compilerOutputs->back().invalidate();
-        script->resetUseCount();
+        script->resetWarmUpCounter();
         return false;
     }
 
@@ -1752,20 +1811,20 @@ HeapTypeSetKey::constant(CompilerConstraintList *constraints, Value *valOut)
     if (nonData(constraints))
         return false;
 
-    if (!maybeTypes())
-        return false;
-
-    if (maybeTypes()->nonConstantProperty())
-        return false;
-
     // Only singleton object properties can be marked as constants.
-    JS_ASSERT(object()->singleton());
+    JSObject *obj = object()->singleton();
+    if (!obj || !obj->isNative())
+        return false;
+
+    if (maybeTypes() && maybeTypes()->nonConstantProperty())
+        return false;
 
     // Get the current value of the property.
-    Shape *shape = object()->singleton()->nativeLookupPure(id());
-    if (!shape)
+    Shape *shape = obj->nativeLookupPure(id());
+    if (!shape || !shape->hasDefaultGetter() || !shape->hasSlot() || shape->hadOverwrite())
         return false;
-    Value val = object()->singleton()->nativeGetSlot(shape->slot());
+
+    Value val = obj->nativeGetSlot(shape->slot());
 
     // If the value is a pointer to an object in the nursery, don't optimize.
     if (val.isGCThing() && IsInsideNursery(val.toGCThing()))
@@ -2004,7 +2063,7 @@ TemporaryTypeSet::maybeCallable()
     unsigned count = getObjectCount();
     for (unsigned i = 0; i < count; i++) {
         const Class *clasp = getObjectClass(i);
-        if (clasp && clasp->isCallable())
+        if (clasp && (clasp->isProxy() || clasp->nonProxyCallable()))
             return true;
     }
 
@@ -2359,7 +2418,7 @@ TypeZone::addPendingRecompile(JSContext *cx, JSScript *script)
 
     // Let the script warm up again before attempting another compile.
     if (jit::IsBaselineEnabled(cx))
-        script->resetUseCount();
+        script->resetWarmUpCounter();
 
     if (script->hasIonScript())
         addPendingRecompile(cx, script->ionScript()->recompileInfo());
@@ -3887,7 +3946,7 @@ TypeNewScript::maybeAnalyze(JSContext *cx, TypeObject *type, bool *regenerate, b
     if (!jit::AnalyzeNewScriptDefiniteProperties(cx, fun, type, templateRoot, &initializerVector))
         return false;
 
-    if (type->unknownProperties())
+    if (!type->newScript())
         return true;
 
     JS_ASSERT(OnlyHasDataProperties(templateObject()->lastProperty()));

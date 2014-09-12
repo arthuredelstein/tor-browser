@@ -135,6 +135,17 @@ HostInDomain(const nsCString &aHost, const nsCString &aPattern)
 static bool
 HostHasPermission(nsIURI &docURI)
 {
+  nsresult rv;
+
+  bool isHttps;
+  rv = docURI.SchemeIs("https",&isHttps);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return false;
+  }
+  if (!isHttps) {
+    return false;
+  }
+
   nsAdoptingCString hostName;
   docURI.GetAsciiHost(hostName); //normalize UTF8 to ASCII equivalent
   nsAdoptingCString domainWhiteList =
@@ -145,7 +156,6 @@ HostHasPermission(nsIURI &docURI)
     return false;
   }
 
-  nsresult rv;
   // Get UTF8 to ASCII domain name normalization service
   nsCOMPtr<nsIIDNService> idnService
     = do_GetService("@mozilla.org/network/idn-service;1", &rv);
@@ -505,15 +515,18 @@ public:
       (aVideoSource ? DOMMediaStream::HINT_CONTENTS_VIDEO : 0);
 
     nsRefPtr<nsDOMUserMediaStream> stream = new nsDOMUserMediaStream(aListener,
-                                                                     aAudioSource);
+                                                                     aAudioSource,
+                                                                     aVideoSource);
     stream->InitTrackUnionStream(aWindow, hints);
     return stream.forget();
   }
 
   nsDOMUserMediaStream(GetUserMediaCallbackMediaStreamListener* aListener,
-                       MediaEngineSource *aAudioSource) :
+                       MediaEngineSource *aAudioSource,
+                       MediaEngineSource *aVideoSource) :
     mListener(aListener),
     mAudioSource(aAudioSource),
+    mVideoSource(aVideoSource),
     mEchoOn(true),
     mAgcOn(false),
     mNoiseOn(true),
@@ -625,12 +638,32 @@ public:
     GetStream()->AsProcessedStream()->ForwardTrackEnabled(aID, aEnabled);
   }
 
+  virtual DOMLocalMediaStream* AsDOMLocalMediaStream()
+  {
+    return this;
+  }
+
+  virtual MediaEngineSource* GetMediaEngine(TrackID aTrackID)
+  {
+    // MediaEngine supports only one video and on video track now and TrackID is
+    // fixed in MediaEngine.
+    if (aTrackID == kVideoTrack) {
+      return mVideoSource;
+    }
+    else if (aTrackID == kAudioTrack) {
+      return mAudioSource;
+    }
+
+    return nullptr;
+  }
+
   // The actual MediaStream is a TrackUnionStream. But these resources need to be
   // explicitly destroyed too.
   nsRefPtr<SourceMediaStream> mSourceStream;
   nsRefPtr<MediaInputPort> mPort;
   nsRefPtr<GetUserMediaCallbackMediaStreamListener> mListener;
   nsRefPtr<MediaEngineSource> mAudioSource; // so we can turn on AEC
+  nsRefPtr<MediaEngineSource> mVideoSource;
   bool mEchoOn;
   bool mAgcOn;
   bool mNoiseOn;

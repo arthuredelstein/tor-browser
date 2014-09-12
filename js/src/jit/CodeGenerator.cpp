@@ -23,6 +23,7 @@
 # include "gc/Nursery.h"
 #endif
 #include "jit/BaselineCompiler.h"
+#include "jit/IonBuilder.h"
 #include "jit/IonCaches.h"
 #include "jit/IonLinker.h"
 #include "jit/IonOptimizationLevels.h"
@@ -1079,7 +1080,6 @@ CodeGenerator::visitStringReplace(LStringReplace *lir)
 
     return callVM(StringReplaceInfo, lir);
 }
-
 
 typedef JSObject *(*LambdaFn)(JSContext *, HandleFunction, HandleObject);
 static const VMFunction LambdaInfo = FunctionInfo<LambdaFn>(js::Lambda);
@@ -5177,8 +5177,9 @@ static void
 CopyStringChars(MacroAssembler &masm, Register to, Register from, Register len, Register scratch,
                 size_t fromWidth, size_t toWidth)
 {
-    // Copy |len| jschars from |from| to |to|. Assumes len > 0 (checked below in
-    // debug builds), and when done |to| must point to the next available char.
+    // Copy |len| char16_t code units from |from| to |to|. Assumes len > 0
+    // (checked below in debug builds), and when done |to| must point to the
+    // next available char.
 
 #ifdef DEBUG
     Label ok;
@@ -5219,13 +5220,13 @@ CopyStringCharsMaybeInflate(MacroAssembler &masm, Register input, Register destC
                       Imm32(JSString::LATIN1_CHARS_BIT), &isLatin1);
     {
         masm.loadStringChars(input, input);
-        CopyStringChars(masm, destChars, input, temp1, temp2, sizeof(jschar), sizeof(jschar));
+        CopyStringChars(masm, destChars, input, temp1, temp2, sizeof(char16_t), sizeof(char16_t));
         masm.jump(&done);
     }
     masm.bind(&isLatin1);
     {
         masm.loadStringChars(input, input);
-        CopyStringChars(masm, destChars, input, temp1, temp2, sizeof(char), sizeof(jschar));
+        CopyStringChars(masm, destChars, input, temp1, temp2, sizeof(char), sizeof(char16_t));
     }
     masm.bind(&done);
 }
@@ -5495,6 +5496,40 @@ JitRuntime::generateFreeStub(JSContext *cx)
     writePerfSpewerJitCodeProfile(code, "FreeStub");
 #endif
 
+    return code;
+}
+
+
+JitCode *
+JitRuntime::generateLazyLinkStub(JSContext *cx)
+{
+    MacroAssembler masm(cx);
+
+    Label call;
+    GeneralRegisterSet regs = GeneralRegisterSet::Volatile();
+    Register temp0 = regs.takeAny();
+
+    uint32_t descriptor = MakeFrameDescriptor(masm.framePushed(), JitFrame_IonJS);
+    masm.Push(Imm32(descriptor));
+    masm.call(&call);
+    masm.jump(ReturnReg);
+
+    masm.bind(&call);
+    masm.enterExitFrame();
+    masm.setupUnalignedABICall(1, temp0);
+    masm.loadJSContext(temp0);
+    masm.passABIArg(temp0);
+    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void *, LazyLinkTopActivation));
+    masm.leaveExitFrame();
+    masm.retn(Imm32(sizeof(IonExitFrameLayout)));
+
+    Linker linker(masm);
+    AutoFlushICache afc("LazyLinkStub");
+    JitCode *code = linker.newCode<NoGC>(cx, OTHER_CODE);
+
+#ifdef JS_ION_PERF
+    writePerfSpewerJitCodeProfile(code, "LazyLinkStub");
+#endif
     return code;
 }
 
@@ -6925,7 +6960,7 @@ CodeGenerator::link(JSContext *cx, types::CompilerConstraintList *constraints)
     if (sps_.enabled())
         ionScript->setHasSPSInstrumentation();
 
-    SetIonScript(script, executionMode, ionScript);
+    SetIonScript(cx, script, executionMode, ionScript);
 
     // In parallel execution mode, when we first compile a script, we
     // don't know that its potential callees are compiled, so set a
@@ -8729,16 +8764,40 @@ CodeGenerator::visitProfilerStackOp(LProfilerStackOp *lir)
     }
 }
 
+class OutOfLineIsCallable : public OutOfLineCodeBase<CodeGenerator>
+{
+    LIsCallable *ins_;
+
+  public:
+    OutOfLineIsCallable(LIsCallable *ins)
+      : ins_(ins)
+    { }
+
+    bool accept(CodeGenerator *codegen) {
+        return codegen->visitOutOfLineIsCallable(this);
+    }
+    LIsCallable *ins() const {
+        return ins_;
+    }
+};
+
 bool
 CodeGenerator::visitIsCallable(LIsCallable *ins)
 {
     Register object = ToRegister(ins->object());
     Register output = ToRegister(ins->output());
 
+    OutOfLineIsCallable *ool = new(alloc()) OutOfLineIsCallable(ins);
+    if (!addOutOfLineCode(ool, ins->mir()))
+        return false;
+
+    Label notFunction, done;
     masm.loadObjClass(object, output);
 
-    // An object is callable iff (is<JSFunction>() || getClass()->call).
-    Label notFunction, done, notCall;
+    // Just skim proxies off. Their notion of isCallable() is more complicated.
+    masm.branchTestClassIsProxy(true, output, ool->entry());
+
+    // An object is callable iff (is<JSFunction>() || getClass()->call.
     masm.branchPtr(Assembler::NotEqual, output, ImmPtr(&JSFunction::class_), &notFunction);
     masm.move32(Imm32(1), output);
     masm.jump(&done);
@@ -8746,6 +8805,28 @@ CodeGenerator::visitIsCallable(LIsCallable *ins)
     masm.bind(&notFunction);
     masm.cmpPtrSet(Assembler::NonZero, Address(output, offsetof(js::Class, call)), ImmPtr(nullptr), output);
     masm.bind(&done);
+    masm.bind(ool->rejoin());
+
+    return true;
+}
+
+bool
+CodeGenerator::visitOutOfLineIsCallable(OutOfLineIsCallable *ool)
+{
+    LIsCallable *ins = ool->ins();
+    Register object = ToRegister(ins->object());
+    Register output = ToRegister(ins->output());
+
+    saveVolatile(output);
+    masm.setupUnalignedABICall(1, output);
+    masm.passABIArg(object);
+    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void *, ObjectIsCallable));
+    masm.storeCallResult(output);
+    // C++ compilers like to only use the bottom byte for bools, but we need to maintain the entire
+    // register.
+    masm.and32(Imm32(0xFF), output);
+    restoreVolatile(output);
+    masm.jump(ool->rejoin());
 
     return true;
 }
@@ -9105,8 +9186,8 @@ CodeGenerator::visitRecompileCheck(LRecompileCheck *ins)
     Register tmp = ToRegister(ins->scratch());
     OutOfLineCode *ool = oolCallVM(RecompileFnInfo, ins, (ArgList()), StoreRegisterTo(tmp));
 
-    // Check if usecount is high enough.
-    masm.movePtr(ImmPtr(ins->mir()->script()->addressOfUseCount()), tmp);
+    // Check if warm-up counter is high enough.
+    masm.movePtr(ImmPtr(ins->mir()->script()->addressOfWarmUpCounter()), tmp);
     Address ptr(tmp, 0);
     masm.add32(Imm32(1), tmp);
     masm.branch32(Assembler::BelowOrEqual, ptr, Imm32(ins->mir()->recompileThreshold()), &done);

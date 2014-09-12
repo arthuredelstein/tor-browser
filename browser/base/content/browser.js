@@ -180,6 +180,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "TabCrashReporter",
 XPCOMUtils.defineLazyModuleGetter(this, "FormValidationHandler",
   "resource:///modules/FormValidationHandler.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "UITour",
+  "resource:///modules/UITour.jsm");
+
 let gInitialPages = [
   "about:blank",
   "about:newtab",
@@ -1016,6 +1019,12 @@ var gBrowserInit = {
         setTimeout(pageShowEventHandlers, 0, message.data.persisted);
       }
     });
+
+    gBrowser.addEventListener("AboutTabCrashedLoad", function(event) {
+#ifdef MOZ_CRASHREPORTER
+      TabCrashReporter.onAboutTabCrashedLoad(gBrowser.getBrowserForDocument(event.target));
+#endif
+    }, false, true);
 
     if (uriToLoad && uriToLoad != "about:blank") {
       if (uriToLoad instanceof Ci.nsISupportsArray) {
@@ -2336,6 +2345,9 @@ let BrowserOnClick = {
 
     let originalTarget = event.originalTarget;
     let ownerDoc = originalTarget.ownerDocument;
+    if (!ownerDoc) {
+      return;
+    }
 
     if (gMultiProcessBrowser &&
         ownerDoc.documentURI.toLowerCase() == "about:newtab") {
@@ -3122,9 +3134,13 @@ const BrowserSearch = {
    * @param source
    *        (string) Where the search originated from. See the FHR
    *        SearchesProvider for allowed values.
+   * @param selection [optional]
+   *        ({index: The selected index, kind: "key" or "mouse"}) If
+   *        the search was a suggested search, this indicates where the
+   *        item was in the suggestion list and how the user selected it.
    */
-  recordSearchInHealthReport: function (engine, source) {
-    BrowserUITelemetry.countSearchEvent(source);
+  recordSearchInHealthReport: function (engine, source, selection) {
+    BrowserUITelemetry.countSearchEvent(source, null, selection);
 #ifdef MOZ_SERVICES_HEALTHREPORT
     let reporter = Cc["@mozilla.org/datareporting/service;1"]
                      .getService()
@@ -4037,11 +4053,6 @@ var TabsProgressListener = {
         if (event.target.documentElement)
           event.target.documentElement.removeAttribute("hasBrowserHandlers");
       }, true);
-
-#ifdef MOZ_CRASHREPORTER
-      if (doc.documentURI.startsWith("about:tabcrashed"))
-        TabCrashReporter.onAboutTabCrashedLoad(aBrowser);
-#endif
     }
   },
 
@@ -6878,8 +6889,8 @@ let gRemoteTabsUI = {
       return;
     }
 
-    let remoteTabs = gPrefService.getBoolPref("browser.tabs.remote");
-    let autostart = gPrefService.getBoolPref("browser.tabs.remote.autostart");
+    let remoteTabs = Services.appinfo.browserTabsRemote;
+    let autostart = Services.appinfo.browserTabsRemoteAutostart;
 
     let newRemoteWindow = document.getElementById("menu_newRemoteWindow");
     let newNonRemoteWindow = document.getElementById("menu_newNonRemoteWindow");
@@ -6909,9 +6920,13 @@ let gRemoteTabsUI = {
  *        If switching to this URI results in us opening a tab, aOpenParams
  *        will be the parameter object that gets passed to openUILinkIn. Please
  *        see the documentation for openUILinkIn to see what parameters can be
- *        passed via this object. This object also allows the 'ignoreFragment'
- *        property to be set to true to exclude fragment-portion matching when
- *        comparing URIs.
+ *        passed via this object.
+ *        This object also allows:
+ *        - 'ignoreFragment' property to be set to true to exclude fragment-portion
+ *        matching when comparing URIs.
+ *        - 'replaceQueryString' property to be set to true to exclude query string
+ *        matching when comparing URIs and ovewrite the initial query string with
+ *        the one from the new URI.
  * @return True if an existing tab was found, false otherwise
  */
 function switchToTabHavingURI(aURI, aOpenNew, aOpenParams={}) {
@@ -6922,6 +6937,8 @@ function switchToTabHavingURI(aURI, aOpenNew, aOpenParams={}) {
   ]);
 
   let ignoreFragment = aOpenParams.ignoreFragment;
+  let replaceQueryString = aOpenParams.replaceQueryString;
+
   // This property is only used by switchToTabHavingURI and should
   // not be used as a parameter for the new load.
   delete aOpenParams.ignoreFragment;
@@ -6952,6 +6969,15 @@ function switchToTabHavingURI(aURI, aOpenNew, aOpenParams={}) {
           browser.loadURI(spec);
         }
         return true;
+      }
+      if (replaceQueryString) {
+        if (browser.currentURI.spec.split("?")[0] == aURI.spec.split("?")[0]) {
+          // Focus the matching window & tab
+          aWindow.focus();
+          aWindow.gBrowser.tabContainer.selectedIndex = i;
+          browser.loadURI(aURI.spec);
+          return true;
+        }
       }
     }
     return false;

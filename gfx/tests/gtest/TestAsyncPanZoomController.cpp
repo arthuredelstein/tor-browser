@@ -1481,7 +1481,7 @@ protected:
   }
 
   static TestAsyncPanZoomController* ApzcOf(Layer* aLayer) {
-    EXPECT_EQ(1, aLayer->GetFrameMetricsCount());
+    EXPECT_EQ(1u, aLayer->GetFrameMetricsCount());
     return (TestAsyncPanZoomController*)aLayer->GetAsyncPanZoomController(0);
   }
 
@@ -1505,7 +1505,8 @@ protected:
   already_AddRefed<AsyncPanZoomController> GetTargetAPZC(const ScreenPoint& aPoint) {
     nsRefPtr<AsyncPanZoomController> hit = manager->GetTargetAPZC(aPoint, nullptr);
     if (hit) {
-      manager->GetInputTransforms(hit.get(), transformToApzc, transformToGecko);
+      transformToApzc = manager->GetScreenToApzcTransform(hit.get());
+      transformToGecko = manager->GetApzcToGeckoTransform(hit.get());
     }
     return hit.forget();
   }

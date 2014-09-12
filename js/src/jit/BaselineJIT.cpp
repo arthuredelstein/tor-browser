@@ -258,17 +258,17 @@ CanEnterBaselineJIT(JSContext *cx, HandleScript script, bool osr)
     if (script->hasBaselineScript())
         return Method_Compiled;
 
-    // Check script use count.
+    // Check script warm-up counter.
     //
     // Also eagerly compile if we are in parallel warmup, the point of which
     // is to gather type information so that the script may be compiled for
     // parallel execution. We want to avoid the situation of OSRing during
-    // warmup and only gathering type information for the loop, and not the
+    // warm-up and only gathering type information for the loop, and not the
     // rest of the function.
     if (cx->runtime()->forkJoinWarmup > 0) {
         if (osr)
             return Method_Skipped;
-    } else if (script->incUseCount() <= js_JitOptions.baselineUsesBeforeCompile) {
+    } else if (script->incWarmUpCounter() <= js_JitOptions.baselineWarmUpThreshold) {
         return Method_Skipped;
     }
 
@@ -891,6 +891,10 @@ jit::FinishDiscardBaselineScript(FreeOp *fop, JSScript *script)
         // Reset |active| flag so that we don't need a separate script
         // iteration to unmark them.
         script->baselineScript()->resetActive();
+
+        // The baseline caches have been wiped out, so the script will need to
+        // warm back up before it can be inlined during Ion compilation.
+        script->baselineScript()->clearIonCompiledOrInlined();
         return;
     }
 

@@ -35,6 +35,10 @@
 #include "nsTArray.h"                   // for nsAutoTArray
 #include "TextRenderer.h"               // for TextRenderer
 #include <vector>
+#include "GeckoProfiler.h"              // for GeckoProfiler
+#ifdef MOZ_ENABLE_PROFILER_SPS
+#include "ProfilerMarkers.h"            // for ProfilerMarkers
+#endif
 
 #define CULLING_LOG(...)
 // #define CULLING_LOG(...) printf_stderr("CULLING: " __VA_ARGS__)
@@ -115,7 +119,10 @@ static void DrawLayerInfo(const RenderTargetIntRect& aClipRect,
 
 static void PrintUniformityInfo(Layer* aLayer)
 {
-  static TimeStamp t0 = TimeStamp::Now();
+#ifdef MOZ_ENABLE_PROFILER_SPS
+  if (!profiler_is_active()) {
+    return;
+  }
 
   // Don't want to print a log for smaller layers
   if (aLayer->GetEffectiveVisibleRegion().GetBounds().width < 300 ||
@@ -127,10 +134,11 @@ static void PrintUniformityInfo(Layer* aLayer)
   if (!transform.Is2D()) {
     return;
   }
+
   Point translation = transform.As2D().GetTranslation();
-  printf_stderr("UniformityInfo Layer_Move %llu %p %s\n",
-      (unsigned long long)(TimeStamp::Now() - t0).ToMilliseconds(), aLayer,
-      ToString(translation).c_str());
+  LayerTranslationPayload* payload = new LayerTranslationPayload(aLayer, translation);
+  PROFILER_MARKER_PAYLOAD("LayerTranslation", payload);
+#endif
 }
 
 /* all of the per-layer prepared data we need to maintain */
@@ -176,7 +184,7 @@ ContainerPrepare(ContainerT* aContainer,
     }
 
     RenderTargetIntRect clipRect = layerToRender->GetLayer()->
-        CalculateScissorRect(aClipRect, &aManager->GetWorldTransform());
+        CalculateScissorRect(aClipRect);
     if (clipRect.IsEmpty()) {
       continue;
     }
@@ -435,7 +443,8 @@ ContainerRender(ContainerT* aContainer,
     // underlying layer.
     for (LayerMetricsWrapper i(aContainer); i; i = i.GetFirstChild()) {
       if (AsyncPanZoomController* apzc = i.GetApzc()) {
-        if (!Matrix4x4(apzc->GetCurrentAsyncTransform()).IsIdentity()) {
+        if (!apzc->GetAsyncTransformAppliedToContent()
+            && !Matrix4x4(apzc->GetCurrentAsyncTransform()).IsIdentity()) {
           aManager->UnusedApzTransformWarning();
           break;
         }

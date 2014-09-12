@@ -652,6 +652,10 @@ var SelectionHandler = {
       },
       selector: {
         matches: function() {
+          if (!ParentalControls.isAllowed(ParentalControls.SHARE)) {
+            return false;
+          }
+
           return SelectionHandler.isSelectionActive();
         }
       }
@@ -797,8 +801,8 @@ var SelectionHandler = {
   },
 
   isElementEditableText: function (aElement) {
-    return ((aElement instanceof HTMLInputElement && aElement.mozIsTextField(false)) ||
-            (aElement instanceof HTMLTextAreaElement));
+    return (((aElement instanceof HTMLInputElement && aElement.mozIsTextField(false)) ||
+            (aElement instanceof HTMLTextAreaElement)) && !aElement.readOnly);
   },
 
   /*

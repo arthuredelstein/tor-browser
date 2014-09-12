@@ -55,18 +55,13 @@ GetBuildConfiguration(JSContext *cx, unsigned argc, jsval *vp)
     if (!info)
         return false;
 
-    RootedValue value(cx, BooleanValue(false));
-    if (!JS_SetProperty(cx, info, "rooting-analysis", value))
+    if (!JS_SetProperty(cx, info, "rooting-analysis", FalseHandleValue))
         return false;
 
-#ifdef JSGC_USE_EXACT_ROOTING
-    value = BooleanValue(true);
-#else
-    value = BooleanValue(false);
-#endif
-    if (!JS_SetProperty(cx, info, "exact-rooting", value))
+    if (!JS_SetProperty(cx, info, "exact-rooting", TrueHandleValue))
         return false;
 
+    RootedValue value(cx);
 #ifdef DEBUG
     value = BooleanValue(true);
 #else
@@ -1727,7 +1722,7 @@ ReportLargeAllocationFailure(JSContext *cx, unsigned argc, jsval *vp)
 
 namespace heaptools {
 
-typedef UniquePtr<jschar[], JS::FreePolicy> EdgeName;
+typedef UniquePtr<char16_t[], JS::FreePolicy> EdgeName;
 
 // An edge to a node from its predecessor in a path through the graph.
 class BackEdge {
@@ -1951,9 +1946,9 @@ EvalReturningScope(JSContext *cx, unsigned argc, jsval *vp)
     if (!strChars.initTwoByte(cx, str))
         return false;
 
-    mozilla::Range<const jschar> chars = strChars.twoByteRange();
+    mozilla::Range<const char16_t> chars = strChars.twoByteRange();
     size_t srclen = chars.length();
-    const jschar *src = chars.start().get();
+    const char16_t *src = chars.start().get();
 
     JS::AutoFilename filename;
     unsigned lineno;

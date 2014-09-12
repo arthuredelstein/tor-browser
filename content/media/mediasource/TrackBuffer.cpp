@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +19,11 @@
 #include "nsIRunnable.h"
 #include "nsThreadUtils.h"
 #include "prlog.h"
+
+#if defined(DEBUG)
+#include <sys/stat.h>
+#include <sys/types.h>
+#endif
 
 struct JSContext;
 class JSObject;
@@ -106,10 +112,13 @@ TrackBuffer::AppendData(const uint8_t* aData, uint32_t aLength)
   }
 
   SourceBufferResource* resource = mCurrentDecoder->GetResource();
+  int64_t appendOffset = resource->GetLength();
+  resource->AppendData(aData, aLength);
   // XXX: For future reference: NDA call must run on the main thread.
   mCurrentDecoder->NotifyDataArrived(reinterpret_cast<const char*>(aData),
-                                     aLength, resource->GetLength());
-  resource->AppendData(aData, aLength);
+                                     aLength, appendOffset);
+  mParentDecoder->NotifyTimeRangesChanged();
+
   return true;
 }
 
@@ -245,6 +254,7 @@ TrackBuffer::RegisterDecoder(nsRefPtr<SourceBufferDecoder> aDecoder)
     MSE_DEBUG("TrackBuffer(%p)::RegisterDecoder with mismatched audio/video tracks", this);
   }
   mInitializedDecoders.AppendElement(aDecoder);
+  mParentDecoder->NotifyTimeRangesChanged();
 }
 
 void
@@ -344,5 +354,23 @@ TrackBuffer::Decoders()
   // XXX assert OnDecodeThread
   return mInitializedDecoders;
 }
+
+#if defined(DEBUG)
+void
+TrackBuffer::Dump(const char* aPath)
+{
+  char path[255];
+  PR_snprintf(path, sizeof(path), "%s/trackbuffer-%p", aPath, this);
+  PR_MkDir(path, 0700);
+
+  for (uint32_t i = 0; i < mDecoders.Length(); ++i) {
+    char buf[255];
+    PR_snprintf(buf, sizeof(buf), "%s/reader-%p", path, mDecoders[i]->GetReader());
+    PR_MkDir(buf, 0700);
+
+    mDecoders[i]->GetResource()->Dump(buf);
+  }
+}
+#endif
 
 } // namespace mozilla

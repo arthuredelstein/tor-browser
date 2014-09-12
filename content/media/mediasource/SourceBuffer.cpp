@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -202,7 +203,7 @@ private:
 
 class MP4ContainerParser : public ContainerParser {
 public:
-  MP4ContainerParser() : mTimescale(0) {}
+  MP4ContainerParser() {}
 
   bool IsInitSegmentPresent(const uint8_t* aData, uint32_t aLength)
   {
@@ -234,15 +235,21 @@ public:
   virtual bool ParseStartAndEndTimestamps(const uint8_t* aData, uint32_t aLength,
                                           double& aStart, double& aEnd)
   {
-    mp4_demuxer::MoofParser parser(new mp4_demuxer::BufferStream(aData, aLength), 0);
-    parser.mMdhd.mTimescale = mTimescale;
+    bool initSegment = IsInitSegmentPresent(aData, aLength);
+    if (initSegment) {
+      mStream = new mp4_demuxer::BufferStream();
+      mParser = new mp4_demuxer::MoofParser(mStream, 0);
+    } else if (!mStream || !mParser) {
+      return false;
+    }
 
+    mStream->AppendBytes(aData, aLength);
     nsTArray<MediaByteRange> byteRanges;
-    byteRanges.AppendElement(MediaByteRange(0, aLength));
-    parser.RebuildFragmentedIndex(byteRanges);
+    byteRanges.AppendElement(mStream->GetByteRange());
+    mParser->RebuildFragmentedIndex(byteRanges);
 
-    if (IsInitSegmentPresent(aData, aLength)) {
-      const MediaByteRange& range = parser.mInitRange;
+    if (initSegment) {
+      const MediaByteRange& range = mParser->mInitRange;
       MSE_DEBUG("MP4ContainerParser(%p)::ParseStartAndEndTimestamps: Stashed init of %u bytes.",
                 this, range.mEnd - range.mStart);
 
@@ -251,11 +258,10 @@ public:
                                   range.mEnd - range.mStart);
     }
 
-    // Persist the timescale for when it is absent in later chunks
-    mTimescale = parser.mMdhd.mTimescale;
-
     mp4_demuxer::Interval<mp4_demuxer::Microseconds> compositionRange =
-        parser.GetCompositionRange();
+      mParser->GetCompositionRange(byteRanges);
+
+    mStream->DiscardBefore(mParser->mOffset);
 
     if (compositionRange.IsNull()) {
       return false;
@@ -267,8 +273,9 @@ public:
     return true;
   }
 
-  private:
-    uint32_t mTimescale;
+private:
+  nsRefPtr<mp4_demuxer::BufferStream> mStream;
+  nsAutoPtr<mp4_demuxer::MoofParser> mParser;
 };
 
 
@@ -440,8 +447,13 @@ SourceBuffer::Remove(double aStart, double aEnd, ErrorResult& aRv)
     return;
   }
   StartUpdating();
-  /// TODO: Run coded frame removal algorithm asynchronously (would call StopUpdating()).
-  StopUpdating();
+  /// TODO: Run coded frame removal algorithm.
+
+  // Run the final step of the coded frame removal algorithm asynchronously
+  // to ensure the SourceBuffer's updating flag transition behaves as
+  // required by the spec.
+  nsCOMPtr<nsIRunnable> event = NS_NewRunnableMethod(this, &SourceBuffer::StopUpdating);
+  NS_DispatchToMainThread(event);
 }
 
 void
@@ -561,7 +573,7 @@ SourceBuffer::AppendData(const uint8_t* aData, uint32_t aLength, ErrorResult& aR
   // TODO: Run coded frame eviction algorithm.
   // TODO: Test buffer full flag.
   StartUpdating();
-  // TODO: Run buffer append algorithm asynchronously (would call StopUpdating()).
+  // TODO: Run more of the buffer append algorithm asynchronously.
   if (mParser->IsInitSegmentPresent(aData, aLength)) {
     MSE_DEBUG("SourceBuffer(%p)::AppendData: New initialization segment.", this);
     mMediaSource->QueueInitializationEvent();
@@ -632,13 +644,16 @@ SourceBuffer::AppendData(const uint8_t* aData, uint32_t aLength, ErrorResult& aR
     // the current start point.
     mMediaSource->NotifyEvicted(0.0, GetBufferedStart());
   }
-  StopUpdating();
+
+  // Run the final step of the buffer append algorithm asynchronously to
+  // ensure the SourceBuffer's updating flag transition behaves as required
+  // by the spec.
+  nsCOMPtr<nsIRunnable> event = NS_NewRunnableMethod(this, &SourceBuffer::StopUpdating);
+  NS_DispatchToMainThread(event);
 
   // Schedule the state machine thread to ensure playback starts
   // if required when data is appended.
   mMediaSource->GetDecoder()->ScheduleStateMachineThread();
-
-  mMediaSource->GetDecoder()->NotifyGotData();
 }
 
 double
@@ -672,6 +687,16 @@ SourceBuffer::Evict(double aStart, double aEnd)
   }
   mTrackBuffer->EvictBefore(evictTime);
 }
+
+#if defined(DEBUG)
+void
+SourceBuffer::Dump(const char* aPath)
+{
+  if (mTrackBuffer) {
+    mTrackBuffer->Dump(aPath);
+  }
+}
+#endif
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(SourceBuffer, DOMEventTargetHelper,
                                    mMediaSource)

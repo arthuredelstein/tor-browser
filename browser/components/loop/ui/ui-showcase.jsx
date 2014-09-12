@@ -17,6 +17,9 @@
   var IncomingCallView = loop.conversation.IncomingCallView;
 
   // 2. Standalone webapp
+  var HomeView = loop.webapp.HomeView;
+  var UnsupportedBrowserView = loop.webapp.UnsupportedBrowserView;
+  var UnsupportedDeviceView = loop.webapp.UnsupportedDeviceView;
   var CallUrlExpiredView    = loop.webapp.CallUrlExpiredView;
   var StartConversationView = loop.webapp.StartConversationView;
 
@@ -58,7 +61,9 @@
   });
   mockConversationModel.startSession = noop;
 
-  var mockNotifier = {};
+  var notifications = new loop.shared.models.NotificationCollection();
+  var errNotifications = new loop.shared.models.NotificationCollection();
+  errNotifications.error("Error!");
 
   var Example = React.createClass({
     render: function() {
@@ -117,11 +122,14 @@
               <strong>Note:</strong> 332px wide.
             </p>
             <Example summary="Call URL retrieved" dashed="true" style={{width: "332px"}}>
-              <PanelView client={mockClient} notifier={mockNotifier}
+              <PanelView client={mockClient} notifications={notifications}
                          callUrl="http://invalid.example.url/" />
             </Example>
             <Example summary="Pending call url retrieval" dashed="true" style={{width: "332px"}}>
-              <PanelView client={mockClient} notifier={mockNotifier} />
+              <PanelView client={mockClient} notifications={notifications} />
+            </Example>
+            <Example summary="Error Notification" dashed="true" style={{width: "332px"}}>
+              <PanelView client={mockClient} notifications={errNotifications}/>
             </Example>
           </Section>
 
@@ -192,7 +200,7 @@
               <div className="standalone">
                 <StartConversationView model={mockConversationModel}
                                        client={mockClient}
-                                       notifier={mockNotifier}
+                                       notifications={notifications}
                                        showCallOptionsMenu={true} />
               </div>
             </Example>
@@ -307,6 +315,31 @@
                 <p className="message">
                   The person you were calling has ended the conversation.
                 </p>
+              </div>
+            </Example>
+          </Section>
+
+          <Section name="HomeView">
+            <Example summary="Standalone Home View">
+              <div className="standalone">
+                <HomeView />
+              </div>
+            </Example>
+          </Section>
+
+
+          <Section name="UnsupportedBrowserView">
+            <Example summary="Standalone Unsupported Browser">
+              <div className="standalone">
+                <UnsupportedBrowserView />
+              </div>
+            </Example>
+          </Section>
+
+          <Section name="UnsupportedDeviceView">
+            <Example summary="Standalone Unsupported Device">
+              <div className="standalone">
+                <UnsupportedDeviceView />
               </div>
             </Example>
           </Section>

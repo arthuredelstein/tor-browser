@@ -1281,16 +1281,12 @@ private:
   virtual bool
   WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
   {
-    // Don't fire this event if the JS object has been disconnected from the
-    // private object.
-    if (!aWorkerPrivate->IsAcceptingEvents()) {
-      return true;
-    }
-
     JS::Rooted<JSObject*> target(aCx, aWorkerPrivate->GetWrapper());
 
     uint64_t innerWindowId;
     bool fireAtScope = true;
+
+    bool workerIsAcceptingEvents = aWorkerPrivate->IsAcceptingEvents();
 
     WorkerPrivate* parent = aWorkerPrivate->GetParent();
     if (parent) {
@@ -1319,9 +1315,19 @@ private:
         return true;
       }
 
-      aWorkerPrivate->AssertInnerWindowIsCorrect();
+      // The innerWindowId is only required if we are going to ReportError
+      // below, which is gated on this condition. The inner window correctness
+      // check is only going to succeed when the worker is accepting events.
+      if (workerIsAcceptingEvents) {
+        aWorkerPrivate->AssertInnerWindowIsCorrect();
+        innerWindowId = aWorkerPrivate->GetInnerWindowId();
+      }
+    }
 
-      innerWindowId = aWorkerPrivate->GetInnerWindowId();
+    // Don't fire this event if the JS object has been disconnected from the
+    // private object.
+    if (!workerIsAcceptingEvents) {
+      return true;
     }
 
     return ReportError(aCx, parent, fireAtScope, aWorkerPrivate, mMessage,
@@ -1560,6 +1566,25 @@ public:
   WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
   {
     aWorkerPrivate->UpdatePreferenceInternal(aCx, mPref, mValue);
+    return true;
+  }
+};
+
+class UpdateLanguagesRunnable MOZ_FINAL : public WorkerRunnable
+{
+  nsTArray<nsString> mLanguages;
+
+public:
+  UpdateLanguagesRunnable(WorkerPrivate* aWorkerPrivate,
+                          const nsTArray<nsString>& aLanguages)
+    : WorkerRunnable(aWorkerPrivate, WorkerThreadModifyBusyCount),
+      mLanguages(aLanguages)
+  { }
+
+  virtual bool
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  {
+    aWorkerPrivate->UpdateLanguagesInternal(aCx, mLanguages);
     return true;
   }
 };
@@ -2887,6 +2912,21 @@ WorkerPrivateParent<Derived>::UpdatePreference(JSContext* aCx, WorkerPreference 
     new UpdatePreferenceRunnable(ParentAsWorkerPrivate(), aPref, aValue);
   if (!runnable->Dispatch(aCx)) {
     NS_WARNING("Failed to update worker preferences!");
+    JS_ClearPendingException(aCx);
+  }
+}
+
+template <class Derived>
+void
+WorkerPrivateParent<Derived>::UpdateLanguages(JSContext* aCx,
+                                              const nsTArray<nsString>& aLanguages)
+{
+  AssertIsOnParentThread();
+
+  nsRefPtr<UpdateLanguagesRunnable> runnable =
+    new UpdateLanguagesRunnable(ParentAsWorkerPrivate(), aLanguages);
+  if (!runnable->Dispatch(aCx)) {
+    NS_WARNING("Failed to update worker languages!");
     JS_ClearPendingException(aCx);
   }
 }
@@ -5524,6 +5564,23 @@ WorkerPrivate::UpdateRuntimeOptionsInternal(
 
   for (uint32_t index = 0; index < mChildWorkers.Length(); index++) {
     mChildWorkers[index]->UpdateRuntimeOptions(aCx, aRuntimeOptions);
+  }
+}
+
+void
+WorkerPrivate::UpdateLanguagesInternal(JSContext* aCx,
+                                       const nsTArray<nsString>& aLanguages)
+{
+  WorkerGlobalScope* globalScope = GlobalScope();
+  if (globalScope) {
+    nsRefPtr<WorkerNavigator> nav = globalScope->GetExistingNavigator();
+    if (nav) {
+      nav->SetLanguages(aLanguages);
+    }
+  }
+
+  for (uint32_t index = 0; index < mChildWorkers.Length(); index++) {
+    mChildWorkers[index]->UpdateLanguages(aCx, aLanguages);
   }
 }
 
