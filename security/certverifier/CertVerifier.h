@@ -96,6 +96,7 @@ private:
       const SECCertificateUsage usage,
       const PRTime time,
       void* pinArg,
+      const char* hostname,
       const Flags flags,
       ChainValidationCallbackState* callbackState,
       /*optional*/ const SECItem* stapledOCSPResponse,
@@ -103,7 +104,12 @@ private:
       /*optional out*/ SECOidTag* evOidPolicy);
 
   OCSPCache mOCSPCache;
+
 };
+
+SECStatus CertListContainsExpectedKeys(
+      const CERTCertList* certList, const char* hostname, PRTime time,
+      CertVerifier::pinning_enforcement_config pinningEnforcementLevel);
 
 void InitCertVerifierLog();
 } } // namespace mozilla::psm

@@ -123,6 +123,47 @@ IsCertBuiltInRoot(CERTCertificate* cert, bool& result) {
   return SECSuccess;
 }
 
+SECStatus
+CertListContainsExpectedKeys(const CERTCertList* certList,
+                             const char* hostname, PRTime time,
+                             CertVerifier::pinning_enforcement_config pinningMode)
+{
+  if (pinningMode == CertVerifier::pinningDisabled) {
+    PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+           ("Pinning is disabled; not checking keys."));
+    return SECSuccess;
+  }
+
+  if (!certList) {
+    return SECFailure;
+  }
+
+  CERTCertListNode* rootNode = CERT_LIST_TAIL(certList);
+  if (CERT_LIST_END(rootNode, certList)) {
+    return SECFailure;
+  }
+
+  bool isBuiltInRoot = false;
+  SECStatus srv = IsCertBuiltInRoot(rootNode->cert, isBuiltInRoot);
+  if (srv != SECSuccess) {
+    return srv;
+  }
+  // If desired, the user can enable "allow user CA MITM mode", in which
+  // case key pinning is not enforced for certificates that chain to trust
+  // anchors that are not in Mozilla's root program
+  if (!isBuiltInRoot && pinningMode == CertVerifier::pinningAllowUserCAMITM) {
+    return SECSuccess;
+  }
+
+  bool enforceTestMode = (pinningMode == CertVerifier::pinningEnforceTestMode);
+  if (PublicKeyPinningService::ChainHasValidPins(certList, hostname, time,
+                                                 enforceTestMode)) {
+    return SECSuccess;
+  }
+
+  return SECFailure;
+}
+
 struct ChainValidationCallbackState
 {
   const char* hostname;
@@ -332,6 +373,7 @@ CertVerifier::MozillaPKIXVerifyCert(
                    const SECCertificateUsage usage,
                    const PRTime time,
                    void* pinArg,
+                   const char* hostname,
                    const Flags flags,
                    ChainValidationCallbackState* callbackState,
       /*optional*/ const SECItem* stapledOCSPResponse,
@@ -541,8 +583,33 @@ CertVerifier::MozillaPKIXVerifyCert(
     }
 
     default:
-      PR_SetError(SEC_ERROR_INVALID_ARGS, 0);
-      return SECFailure;
+      rv = SECFailure;
+  }
+
+  if (rv != SECSuccess) {
+    if (// rv != Result::ERROR_KEY_PINNING_FAILURE &&
+        usage == certificateUsageSSLServer) {
+      ScopedCERTCertificate certCopy(CERT_DupCertificate(cert));
+      if (!certCopy) {
+        return SECFailure;
+      }
+      ScopedCERTCertList certList(CERT_NewCertList());
+      if (!certList) {
+        return SECFailure;
+      }
+      SECStatus srv = CERT_AddCertToListTail(certList.get(), certCopy.get());
+      if (srv != SECSuccess) {
+        return SECFailure;
+      }
+      certCopy.release(); // now owned by certList
+      SECStatus pinningResult = CertListContainsExpectedKeys(certList.get(), hostname,
+                                                          time, mPinningEnforcementLevel);
+      if (pinningResult != SECSuccess) {
+        PR_SetError(MOZILLA_PKIX_ERROR_KEY_PINNING_FAILURE, 0);;
+      }
+    }
+    // PR_SetError(MapResultToPRErrorCode(rv), 0);
+    return SECFailure;
   }
 
   if (validationChain && rv == SECSuccess) {
@@ -570,7 +637,7 @@ CertVerifier::VerifyCert(CERTCertificate* cert,
                                                  time };
 
   if (mImplementation == mozillapkix) {
-    return MozillaPKIXVerifyCert(cert, usage, time, pinArg, flags,
+    return MozillaPKIXVerifyCert(cert, usage, time, pinArg, hostname, flags,
                                  &callbackState, stapledOCSPResponse,
                                  validationChain, evOidPolicy);
   }
