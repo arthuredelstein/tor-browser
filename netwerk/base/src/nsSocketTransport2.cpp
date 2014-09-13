@@ -730,10 +730,10 @@ nsSocketTransport::nsSocketTransport()
     : mTypes(nullptr)
     , mTypeCount(0)
     , mPort(0)
-    , mProxyPort(0)
+    , mHttpsProxy(false)
+    , mProxyUse(false)
     , mProxyTransparent(false)
     , mProxyTransparentResolvesHost(false)
-    , mHttpsProxy(false)
     , mConnectionFlags(0)
     , mState(STATE_CLOSED)
     , mAttached(false)
@@ -805,8 +805,7 @@ nsSocketTransport::Init(const char **types, uint32_t typeCount,
 
     const char *proxyType = nullptr;
     if (proxyInfo) {
-        mProxyPort = proxyInfo->Port();
-        mProxyHost = proxyInfo->Host();
+        mProxyInfo = proxyInfo;
         // grab proxy type (looking for "socks" for example)
         proxyType = proxyInfo->Type();
         if (proxyType && (proxyInfo->IsHTTP() ||
@@ -815,10 +814,18 @@ nsSocketTransport::Init(const char **types, uint32_t typeCount,
                           !strcmp(proxyType, "unknown"))) {
             proxyType = nullptr;
         }
+
+        mProxyUse = true;
+        // check that we don't have a proxyInfo without proxy
+        nsCString proxyHost;
+        proxyInfo->GetHost(proxyHost);
+        if (!proxyType || proxyHost.IsEmpty()) {
+            mProxyUse = false;
+        }
     }
 
-    SOCKET_LOG(("nsSocketTransport::Init [this=%p host=%s:%hu proxy=%s:%hu]\n",
-        this, mHost.get(), mPort, mProxyHost.get(), mProxyPort));
+    SOCKET_LOG(("nsSocketTransport::Init [this=%x host=%s:%hu proxy=%s]\n",
+        this, mHost.get(), mPort, mProxyUse ? "yes" : "no"));
 
     // include proxy type as a socket type if proxy type is not "http"
     mTypeCount = typeCount + (proxyType != nullptr);
@@ -991,7 +998,7 @@ nsSocketTransport::ResolveHost()
 
     nsresult rv;
 
-    if (!mProxyHost.IsEmpty()) {
+    if (mProxyUse) {
         if (!mProxyTransparent || mProxyTransparentResolvesHost) {
 #if defined(XP_UNIX)
             NS_ABORT_IF_FALSE(!mNetAddrIsSet || mNetAddr.raw.family != AF_LOCAL,
@@ -1077,9 +1084,8 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
 
         const char *host       = mHost.get();
         int32_t     port       = (int32_t) mPort;
-        const char *proxyHost  = mProxyHost.IsEmpty() ? nullptr : mProxyHost.get();
-        int32_t     proxyPort  = (int32_t) mProxyPort;
         uint32_t    proxyFlags = 0;
+        nsCOMPtr<nsIProxyInfo> proxy = mProxyInfo;
 
         uint32_t i;
         for (i=0; i<mTypeCount; ++i) {
@@ -1108,10 +1114,15 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
                 // when https proxying we want to just connect to the proxy as if
                 // it were the end host (i.e. expect the proxy's cert)
 
+                nsCString proxyHost;
+                GetHost(proxyHost);
+                int32_t proxyPort;
+                GetPort(&proxyPort);
+
                 rv = provider->NewSocket(mNetAddr.raw.family,
-                                         mHttpsProxy ? proxyHost : host,
+                                         mHttpsProxy ? proxyHost.get() : host,
                                          mHttpsProxy ? proxyPort : port,
-                                         proxyHost, proxyPort,
+                                         proxy,
                                          proxyFlags, &fd,
                                          getter_AddRefs(secinfo));
 
@@ -1125,7 +1136,7 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
                 // so we just want the service to add itself
                 // to the stack (such as pushing an io layer)
                 rv = provider->AddToSocket(mNetAddr.raw.family,
-                                           host, port, proxyHost, proxyPort,
+                                           host, port, proxy,
                                            proxyFlags, fd,
                                            getter_AddRefs(secinfo));
             }
@@ -1155,8 +1166,7 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
                      (strcmp(mTypes[i], "socks4") == 0)) {
                 // since socks is transparent, any layers above
                 // it do not have to worry about proxy stuff
-                proxyHost = nullptr;
-                proxyPort = -1;
+                proxy = nullptr;
                 proxyTransparent = true;
             }
         }
@@ -1215,10 +1225,14 @@ nsSocketTransport::InitiateSocket()
                                  netAddrCString.BeginWriting(),
                                  kIPv6CStrBufSize))
                 netAddrCString = NS_LITERAL_CSTRING("<IP-to-string failed>");
+            nsCString proxyHost;
+            GetHost(proxyHost);
+            int32_t proxyPort;
+            GetPort(&proxyPort);
             SOCKET_LOG(("nsSocketTransport::InitiateSocket skipping "
                         "speculative connection for host [%s:%d] proxy "
                         "[%s:%d] with Local IP address [%s]",
-                        mHost.get(), mPort, mProxyHost.get(), mProxyPort,
+                        mHost.get(), mPort, proxyHost.get(), proxyPort,
                         netAddrCString.get()));
         }
 #endif
@@ -1367,7 +1381,7 @@ nsSocketTransport::InitiateSocket()
             //
             OnSocketConnected();
 
-            if (mSecInfo && !mProxyHost.IsEmpty() && proxyTransparent && usingSSL) {
+            if (mSecInfo && mProxyUse && proxyTransparent && usingSSL) {
                 // if the connection phase is finished, and the ssl layer has
                 // been pushed, and we were proxying (transparently; ie. nothing
                 // has to happen in the protocol layer above us), it's time for
@@ -1391,8 +1405,7 @@ nsSocketTransport::InitiateSocket()
         // the OS error
         //
         else if (PR_UNKNOWN_ERROR == code &&
-                 mProxyTransparent &&
-                 !mProxyHost.IsEmpty()) {
+                 mProxyUse && mProxyTransparent) {
             code = PR_GetOSError();
             rv = ErrorAccordingToNSPR(code);
         }
@@ -1401,7 +1414,7 @@ nsSocketTransport::InitiateSocket()
         //
         else {
             rv = ErrorAccordingToNSPR(code);
-            if ((rv == NS_ERROR_CONNECTION_REFUSED) && !mProxyHost.IsEmpty())
+            if (rv == NS_ERROR_CONNECTION_REFUSED && mProxyUse)
                 rv = NS_ERROR_PROXY_CONNECTION_REFUSED;
         }
     }
@@ -1713,8 +1726,8 @@ nsSocketTransport::OnSocketEvent(uint32_t type, nsresult status, nsISupports *pa
             // For SOCKS proxies (mProxyTransparent == true), the socket 
             // transport resolves the real host here, so there's no fixup 
             // (see bug 226943).
-            if ((status == NS_ERROR_UNKNOWN_HOST) && !mProxyTransparent &&
-                !mProxyHost.IsEmpty())
+            if (status == NS_ERROR_UNKNOWN_HOST && !mProxyTransparent &&
+                mProxyUse)
                 mCondition = NS_ERROR_UNKNOWN_PROXY_HOST;
             else
                 mCondition = status;
@@ -1823,8 +1836,7 @@ nsSocketTransport::OnSocketReady(PRFileDesc *fd, int16_t outFlags)
             // The SOCKS proxy rejected our request. Find out why.
             //
             else if (PR_UNKNOWN_ERROR == code &&
-                     mProxyTransparent &&
-                     !mProxyHost.IsEmpty()) {
+                     mProxyUse && mProxyTransparent) {
                 code = PR_GetOSError();
                 mCondition = ErrorAccordingToNSPR(code);
             }
@@ -1833,7 +1845,7 @@ nsSocketTransport::OnSocketReady(PRFileDesc *fd, int16_t outFlags)
                 // else, the connection failed...
                 //
                 mCondition = ErrorAccordingToNSPR(code);
-                if ((mCondition == NS_ERROR_CONNECTION_REFUSED) && !mProxyHost.IsEmpty())
+                if (mCondition == NS_ERROR_CONNECTION_REFUSED && mProxyUse)
                     mCondition = NS_ERROR_PROXY_CONNECTION_REFUSED;
                 SOCKET_LOG(("  connection failed! [reason=%x]\n", mCondition));
             }
@@ -2154,6 +2166,31 @@ nsSocketTransport::GetPort(int32_t *port)
 {
     *port = (int32_t) SocketPort();
     return NS_OK;
+}
+
+const nsCString &
+nsSocketTransport::SocketHost()
+{
+  if (mProxyInfo && !mProxyTransparent) {
+    if (mProxyHostCache.IsEmpty()) {
+      mProxyInfo->GetHost(mProxyHostCache);
+    }
+    return mProxyHostCache;
+  }
+  else
+    return mHost;
+}
+
+uint16_t
+nsSocketTransport::SocketPort()
+{
+  if (mProxyInfo && !mProxyTransparent) {
+    int32_t result;
+    mProxyInfo->GetPort(&result);
+    return (uint16_t) result;
+  }
+  else
+    return mPort;
 }
 
 NS_IMETHODIMP

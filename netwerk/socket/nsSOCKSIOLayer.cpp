@@ -50,6 +50,8 @@ class nsSOCKSSocketInfo : public nsISOCKSSocketInfo
         SOCKS4_READ_CONNECT_RESPONSE,
         SOCKS5_WRITE_AUTH_REQUEST,
         SOCKS5_READ_AUTH_RESPONSE,
+        SOCKS5_WRITE_USERNAME_REQUEST,
+        SOCKS5_READ_USERNAME_RESPONSE,
         SOCKS5_WRITE_CONNECT_REQUEST,
         SOCKS5_READ_CONNECT_RESPONSE_TOP,
         SOCKS5_READ_CONNECT_RESPONSE_BOTTOM,
@@ -71,8 +73,7 @@ public:
 
     void Init(int32_t version,
               int32_t family,
-              const char *proxyHost,
-              int32_t proxyPort,
+              nsIProxyInfo *proxy,
               const char *destinationHost,
               uint32_t flags);
 
@@ -94,6 +95,8 @@ private:
     PRStatus ReadV4ConnectResponse();
     PRStatus WriteV5AuthRequest();
     PRStatus ReadV5AuthResponse();
+    PRStatus WriteV5UsernameRequest();
+    PRStatus ReadV5UsernameResponse();
     PRStatus WriteV5ConnectRequest();
     PRStatus ReadV5AddrTypeAndLength(uint8_t *type, uint32_t *len);
     PRStatus ReadV5ConnectResponseTop();
@@ -129,8 +132,7 @@ private:
     PRFileDesc             *mFD;
 
     nsCString mDestinationHost;
-    nsCString mProxyHost;
-    int32_t   mProxyPort;
+    nsCOMPtr<nsIProxyInfo> mProxy;
     int32_t   mVersion;   // SOCKS version 4 or 5
     int32_t   mDestinationFamily;
     uint32_t  mFlags;
@@ -138,6 +140,7 @@ private:
     NetAddr   mExternalProxyAddr;
     NetAddr   mDestinationAddr;
     PRIntervalTime mTimeout;
+    nsCString mProxyUsername; // Cache, from mProxy
 };
 
 nsSOCKSSocketInfo::nsSOCKSSocketInfo()
@@ -146,7 +149,6 @@ nsSOCKSSocketInfo::nsSOCKSSocketInfo()
     , mDataLength(0)
     , mReadOffset(0)
     , mAmountToRead(0)
-    , mProxyPort(-1)
     , mVersion(-1)
     , mDestinationFamily(AF_INET)
     , mFlags(0)
@@ -168,14 +170,14 @@ nsSOCKSSocketInfo::nsSOCKSSocketInfo()
 }
 
 void
-nsSOCKSSocketInfo::Init(int32_t version, int32_t family, const char *proxyHost, int32_t proxyPort, const char *host, uint32_t flags)
+nsSOCKSSocketInfo::Init(int32_t version, int32_t family, nsIProxyInfo *proxy, const char *host, uint32_t flags)
 {
     mVersion         = version;
     mDestinationFamily = family;
-    mProxyHost       = proxyHost;
-    mProxyPort       = proxyPort;
+    mProxy           = proxy;
     mDestinationHost = host;
     mFlags           = flags;
+    mProxy->GetUsername(mProxyUsername); // cache
 }
 
 NS_IMPL_ISUPPORTS(nsSOCKSSocketInfo, nsISOCKSSocketInfo, nsIDNSListener)
@@ -262,14 +264,17 @@ nsSOCKSSocketInfo::StartDNS(PRFileDesc *fd)
     if (!dns)
         return PR_FAILURE;
 
+    nsCString proxyHost;
+    mProxy->GetHost(proxyHost);
+
     mFD  = fd;
-    nsresult rv = dns->AsyncResolve(mProxyHost, 0, this,
+    nsresult rv = dns->AsyncResolve(proxyHost, 0, this,
                                     NS_GetCurrentThread(),
                                     getter_AddRefs(mLookup));
 
     if (NS_FAILED(rv)) {
         LOGERROR(("socks: DNS lookup for SOCKS proxy %s failed",
-                  mProxyHost.get()));
+                  proxyHost.get()));
         return PR_FAILURE;
     }
     mState = SOCKS_DNS_IN_PROGRESS;
@@ -314,16 +319,21 @@ nsSOCKSSocketInfo::ConnectToProxy(PRFileDesc *fd)
         mVersion = 5;
     }
 
+    int32_t proxyPort;
+    mProxy->GetPort(&proxyPort);
+
     int32_t addresses = 0;
     do {
         if (addresses++)
-            mDnsRec->ReportUnusable(mProxyPort);
+            mDnsRec->ReportUnusable(proxyPort);
         
-        rv = mDnsRec->GetNextAddr(mProxyPort, &mInternalProxyAddr);
+        rv = mDnsRec->GetNextAddr(proxyPort, &mInternalProxyAddr);
         // No more addresses to try? If so, we'll need to bail
         if (NS_FAILED(rv)) {
+            nsCString proxyHost;
+            mProxy->GetHost(proxyHost);
             LOGERROR(("socks: unable to connect to SOCKS proxy, %s",
-                     mProxyHost.get()));
+                     proxyHost.get()));
             return PR_FAILURE;
         }
 
@@ -464,7 +474,9 @@ nsSOCKSSocketInfo::WriteV4ConnectRequest()
         // than 0, is used to notify the proxy that this is a SOCKS 4a
         // request. This request type works for Tor and perhaps others.
         WriteUint32(htonl(0x00000001)); // Fake IP
-        WriteUint8(0x00); // Send an emtpy username
+        WriteString(mProxyUsername); // Send username. May be empty.
+        WriteUint8(0x00); // Null-terminate username
+        // Password not supported by V4.
         if (mDestinationHost.Length() > MAX_HOSTNAME_LEN) {
             LOGERROR(("socks4: destination host name is too long!"));
             HandshakeFinished(PR_BAD_ADDRESS_ERROR);
@@ -474,7 +486,9 @@ nsSOCKSSocketInfo::WriteV4ConnectRequest()
         WriteUint8(0x00);
     } else if (addr->raw.family == AF_INET) {
         WriteNetAddr(addr); // Add the IPv4 address
-        WriteUint8(0x00); // Send an emtpy username
+        WriteString(mProxyUsername); // Send username. May be empty.
+        WriteUint8(0x00); // Null-terminate username
+        // Password not supported by V4.
     } else if (addr->raw.family == AF_INET6) {
         LOGERROR(("socks: SOCKS 4 can't handle IPv6 addresses!"));
         HandshakeFinished(PR_BAD_ADDRESS_ERROR);
@@ -517,13 +531,18 @@ nsSOCKSSocketInfo::WriteV5AuthRequest()
 {
     NS_ABORT_IF_FALSE(mVersion == 5, "SOCKS version must be 5!");
 
+    mDataLength = 0;
     mState = SOCKS5_WRITE_AUTH_REQUEST;
 
     // Send an initial SOCKS 5 greeting
     LOGDEBUG(("socks5: sending auth methods"));
     WriteUint8(0x05); // version -- 5
-    WriteUint8(0x01); // # auth methods -- 1
-    WriteUint8(0x00); // we don't support authentication
+    WriteUint8(0x01); // # of auth methods -- 1
+    if (mProxyUsername.IsEmpty()) {
+      WriteUint8(0x00); // no authentication
+    } else {
+      WriteUint8(0x02); // username/password
+    }
 
     return PR_SUCCESS;
 }
@@ -536,8 +555,6 @@ nsSOCKSSocketInfo::ReadV5AuthResponse()
     NS_ABORT_IF_FALSE(mDataLength == 2,
                       "SOCKS 5 auth method reply must be 2 bytes!");
 
-    LOGDEBUG(("socks5: checking auth method reply"));
-
     // Check version number
     if (ReadUint8() != 0x05) {
         LOGERROR(("socks5: unexpected version in the reply"));
@@ -545,12 +562,66 @@ nsSOCKSSocketInfo::ReadV5AuthResponse()
         return PR_FAILURE;
     }
 
-    // Make sure our authentication choice was accepted
-    if (ReadUint8() != 0x00) {
+    // Make sure our authentication choice was accepted,
+    // and continue accordingly
+    uint8_t authMethod = ReadUint8();
+    if (mProxyUsername.IsEmpty() && authMethod == 0x00) { // no auth
+        LOGDEBUG(("socks5: server allows connection without authentication"));
+        return WriteV5ConnectRequest();
+    } else if (!mProxyUsername.IsEmpty() && authMethod == 0x02) { // username/pw
+        LOGDEBUG(("socks5: auth method accepted by server"));
+        return WriteV5UsernameRequest();
+    } else { // 0xFF signals error
         LOGERROR(("socks5: server did not accept our authentication method"));
         HandshakeFinished(PR_CONNECT_REFUSED_ERROR);
         return PR_FAILURE;
     }
+}
+
+PRStatus
+nsSOCKSSocketInfo::WriteV5UsernameRequest()
+{
+    NS_ABORT_IF_FALSE(mVersion == 5, "SOCKS version must be 5!");
+
+    mDataLength = 0;
+    mState = SOCKS5_WRITE_USERNAME_REQUEST;
+
+    LOGDEBUG(("socks5: sending username and password"));
+    // RFC 1929 Username/password auth for SOCKS 5
+    WriteUint8(0x01); // version 1 (not 5)
+    WriteUint8(mProxyUsername.Length()); // username length
+    WriteString(mProxyUsername); // username
+    nsCString password;
+    mProxy->GetPassword(password);
+    WriteUint8(password.Length()); // password length
+    WriteString(password); // password. WARNING: Sent unencrypted!
+
+    return PR_SUCCESS;
+}
+
+PRStatus
+nsSOCKSSocketInfo::ReadV5UsernameResponse()
+{
+    NS_ABORT_IF_FALSE(mState == SOCKS5_READ_USERNAME_RESPONSE,
+                      "Handling SOCKS 5 username/password reply in wrong state!");
+    NS_ABORT_IF_FALSE(mDataLength == 2,
+                      "SOCKS 5 username reply must be 2 bytes!");
+
+    // Check version number, must be 1 (not 5)
+    if (ReadUint8() != 0x01) {
+        LOGERROR(("socks5: unexpected version in the reply"));
+        HandshakeFinished(PR_CONNECT_REFUSED_ERROR);
+        return PR_FAILURE;
+    }
+
+    // Check whether username/password were accepted
+    if (ReadUint8() != 0x00) { // 0 = success
+        LOGERROR(("socks5: username/password not accepted"));
+        HandshakeFinished(PR_CONNECT_REFUSED_ERROR);
+        return PR_FAILURE;
+    }
+
+    LOGDEBUG(("socks5: username/password accepted by server"));
 
     return WriteV5ConnectRequest();
 }
@@ -794,6 +865,16 @@ nsSOCKSSocketInfo::DoHandshake(PRFileDesc *fd, int16_t oflags)
             if (ReadFromSocket(fd) != PR_SUCCESS)
                 return PR_FAILURE;
             return ReadV5AuthResponse();
+        case SOCKS5_WRITE_USERNAME_REQUEST:
+            if (WriteToSocket(fd) != PR_SUCCESS)
+                return PR_FAILURE;
+            WantRead(2);
+            mState = SOCKS5_READ_USERNAME_RESPONSE;
+            return PR_SUCCESS;
+        case SOCKS5_READ_USERNAME_RESPONSE:
+            if (ReadFromSocket(fd) != PR_SUCCESS)
+                return PR_FAILURE;
+            return ReadV5UsernameResponse();
         case SOCKS5_WRITE_CONNECT_REQUEST:
             if (WriteToSocket(fd) != PR_SUCCESS)
                 return PR_FAILURE;
@@ -838,10 +919,12 @@ nsSOCKSSocketInfo::GetPollFlags() const
             return PR_POLL_EXCEPT | PR_POLL_WRITE;
         case SOCKS4_WRITE_CONNECT_REQUEST:
         case SOCKS5_WRITE_AUTH_REQUEST:
+        case SOCKS5_WRITE_USERNAME_REQUEST:
         case SOCKS5_WRITE_CONNECT_REQUEST:
             return PR_POLL_WRITE;
         case SOCKS4_READ_CONNECT_RESPONSE:
         case SOCKS5_READ_AUTH_RESPONSE:
+        case SOCKS5_READ_USERNAME_RESPONSE:
         case SOCKS5_READ_CONNECT_RESPONSE_TOP:
         case SOCKS5_READ_CONNECT_RESPONSE_BOTTOM:
             return PR_POLL_READ;
@@ -1220,8 +1303,7 @@ nsresult
 nsSOCKSIOLayerAddToSocket(int32_t family,
                           const char *host, 
                           int32_t port,
-                          const char *proxyHost,
-                          int32_t proxyPort,
+                          nsIProxyInfo *proxy,
                           int32_t socksVersion,
                           uint32_t flags,
                           PRFileDesc *fd, 
@@ -1288,7 +1370,7 @@ nsSOCKSIOLayerAddToSocket(int32_t family,
     }
 
     NS_ADDREF(infoObject);
-    infoObject->Init(socksVersion, family, proxyHost, proxyPort, host, flags);
+    infoObject->Init(socksVersion, family, proxy, host, flags);
     layer->secret = (PRFilePrivate*) infoObject;
     rv = PR_PushIOLayer(fd, PR_GetLayersIdentity(fd), layer);
 
