@@ -664,14 +664,6 @@ nsDNSService::AsyncResolve(const nsACString  &hostname,
         if (mDisablePrefetch && (flags & RESOLVE_SPECULATE))
             return NS_ERROR_DNS_LOOKUP_QUEUE_FULL;
 
-        PRNetAddr tempAddr;
-        if (mDisableDNS) {
-            // Allow IP lookups through, but nothing else.
-            if (PR_StringToNetAddr(hostname.BeginReading(), &tempAddr) != PR_SUCCESS) {
-                return NS_ERROR_UNKNOWN_PROXY_HOST; // XXX: NS_ERROR_NOT_IMPLEMENTED?
-            }
-        }
-
         res = mResolver;
         idn = mIDN;
         localDomain = mLocalDomains.GetEntry(hostname);
@@ -680,6 +672,14 @@ nsDNSService::AsyncResolve(const nsACString  &hostname,
     if (mNotifyResolution) {
         NS_DispatchToMainThread(new NotifyDNSResolution(mObserverService,
                                                         hostname));
+    }
+
+    PRNetAddr tempAddr;
+    if (mDisableDNS) {
+        // Allow IP lookups through, but nothing else.
+        if (PR_StringToNetAddr(hostname.BeginReading(), &tempAddr) != PR_SUCCESS) {
+            return NS_ERROR_UNKNOWN_PROXY_HOST; // XXX: NS_ERROR_NOT_IMPLEMENTED?
+        }
     }
 
     if (!res)
