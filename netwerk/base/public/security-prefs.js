@@ -59,4 +59,4 @@ pref("security.use_mozillapkix_verification", true);
 
 // If set to true, disables sending SSL3 Session IDs and TLS Session Tickets,
 // to prevent session tracking:
-pref("security.disable_session_identifiers", false);
+pref("security.ssl.disable_session_identifiers", false);
