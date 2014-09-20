@@ -123,7 +123,7 @@ pref("network.http.pipelining.reschedule-timeout", 15000);
 pref("network.http.pipelining.read-timeout", 60000);
 // Hacked pref: Now means "Attempt to pipeline at least this many requests together"
 pref("network.http.pipelining.max-optimistic-requests", 3);
-pref("security.disable_session_identifiers", true);
+pref("security.ssl.disable_session_identifiers", true);
 
 // Extension support
 pref("extensions.autoDisableScopes", 0);
