@@ -57,6 +57,7 @@ pref("extensions.getAddons.cache.enabled", false); // https://blog.mozilla.org/a
 pref("webgl.min_capability_mode", true);
 pref("webgl.disable-extensions", true);
 pref("dom.battery.enabled", false); // fingerprinting due to differing OS implementations
+pref("dom.gamepad.enabled", false); // bugs.torproject.org/13023
 pref("dom.network.enabled",false); // fingerprinting due to differing OS implementations
 pref("browser.display.max_font_attempts",10);
 pref("browser.display.max_font_count",10);
