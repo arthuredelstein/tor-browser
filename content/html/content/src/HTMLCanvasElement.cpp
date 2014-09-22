@@ -387,12 +387,13 @@ HTMLCanvasElement::ExtractData(JSContext* aCx,
                                nsIInputStream** aStream)
 {
   // Check site-speciifc permission and display prompt if appropriate.
-  // If no permission, return all-black, opaque image data.
+  // If no permission, return all-white, opaque image data.
   bool usePlaceholder = !CanvasUtils::IsImageExtractionAllowed(OwnerDoc(), aCx);
   return ImageEncoder::ExtractData(aType,
                                    aOptions,
                                    GetSize(),
-                                   usePlaceholder ? nullptr : mCurrentContext,
+                                   usePlaceholder,
+                                   mCurrentContext,
                                    aStream);
 }
 
@@ -528,7 +529,7 @@ HTMLCanvasElement::ToBlob(JSContext* aCx,
     GetScriptContextFromJSContext(nsContentUtils::GetCurrentJSContext());
 
   // Check site-specific permission and display prompt if appropriate.
-  // If no permission, return all-black, opaque image data.
+  // If no permission, return all-white, opaque image data.
   bool usePlaceholder = !CanvasUtils::IsImageExtractionAllowed(OwnerDoc(), aCx);
 
   uint8_t* imageBuffer = nullptr;
@@ -543,6 +544,7 @@ HTMLCanvasElement::ToBlob(JSContext* aCx,
                                        imageBuffer,
                                        format,
                                        GetSize(),
+                                       usePlaceholder,
                                        mCurrentContext, // ignored
                                        scriptContext,
                                        aCallback);

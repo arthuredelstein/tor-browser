@@ -664,14 +664,6 @@ nsDNSService::AsyncResolve(const nsACString  &hostname,
         if (mDisablePrefetch && (flags & RESOLVE_SPECULATE))
             return NS_ERROR_DNS_LOOKUP_QUEUE_FULL;
 
-        PRNetAddr tempAddr;
-        if (mDisableDNS) {
-            // Allow IP lookups through, but nothing else.
-            if (PR_StringToNetAddr(hostname.BeginReading(), &tempAddr) != PR_SUCCESS) {
-                return NS_ERROR_UNKNOWN_PROXY_HOST; // XXX: NS_ERROR_NOT_IMPLEMENTED?
-            }
-        }
-
         res = mResolver;
         idn = mIDN;
         localDomain = mLocalDomains.GetEntry(hostname);
@@ -682,12 +674,6 @@ nsDNSService::AsyncResolve(const nsACString  &hostname,
                                                         hostname));
     }
 
-    if (!res)
-        return NS_ERROR_OFFLINE;
-
-    if (mOffline)
-        flags |= RESOLVE_OFFLINE;
-
     PRNetAddr tempAddr;
     if (mDisableDNS) {
         // Allow IP lookups through, but nothing else.
@@ -695,6 +681,12 @@ nsDNSService::AsyncResolve(const nsACString  &hostname,
             return NS_ERROR_UNKNOWN_PROXY_HOST; // XXX: NS_ERROR_NOT_IMPLEMENTED?
         }
     }
+
+    if (!res)
+        return NS_ERROR_OFFLINE;
+
+    if (mOffline)
+        flags |= RESOLVE_OFFLINE;
 
     const nsACString *hostPtr = &hostname;
 
@@ -812,6 +804,14 @@ nsDNSService::Resolve(const nsACString &hostname,
 
     if (mOffline)
         flags |= RESOLVE_OFFLINE;
+
+    PRNetAddr tempAddr;
+    if (mDisableDNS) {
+        // Allow IP lookups through, but nothing else.
+        if (PR_StringToNetAddr(hostname.BeginReading(), &tempAddr) != PR_SUCCESS) {
+            return NS_ERROR_UNKNOWN_PROXY_HOST; // XXX: NS_ERROR_NOT_IMPLEMENTED?
+        }
+    }
 
     const nsACString *hostPtr = &hostname;
 

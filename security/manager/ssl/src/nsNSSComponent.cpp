@@ -1196,7 +1196,7 @@ nsNSSComponent::InitializeNSS()
   LoadLoadableRoots();
 
   bool disableSessionIdentifiers =
-    Preferences::GetBool("security.disable_session_identifiers",
+    Preferences::GetBool("security.ssl.disable_session_identifiers",
                          DISABLE_SESSION_IDENTIFIERS_DEFAULT);
   SSL_OptionSetDefault(SSL_ENABLE_SESSION_TICKETS, !disableSessionIdentifiers);
   SSL_OptionSetDefault(SSL_NO_CACHE, disableSessionIdentifiers);
@@ -1605,9 +1605,9 @@ nsNSSComponent::Observe(nsISupports* aSubject, const char* aTopic,
     if (prefName.Equals("security.tls.version.min") ||
         prefName.Equals("security.tls.version.max")) {
       (void) setEnabledTLSVersions();
-    } else if (prefName.Equals("security.disable_session_identifiers")) {
+    } else if (prefName.Equals("security.ssl.disable_session_identifiers")) {
       bool disableSessionIdentifiers =
-        Preferences::GetBool("security.disable_session_identifiers",
+        Preferences::GetBool("security.ssl.disable_session_identifiers",
                              DISABLE_SESSION_IDENTIFIERS_DEFAULT);
       SSL_OptionSetDefault(SSL_ENABLE_SESSION_TICKETS, !disableSessionIdentifiers);
       SSL_OptionSetDefault(SSL_NO_CACHE, disableSessionIdentifiers);
