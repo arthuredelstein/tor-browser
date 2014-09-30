@@ -1,0 +1,50 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+Tor bug
+https://trac.torproject.org/projects/tor/ticket/5926
+-->
+<head>
+  <meta charset="utf-8">
+  <title>Tests for Tor Bug #5926: Spoof default JavaScript locale as "en-US".</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+  <script type="application/javascript">
+    let testDate = new Date(2010, 10, 6),
+        testNumber = 123456.789,
+        localeTests = function (language, locale, formattedNumber,
+                                formattedDate, ä_first, monthName) {
+      SpecialPowers.setCharPref("javascript.default_locale", locale);
+      is(Intl.NumberFormat().resolvedOptions().locale, locale,
+         "Intl resolved locale should be " + locale);
+      is(Intl.NumberFormat().format(testNumber), formattedNumber,
+         "Intl.NumberFormat should produce a " + language + "-formatted number.");
+      is(testNumber.toLocaleString(), formattedNumber,
+         "Number.toLocaleString should produce a " + language + " format.");
+      is(Intl.DateTimeFormat().format(testDate), formattedDate,
+         "Intl.DateTimeFormat should produce a " + language + "-formatted date.");
+      is(testDate.toLocaleDateString(), formattedDate,
+         "Date.toLocaleString should produce a " + language + " format.");
+      is(Intl.Collator.compare('ä', 'z') > 0, ä_first,
+         "String sorting should be in " + language + "order.");
+      is('ä'.localeCompare('z') > 0, ä_first,
+         "String sorting should be in " + language + "order.");
+      is(testDate.toLocaleFormat().contains(monthName), true,
+         "Date should be localized to " + language + ".");
+    };
+    localeTests("Swedish", "sv-SE", "123 456,789",
+                "2010-11-06", true, "november");
+    localeTests("US English", "en-US", "123,456.789",
+                "06/11/2010", false, "November");
+  </script>
+</head>
+<body>
+<a target="_blank" href="https://trac.torproject.org/projects/tor/ticket/5926">Tor Bug 5926</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+
+</div>
+<pre id="test">
+</pre>
+</body>
+</html>
