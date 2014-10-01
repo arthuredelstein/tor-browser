@@ -65,7 +65,7 @@ pref("general.appname.override", "Netscape");
 pref("general.appversion.override", "5.0 (Windows)");
 pref("general.oscpu.override", "Windows NT 6.1");
 pref("general.platform.override", "Win32");
-pref("general.useragent.override", "Mozilla/5.0 (Windows NT 6.1; rv:24.0) Gecko/20100101 Firefox/24.0");
+pref("general.useragent.override", "Mozilla/5.0 (Windows NT 6.1; rv:31.0) Gecko/20100101 Firefox/31.0");
 pref("general.productSub.override", "20100101");
 pref("general.buildID.override", "20100101");
 pref("browser.startup.homepage_override.buildID", "20100101");
@@ -139,7 +139,7 @@ pref("xpinstall.whitelist.add", "");
 pref("xpinstall.whitelist.add.36", "");
 
 // Toolbar layout
-pref("browser.uiCustomization.state", "{\"placements\":{\"PanelUI-contents\":[\"edit-controls\",\"zoom-controls\",\"new-window-button\",\"privatebrowsing-button\",\"save-page-button\",\"print-button\",\"bookmarks-menu-button\",\"history-panelmenu\",\"fullscreen-button\",\"find-button\",\"preferences-button\",\"add-ons-button\",\"developer-button\",\"https-everywhere-button\",\"downloads-button\"],\"addon-bar\":[\"addonbar-closebutton\",\"status-bar\"],\"PersonalToolbar\":[\"personal-bookmarks\"],\"nav-bar\":[\"noscript-tbb\",\"torbutton-button\",\"urlbar-container\",\"search-container\",\"webrtc-status-button\",\"social-share-button\"],\"TabsToolbar\":[\"tabbrowser-tabs\",\"new-tab-button\",\"alltabs-button\"],\"toolbar-menubar\":[\"menubar-items\"]},\"seen\":[],\"dirtyAreaCache\":[\"PersonalToolbar\",\"nav-bar\",\"TabsToolbar\",\"toolbar-menubar\",\"PanelUI-contents\"],\"newElementCount\":0}");
+pref("browser.uiCustomization.state", "{\"placements\":{\"PanelUI-contents\":[\"edit-controls\",\"zoom-controls\",\"new-window-button\",\"save-page-button\",\"print-button\",\"bookmarks-menu-button\",\"history-panelmenu\",\"find-button\",\"preferences-button\",\"add-ons-button\",\"developer-button\",\"https-everywhere-button\",\"downloads-button\"],\"addon-bar\":[\"addonbar-closebutton\",\"status-bar\"],\"PersonalToolbar\":[\"personal-bookmarks\"],\"nav-bar\":[\"noscript-tbb\",\"torbutton-button\",\"urlbar-container\",\"search-container\",\"webrtc-status-button\",\"social-share-button\"],\"TabsToolbar\":[\"tabbrowser-tabs\",\"new-tab-button\",\"alltabs-button\"],\"toolbar-menubar\":[\"menubar-items\"]},\"seen\":[],\"dirtyAreaCache\":[\"PersonalToolbar\",\"nav-bar\",\"TabsToolbar\",\"toolbar-menubar\",\"PanelUI-contents\",\"addon-bar\"],\"newElementCount\":0}");
 
 // Omnibox settings
 pref("keyword.URL", "https://startpage.com/do/search?q=");
