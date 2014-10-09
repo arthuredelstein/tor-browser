@@ -57,9 +57,6 @@ pref("security.OCSP.GET.enabled", false);
 
 pref("security.use_mozillapkix_verification", true);
 
-+// Default to MITM mode for pinning checks.
-+pref("security.cert_pinning.enforcement_level", 1);
-
 // If set to true, disables sending SSL3 Session IDs and TLS Session Tickets,
 // to prevent session tracking:
 pref("security.ssl.disable_session_identifiers", false);
