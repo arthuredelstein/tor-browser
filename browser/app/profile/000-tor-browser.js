@@ -12,6 +12,12 @@ pref("browser.startup.homepage_override.mstone", "ignore");
 pref("startup.homepage_welcome_url", "");
 pref("startup.homepage_override_url", "");
 
+// Disable "Slow startup" warnings and associated disk history
+// (bug #13346)
+pref("browser.slowStartup.notificationDisabled", true);
+pref("browser.slowStartup.maxSamples", 0);
+pref("browser.slowStartup.samples", 0);
+
 // Disk activity: Disable Browsing History Storage
 pref("browser.privatebrowsing.autostart", true);
 pref("browser.cache.disk.enable", false);
