@@ -59,6 +59,8 @@ private:
 
   const char  *mType;  // pointer to statically allocated value
   nsCString    mHost;
+  nsCString    mUsername;
+  nsCString    mPassword;
   int32_t      mPort;
   uint32_t     mFlags;
   uint32_t     mResolveFlags;
