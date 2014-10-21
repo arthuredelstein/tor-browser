@@ -107,6 +107,11 @@ nsHttpConnectionInfo::SetOriginServer(const nsACString &host, int32_t port)
         mHashKey.Append(':');
         mHashKey.AppendInt(ProxyPort());
         mHashKey.Append(')');
+        mHashKey.Append('[');
+        mHashKey.Append(ProxyUsername());
+        mHashKey.Append(':');
+        mHashKey.Append(ProxyPassword());
+        mHashKey.Append(']');
     }
 }
 
