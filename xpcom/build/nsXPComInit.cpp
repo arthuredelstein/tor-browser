@@ -493,7 +493,7 @@ void StartWatchingDefaultLocalePref() {
   // Store the default JavaScript locale.
   JSRuntime* rt = GetRuntime();
   if (rt) {
-    sJSLocale = JS_GetDefaultLocale(rt);
+    sJSLocale = strdup(JS_GetDefaultLocale(rt));
   }
   // Now keep the locale updated with the current pref value.
   mozilla::Preferences::RegisterCallbackAndCall(DefaultLocaleChangedCallback, DEFAULT_LOCALE_PREF);
