@@ -170,8 +170,6 @@ pref("media.audio_data.enabled", false);
 // Enable TLS 1.1 and 1.2:
 // https://trac.torproject.org/projects/tor/ticket/11253
 pref("security.tls.version.max", 3);
-// POODLE hotfix: Disable SSLv3
-pref("security.tls.version.min", 1);
 
 #ifdef TOR_BROWSER_VERSION
 #expand pref("torbrowser.version", __TOR_BROWSER_VERSION__);
