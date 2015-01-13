@@ -156,13 +156,6 @@ pref("keyword.URL", "https://startpage.com/do/search?q=");
 pref("gfx.direct2d.disabled", true);
 pref("layers.acceleration.disabled", true);
 
-// Security enhancements
-// https://trac.torproject.org/projects/tor/ticket/9387#comment:17
-pref("javascript.options.ion.content", false);
-pref("javascript.options.baselinejit.content", false);
-pref("javascript.options.asmjs", false);
-pref("javascript.options.typeinference", false);
-
 // Audio_data is deprecated in future releases, but still present
 // in FF24. This is a dangerous combination (spotted by iSec)
 pref("media.audio_data.enabled", false);
