@@ -148,8 +148,16 @@ pref("xpinstall.whitelist.add.36", "");
 // Toolbar layout
 pref("browser.uiCustomization.state", "{\"placements\":{\"PanelUI-contents\":[\"edit-controls\",\"zoom-controls\",\"new-window-button\",\"save-page-button\",\"print-button\",\"bookmarks-menu-button\",\"history-panelmenu\",\"find-button\",\"preferences-button\",\"add-ons-button\",\"developer-button\",\"https-everywhere-button\",\"downloads-button\"],\"addon-bar\":[\"addonbar-closebutton\",\"status-bar\"],\"PersonalToolbar\":[\"personal-bookmarks\"],\"nav-bar\":[\"noscript-tbb\",\"torbutton-button\",\"urlbar-container\",\"search-container\",\"webrtc-status-button\",\"social-share-button\"],\"TabsToolbar\":[\"tabbrowser-tabs\",\"new-tab-button\",\"alltabs-button\"],\"toolbar-menubar\":[\"menubar-items\"]},\"seen\":[],\"dirtyAreaCache\":[\"PersonalToolbar\",\"nav-bar\",\"TabsToolbar\",\"toolbar-menubar\",\"PanelUI-contents\",\"addon-bar\"],\"newElementCount\":0}");
 
-// Omnibox settings
-pref("keyword.URL", "https://startpage.com/do/search?q=");
+// Putting the search engine prefs into this file to fix #11236.
+// Default search engine
+pref("browser.search.defaultenginename", "Startpage");
+
+// Search engine order (order displayed in the search bar dropdown)
+// Somewhat surprisingly we get Startpage - DuckDuckGo - Google as the order
+// only if we set them as below.
+pref("browser.search.order.extra.1", "DuckDuckGo");
+pref("browser.search.order.extra.2", "Google");
+pref("browser.search.order.extra.3", "Startpage");
 
 // Hacks/workarounds: Direct2D seems to crash w/ lots of video cards w/ MinGW?
 // Nvida cards also experience crashes without the second pref set to disabled
