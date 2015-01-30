@@ -898,6 +898,12 @@ nsJARChannel::OnDownloadComplete(nsIDownloader *downloader,
         mContentDisposition = NS_GetContentDispositionFromHeader(mContentDispositionHeader, this);
     }
 
+    // here we check preferences to see if all remote jar support should be disabled
+    if (Preferences::GetBool("network.jar.block-remote-files", true)) {
+        mIsUnsafe = true;
+        status = NS_ERROR_UNSAFE_CONTENT_TYPE;
+    }
+
     if (NS_SUCCEEDED(status) && mIsUnsafe &&
         !Preferences::GetBool("network.jar.open-unsafe-types", false)) {
         status = NS_ERROR_UNSAFE_CONTENT_TYPE;
