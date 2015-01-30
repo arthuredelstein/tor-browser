@@ -160,6 +160,11 @@ pref("layers.acceleration.disabled", true);
 // in FF24. This is a dangerous combination (spotted by iSec)
 pref("media.audio_data.enabled", false);
 
+// If true, remote JAR files will not be opened, regardless of content type
+// Patch done by Jeff Gibat (iSEC). We bind it to the security slider but allow
+// jar: in default mode.
+pref("network.jar.block-remote-files", false);
+
 // Enable TLS 1.1 and 1.2:
 // https://trac.torproject.org/projects/tor/ticket/11253
 pref("security.tls.version.max", 3);
