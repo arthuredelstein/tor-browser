@@ -828,16 +828,21 @@
             }
 
             let sizedIconUrl = browser.mIconURL || "";
-            if (sizedIconUrl) {
+            if (sizedIconUrl !== "") {
               let size = Math.round(16 * window.devicePixelRatio);
               sizedIconUrl += (sizedIconUrl.contains("#") ? "&" : "#") +
                               "-moz-resolution=" + size + "," + size;
             }
-            if (sizedIconUrl != aTab.getAttribute("image")) {
-              if (sizedIconUrl)
+            let firstPartyURI = browser.currentURI.spec;
+            if (sizedIconUrl !== aTab.getAttribute("image") || firstPartyURI !== aTab.getAttribute("firstparty")) {
+              if (sizedIconUrl !== "")
                 aTab.setAttribute("image", sizedIconUrl);
               else
                 aTab.removeAttribute("image");
+              if (firstPartyURI !== "")
+                aTab.setAttribute("firstparty", firstPartyURI);
+              else
+                aTab.removeAttribute("firstparty");
               this._tabAttrModified(aTab);
             }
 
@@ -1205,7 +1210,7 @@
             return;
 
           // This event should be dispatched when any of these attributes change:
-          // label, crop, busy, image, selected
+          // label, crop, busy, image, selected, firstparty
           var event = document.createEvent("Events");
           event.initEvent("TabAttrModified", true, false);
           aTab.dispatchEvent(event);
@@ -4643,7 +4648,7 @@
                      class="tab-throbber"
                      role="presentation"
                      layer="true" />
-          <xul:image xbl:inherits="src=image,fadein,pinned,selected"
+          <xul:image xbl:inherits="src=image,fadein,pinned,selected,firstparty"
                      anonid="tab-icon-image"
                      class="tab-icon-image"
                      validate="never"

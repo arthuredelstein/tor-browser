@@ -8,6 +8,7 @@ interface nsIURI;
 interface nsIDOMWindow;
 interface nsIChannel;
 interface nsIDocument;
+interface nsINode;
 
 /**
  * Utility functions for determining whether a given URI, channel, or window
@@ -162,7 +163,7 @@ interface mozIThirdPartyUtil : nsISupports
    *         URI's scheme is not white listed.
    */
   [noscript] nsIURI getFirstPartyURI(in nsIChannel aChannel,
-                                     in nsIDocument aDoc);
+                                     in nsINode aNode);
 
   /**
    * getFirstPartyIsolationURI
@@ -185,7 +186,7 @@ interface mozIThirdPartyUtil : nsISupports
    *         URI's scheme is not white listed.
    */
   [noscript] nsIURI getFirstPartyIsolationURI(in nsIChannel aChannel,
-                                     in nsIDocument aDoc);
+                                     in nsINode aNode);
 
   /**
    * getFirstPartyURIFromChannel
