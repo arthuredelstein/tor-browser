@@ -1,9 +1,9 @@
-amazondotcom
-bing
-duckduckgo
-eBay
-google
-startpage
+disconnect
+youtube
 twitter
 wikipedia
+startpage
 yahoo
+bing
+google
+duckduckgo
