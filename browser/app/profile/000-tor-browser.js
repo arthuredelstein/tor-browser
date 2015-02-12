@@ -150,14 +150,14 @@ pref("browser.uiCustomization.state", "{\"placements\":{\"PanelUI-contents\":[\"
 
 // Putting the search engine prefs into this file to fix #11236.
 // Default search engine
-pref("browser.search.defaultenginename", "Startpage");
+pref("browser.search.defaultenginename", "Disconnect");
 
 // Search engine order (order displayed in the search bar dropdown)
-// Somewhat surprisingly we get Startpage - DuckDuckGo - Google as the order
+// Somewhat surprisingly we get Disconnect - YouTube - Twitter as the order
 // only if we set them as below.
-pref("browser.search.order.extra.1", "DuckDuckGo");
-pref("browser.search.order.extra.2", "Google");
-pref("browser.search.order.extra.3", "Startpage");
+pref("browser.search.order.extra.1", "YouTube");
+pref("browser.search.order.extra.2", "Twitter");
+pref("browser.search.order.extra.3", "Disconnect");
 
 // Hacks/workarounds: Direct2D seems to crash w/ lots of video cards w/ MinGW?
 // Nvida cards also experience crashes without the second pref set to disabled
