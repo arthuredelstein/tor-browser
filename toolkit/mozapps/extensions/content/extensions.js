@@ -858,6 +858,20 @@ var gViewController = {
       }
     },
 
+    cmd_goToEnablePlugins: {
+      isEnabled: function cmd_goToEnablePlugins_isEnabled() true,
+      doCommand: function cmd_goToEnablePlugins_doCommand() {
+        Services.prefs.setBoolPref("plugin.disable", false);
+      }
+    },
+
+    cmd_goToDisablePlugins: {
+      isEnabled: function cmd_goToDisablePlugins_isEnabled() true,
+      doCommand: function cmd_goToDisablePlugins_doCommand() {
+        Services.prefs.setBoolPref("plugin.disable", true);
+      }
+    },
+
     cmd_goToRecentUpdates: {
       isEnabled: function cmd_goToRecentUpdates_isEnabled() true,
       doCommand: function cmd_goToRecentUpdates_doCommand() {
@@ -2553,12 +2567,17 @@ var gListView = {
   node: null,
   _listBox: null,
   _emptyNotice: null,
+  _pluginDisabledNotice: null,
+  _pluginEnabledNotice: null,
   _type: null,
+  _pluginListEmpty: false,
 
   initialize: function gListView_initialize() {
     this.node = document.getElementById("list-view");
     this._listBox = document.getElementById("addon-list");
     this._emptyNotice = document.getElementById("addon-list-empty");
+    this._pluginDisabledNotice = document.getElementById("plugin-disabled");
+    this._pluginEnabledNotice = document.getElementById("plugin-enabled");
 
     var self = this;
     this._listBox.addEventListener("keydown", function listbox_onKeydown(aEvent) {
@@ -2570,6 +2589,10 @@ var gListView = {
     }, false);
   },
 
+  shutdown: function gListView_shutdown() {
+    AddonManager.removeAddonListener(this);
+  },
+
   show: function gListView_show(aType, aRequest) {
     if (!(aType in AddonManager.addonTypes))
       throw Components.Exception("Attempting to show unknown type " + aType, Cr.NS_ERROR_INVALID_ARG);
@@ -2577,9 +2600,12 @@ var gListView = {
     this._type = aType;
     this.node.setAttribute("type", aType);
     this.showEmptyNotice(false);
+    this.showPluginEnabledNotice(false);
+    this.showPluginDisabledNotice(false);
 
     while (this._listBox.itemCount > 0)
       this._listBox.removeItemAt(0);
+    this._pluginListEmpty = true;
 
     var self = this;
     getAddonsAndInstalls(aType, function show_getAddonsAndInstalls(aAddonsList, aInstallsList) {
@@ -2594,26 +2620,65 @@ var gListView = {
       for (let installItem of aInstallsList)
         elements.push(createItem(installItem, true));
 
-      self.showEmptyNotice(elements.length == 0);
       if (elements.length > 0) {
         sortElements(elements, ["uiState", "name"], true);
         for (let element of elements)
           self._listBox.appendChild(element);
       }
+      self.showAllNeedNotices(true);
 
       gEventManager.registerInstallListener(self);
       gViewController.updateCommands();
       gViewController.notifyViewChanged();
+      AddonManager.addAddonListener(self);
     });
   },
 
   hide: function gListView_hide() {
+    AddonManager.removeAddonListener(this);
     gEventManager.unregisterInstallListener(this);
     doPendingUninstalls(this._listBox);
   },
 
   showEmptyNotice: function gListView_showEmptyNotice(aShow) {
     this._emptyNotice.hidden = !aShow;
+  },
+
+  showPluginDisabledNotice: function gListView_showPluginDisabledNotice(aShow) {
+    this._pluginDisabledNotice.hidden = !aShow;
+  },
+
+  showPluginEnabledNotice: function gListView_showPluginEnabledNotice(aShow) {
+    this._pluginEnabledNotice.hidden = !aShow;
+  },
+
+  showAllNeedNotices: function gListView_showAllNeedNotices(aShow) {
+      var empty_list = (this._listBox.itemCount == 0);
+      var show_empty_notice = true;
+
+      if (this._type == "plugin") {
+        var update_notices = (this._pluginListEmpty != empty_list);
+        this._pluginListEmpty = empty_list;
+
+        if (update_notices || aShow) {
+          var plugin_disable = false;
+
+          try {
+            plugin_disable = Services.prefs.getBoolPref("plugin.disable")
+          } catch (e) {}
+
+          if (plugin_disable == true) {
+            this.showPluginEnabledNotice(false);
+            this.showPluginDisabledNotice(true);
+            show_empty_notice = false;
+          } else {
+            this.showPluginDisabledNotice(false);
+            this.showPluginEnabledNotice(true);
+          }
+        }
+      }
+      if (show_empty_notice == true)
+        this.showEmptyNotice(empty_list);
   },
 
   onSortChanged: function gListView_onSortChanged(aSortBy, aAscending) {
@@ -2658,6 +2723,10 @@ var gListView = {
     }
   },
 
+  onUninstalled: function gListView_onUninstalled()  {
+    this.showAllNeedNotices(false);
+  },
+
   addItem: function gListView_addItem(aObj, aIsInstall) {
     if (aObj.type != this._type)
       return;
@@ -2673,7 +2742,7 @@ var gListView = {
 
     let item = createItem(aObj, aIsInstall);
     this._listBox.insertBefore(item, this._listBox.firstChild);
-    this.showEmptyNotice(false);
+    this.showAllNeedNotices(false);
   },
 
   removeItem: function gListView_removeItem(aObj, aIsInstall) {
@@ -2682,7 +2751,7 @@ var gListView = {
     for (let item of this._listBox.childNodes) {
       if (item[prop] == aObj) {
         this._listBox.removeChild(item);
-        this.showEmptyNotice(this._listBox.itemCount == 0);
+        this.showAllNeedNotices(false);
         return;
       }
     }
