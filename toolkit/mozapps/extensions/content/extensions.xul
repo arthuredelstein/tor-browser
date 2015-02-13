@@ -79,6 +79,8 @@
     <command id="cmd_findAllUpdates"/>
     <command id="cmd_restartApp"/>
     <command id="cmd_goToDiscoverPane"/>
+    <command id="cmd_goToEnablePlugins"/>
+    <command id="cmd_goToDisablePlugins"/>
     <command id="cmd_goToRecentUpdates"/>
     <command id="cmd_goToAvailableUpdates"/>
     <command id="cmd_installFromFile"/>
@@ -386,7 +388,28 @@
             </vbox>
             <spacer class="alert-spacer-after"/>
           </vbox>
+          <vbox id="plugin-disabled" class="alert-container"
+                flex="1" hidden="true">
+            <spacer class="alert-spacer-before"/>
+            <vbox class="alert">
+              <label value="&plugins.installed.find;"/>
+              <button class="button-enableplugin"
+                      label="&plugins.installed.enable;"
+                      command="cmd_goToEnablePlugins"/>
+            </vbox>
+            <spacer class="alert-spacer-after"/>
+          </vbox>
           <richlistbox id="addon-list" class="list" flex="1"/>
+          <vbox id="plugin-enabled" class="view-header global-info-container"
+                hidden="true">
+            <vbox class="global-info" flex="1"  align="center">
+              <button class="button-disableplugin"
+                      label="&plugins.installed.disable;"
+                      tooltiptext="&plugins.installed.disable.tip;"
+                      command="cmd_goToDisablePlugins"/>
+              <spacer flex="5000"/> <!-- Necessary to allow the message to wrap -->
+            </vbox>
+          </vbox>
         </vbox>
 
         <!-- updates view -->
