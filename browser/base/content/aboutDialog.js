@@ -54,7 +54,8 @@ function init(aEvent)
 #ifdef TOR_BROWSER_VERSION
   let versionElem = document.getElementById("version");
   if (versionElem)
-    versionElem.textContent += " (Tor Browser " + TOR_BROWSER_VERSION + ")";
+    versionElem.textContent = TOR_BROWSER_VERSION +
+                              " (based on Mozilla Firefox " + versionElem.textContent + ")";
 #endif
 
 #ifdef MOZ_UPDATER
