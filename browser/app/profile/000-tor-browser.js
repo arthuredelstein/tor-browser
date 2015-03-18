@@ -115,6 +115,7 @@ pref("network.protocol-handler.warn-external.snews", true);
 pref("plugins.click_to_play", true);
 pref("plugin.state.flash", 1);
 pref("plugins.hide_infobar_for_missing_plugin", true);
+pref("plugins.hideMissingPluginsNotification", true);
 pref("media.peerconnection.enabled", false); // Disable WebRTC interfaces
 pref("svg.in-content.enabled", true); // May be disabled via Torbutton's security slider.
 
