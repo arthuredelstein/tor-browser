@@ -50,17 +50,68 @@
 #include "nsSVGPaintServerFrame.h"
 #include "mozilla/dom/SVGSVGElement.h"
 #include "nsTextFrame.h"
+#include "nsNetUtil.h"
+#include "nsContentUtils.h"
 #include "SVGContentUtils.h"
 #include "mozilla/unused.h"
+#include "nsIDocument.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::gfx;
 
+static bool sSVGEnabledInContent;
 static bool sSVGPathCachingEnabled;
 static bool sSVGDisplayListHitTestingEnabled;
 static bool sSVGDisplayListPaintingEnabled;
 static bool sSVGNewGetBBoxEnabled;
+
+// Determine if SVG should be enabled for aDoc.  The svg.in-content.enabled
+// preference is checked as well as whether aDoc is a content or chrome doc.
+// If aDoc is NULL, the pref. value is returned.
+// Once we determine whether SVG is allowed for a given document, we record
+// that fact inside the document.  This is necessary to avoid crashes due
+// to code that uses static_cast to cast an element object to an nsSVGElement
+// object.  When SVG is disabled, <svg> and related tags are not represented
+// by nsSVGElement objects.
+bool
+NS_SVGEnabled(nsIDocument *aDoc)
+{
+  if (!aDoc)
+    return NS_SVGEnabledForChannel(nullptr);
+
+  mozilla::dom::SVGStatus svgStatus = aDoc->GetSVGStatus();
+  if (svgStatus == mozilla::dom::SVGStatus_Unknown)
+  {
+    svgStatus = NS_SVGEnabledForChannel(aDoc->GetChannel()) ?
+           mozilla::dom::SVGStatus_Enabled : mozilla::dom::SVGStatus_Disabled;
+    aDoc->SetSVGStatus(svgStatus);
+  }
+
+  return (svgStatus == mozilla::dom::SVGStatus_Enabled);
+}
+
+// Determine if SVG should be enabled for aChannel.  The svg.in-content.enabled
+// preference is checked as well as whether the load context associated with
+// aChannel is content or chrome.
+// If aChannel is NULL, the pref. value is returned.
+bool
+NS_SVGEnabledForChannel(nsIChannel *aChannel)
+{
+  if (sSVGEnabledInContent)
+    return true;
+
+  if (!aChannel)
+    return false;
+
+  bool isContent = true;
+  nsCOMPtr<nsILoadContext> ctx;
+  NS_QueryNotificationCallbacks(aChannel, ctx);
+  if (ctx)
+    ctx->GetIsContent(&isContent);
+
+  return !isContent;
+}
 
 bool
 NS_SVGPathCachingEnabled()
@@ -132,6 +183,9 @@ SVGAutoRenderState::IsPaintingToWindow(DrawTarget* aDrawTarget)
 void
 nsSVGUtils::Init()
 {
+  Preferences::AddBoolVarCache(&sSVGEnabledInContent,
+                               "svg.in-content.enabled");
+
   Preferences::AddBoolVarCache(&sSVGPathCachingEnabled,
                                "svg.path-caching.enabled");
 
@@ -911,10 +965,11 @@ nsSVGUtils::GetBBox(nsIFrame *aFrame, uint32_t aFlags)
       // needs investigation to check that we won't break too much content.
       // NOTE: When changing this to apply to other frame types, make sure to
       // also update nsSVGUtils::FrameSpaceInCSSPxToUserSpaceOffset.
-      MOZ_ASSERT(content->IsSVG(), "bad cast");
-      nsSVGElement *element = static_cast<nsSVGElement*>(content);
-      matrix = element->PrependLocalTransformsTo(matrix,
+      if (content->IsSVG()) {
+        nsSVGElement *element = static_cast<nsSVGElement*>(content);
+        matrix = element->PrependLocalTransformsTo(matrix,
                           nsSVGElement::eChildToUserSpace);
+      }
     }
     bbox = svg->GetBBoxContribution(ToMatrix(matrix), aFlags).ToThebesRect();
     // Account for 'clipped'.
@@ -1114,7 +1169,9 @@ nsSVGUtils::GetNonScalingStrokeTransform(nsIFrame *aFrame,
   }
 
   nsIContent *content = aFrame->GetContent();
-  MOZ_ASSERT(content->IsSVG(), "bad cast");
+  if (!content->IsSVG()) {
+    return false;
+  }
 
   *aUserToOuterSVG = ThebesMatrix(SVGContentUtils::GetCTM(
                        static_cast<nsSVGElement*>(content), true));
@@ -1405,6 +1462,10 @@ nsSVGUtils::GetStrokeWidth(nsIFrame* aFrame, gfxTextContextPaint *aContextPaint)
     content = content->GetParent();
   }
 
+  if (!aFrame->GetContent()->IsSVG()) {
+    return 0.0;
+  }
+
   nsSVGElement *ctx = static_cast<nsSVGElement*>(content);
 
   return SVGContentUtils::CoordToFloat(ctx, style->mStrokeWidth);
@@ -1418,6 +1479,9 @@ GetStrokeDashData(nsIFrame* aFrame,
 {
   const nsStyleSVG* style = aFrame->StyleSVG();
   nsIContent *content = aFrame->GetContent();
+  if (!content->IsSVG()) {
+    return false;
+  }
   nsSVGElement *ctx = static_cast<nsSVGElement*>
     (content->IsNodeOfType(nsINode::eTEXT) ?
      content->GetParent() : content);
