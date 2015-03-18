@@ -20,6 +20,7 @@
 #include "Image.h"
 #include "nsMediaFragmentURIParser.h"
 #include "nsContentUtils.h"
+#include "nsSVGUtils.h"
 #include "nsIScriptSecurityManager.h"
 
 #include "ImageFactory.h"
@@ -92,7 +93,42 @@ ImageFactory::CreateImage(nsIRequest* aRequest,
   uint32_t imageFlags = ComputeImageFlags(aURI, aMimeType, aIsMultiPart);
 
   // Select the type of image to create based on MIME type.
+  bool isBlocked = false;
   if (aMimeType.EqualsLiteral(IMAGE_SVG_XML)) {
+    nsCOMPtr<nsIChannel> channel(do_QueryInterface(aRequest));
+    isBlocked = !NS_SVGEnabledForChannel(channel);
+    if (!isBlocked && channel && !NS_SVGEnabledForChannel(nullptr)) {
+      // Special case for favicons: block this image load if SVGs are
+      // disallowed from content and if this image load originated from the
+      // favicon xul:image node within a tab.
+      nsCOMPtr<nsILoadInfo> loadInfo;
+      nsresult rv = channel->GetLoadInfo(getter_AddRefs(loadInfo));
+      if (NS_SUCCEEDED(rv)) {
+        nsINode *node = loadInfo->LoadingNode();
+        if (node) {
+          nsCOMPtr<nsIDOMElement> elem(do_QueryInterface(node));
+          if (elem) {
+            nsAutoString anonid;
+            elem->GetAttribute(NS_LITERAL_STRING("anonid"), anonid);
+            isBlocked = anonid.EqualsLiteral("tab-icon-image");
+          }
+        }
+      }
+    }
+
+    if (isBlocked) {
+      // SVG is disabled.  We must return an image object that is marked
+      // "bad", but we want to avoid invoking the VectorImage class (SVG code),
+      // so we return a PNG with the error flag set.
+      RefPtr<RasterImage> badImage = new RasterImage(aURI);
+      (void)badImage->Init(IMAGE_PNG, Image::INIT_FLAG_NONE);
+      if (aProgressTracker) {
+        aProgressTracker->SetImage(badImage);
+        badImage->SetProgressTracker(aProgressTracker);
+      }
+      badImage->SetHasError();
+      return badImage.forget();
+    }
     return CreateVectorImage(aRequest, aProgressTracker, aMimeType,
                              aURI, imageFlags, aInnerWindowId);
   } else {
