@@ -1311,6 +1311,7 @@ nsIDocument::nsIDocument()
     mBidiOptions(IBMBIDI_DEFAULT_BIDI_OPTIONS),
     mPartID(0),
     mDidFireDOMContentLoaded(true),
+    mSVGStatus(mozilla::dom::SVGStatus_Unknown),
     mHasScrollLinkedEffect(false),
     mUserHasInteracted(false)
 {
@@ -2097,6 +2098,8 @@ nsDocument::ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
   mReferrer.Truncate();
 
   mXMLDeclarationBits = 0;
+
+  mSVGStatus = SVGStatus_Unknown;
 
   // Now get our new principal
   if (aPrincipal) {
