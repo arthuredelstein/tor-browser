@@ -20,6 +20,7 @@
 #include "Image.h"
 #include "nsMediaFragmentURIParser.h"
 #include "nsContentUtils.h"
+#include "nsSVGUtils.h"
 #include "nsIScriptSecurityManager.h"
 
 #include "ImageFactory.h"
@@ -77,6 +78,16 @@ ComputeImageFlags(ImageURL* uri, const nsCString& aMimeType, bool isMultiPart)
   return imageFlags;
 }
 
+// Marks an image as having an error before returning it.
+template <typename T>
+static already_AddRefed<Image>
+BadImage(const char* aMessage, RefPtr<T>& aImage)
+{
+  NS_WARNING(aMessage);
+  aImage->SetHasError();
+  return aImage.forget();
+}
+
 /* static */ already_AddRefed<Image>
 ImageFactory::CreateImage(nsIRequest* aRequest,
                           ProgressTracker* aProgressTracker,
@@ -93,22 +104,21 @@ ImageFactory::CreateImage(nsIRequest* aRequest,
 
   // Select the type of image to create based on MIME type.
   if (aMimeType.EqualsLiteral(IMAGE_SVG_XML)) {
+    nsCOMPtr<nsIChannel> channel(do_QueryInterface(aRequest));
+    if (!NS_SVGEnabledForChannel(channel)) {
+      // SVG is disabled.  We must return an image object that is marked
+      // "bad", but we want to avoid invoking the VectorImage class (SVG code),
+      // so we return a PNG with the error flag set.
+      RefPtr<RasterImage> badImage = new RasterImage(aURI);
+      (void)badImage->Init(IMAGE_PNG, Image::INIT_FLAG_NONE);
+      return BadImage("SVG disabled: ImageFactor::CreateImage failed", badImage);
+    }
     return CreateVectorImage(aRequest, aProgressTracker, aMimeType,
                              aURI, imageFlags, aInnerWindowId);
   } else {
     return CreateRasterImage(aRequest, aProgressTracker, aMimeType,
                              aURI, imageFlags, aInnerWindowId);
   }
-}
-
-// Marks an image as having an error before returning it.
-template <typename T>
-static already_AddRefed<Image>
-BadImage(const char* aMessage, RefPtr<T>& aImage)
-{
-  NS_WARNING(aMessage);
-  aImage->SetHasError();
-  return aImage.forget();
 }
 
 /* static */ already_AddRefed<Image>
