@@ -24,6 +24,7 @@
 #include "nsCRT.h"
 #include "nsIViewSourceChannel.h"
 #include "nsContentUtils.h"
+#include "nsSVGUtils.h"
 #include "imgLoader.h"
 #include "nsCharsetSource.h"
 #include "nsMimeTypes.h"
@@ -156,12 +157,13 @@ nsContentDLF::CreateInstance(const char* aCommand,
     nsAutoCString type;
     viewSourceChannel->GetOriginalContentType(type);
     bool knownType =
-      (!type.EqualsLiteral(VIEWSOURCE_CONTENT_TYPE) &&
+      NS_SVGEnabledForChannel(aChannel) &&
+      ((!type.EqualsLiteral(VIEWSOURCE_CONTENT_TYPE) &&
         IsTypeInList(type, gHTMLTypes)) ||
-      nsContentUtils::IsPlainTextType(type) ||
-      IsTypeInList(type, gXMLTypes) ||
-      IsTypeInList(type, gSVGTypes) ||
-      IsTypeInList(type, gXMLTypes);
+       nsContentUtils::IsPlainTextType(type) ||
+       IsTypeInList(type, gXMLTypes) ||
+       IsTypeInList(type, gSVGTypes) ||
+       IsTypeInList(type, gXMLTypes));
 
     if (knownType) {
       viewSourceChannel->SetContentType(type);
@@ -195,7 +197,8 @@ nsContentDLF::CreateInstance(const char* aCommand,
   }
 
   // Try SVG
-  if (IsTypeInList(contentType, gSVGTypes)) {
+  if (NS_SVGEnabledForChannel(aChannel) &&
+      IsTypeInList(contentType, gSVGTypes)) {
     return CreateDocument(aCommand,
                           aChannel, aLoadGroup,
                           aContainer, kSVGDocumentCID,
