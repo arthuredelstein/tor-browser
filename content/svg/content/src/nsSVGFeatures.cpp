@@ -24,7 +24,7 @@ using namespace mozilla;
 nsSVGFeatures::HasFeature(nsISupports* aObject, const nsAString& aFeature)
 {
   // Since we do not have access to the document here we pass nullptr, which
-  // means only the svg.inContent.enabled pref is checked. This is OK since
+  // means only the svg.in-content.enabled pref is checked. This is OK since
   // we do not expect chrome code to use the HasFeature() API.
   if (!NS_SVGEnabled(nullptr))
     return false;
@@ -52,7 +52,7 @@ nsSVGFeatures::HasFeature(nsISupports* aObject, const nsAString& aFeature)
 nsSVGFeatures::HasExtension(const nsAString& aExtension)
 {
   // Since we do not have access to the document here we pass nullptr, which
-  // means only the svg.inContent.enabled pref is checked. This is OK since
+  // means only the svg.in-content.enabled pref is checked. This is OK since
   // we do not expect chrome code to use the HasExtension() API.
   if (!NS_SVGEnabled(nullptr))
     return false;
