@@ -44,11 +44,13 @@ NSSCertDBTrustDomain::NSSCertDBTrustDomain(SECTrustType certDBTrustType,
                                            OCSPFetching ocspFetching,
                                            OCSPCache& ocspCache,
                                            void* pinArg,
+                                           const char* isolationKey,
                                            CERTChainVerifyCallback* checkChainCallback)
   : mCertDBTrustType(certDBTrustType)
   , mOCSPFetching(ocspFetching)
   , mOCSPCache(ocspCache)
   , mPinArg(pinArg)
+  , mIsolationKey(isolationKey)
   , mCheckChainCallback(checkChainCallback)
 {
 }
@@ -355,7 +357,7 @@ NSSCertDBTrustDomain::CheckRevocation(
       return SECFailure;
     }
 
-    response = DoOCSPRequest(arena.get(), url.get(), request,
+    response = DoOCSPRequest(arena.get(), url.get(), mIsolationKey, request,
                              OCSPFetchingTypeToTimeoutTime(mOCSPFetching));
   }
 
