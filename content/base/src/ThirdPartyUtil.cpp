@@ -18,6 +18,7 @@
 #include "nsPrintfCString.h"
 #include "nsIConsoleService.h"
 #include "nsContentUtils.h"
+#include "nsIContent.h"
 
 NS_IMPL_ISUPPORTS(ThirdPartyUtil, mozIThirdPartyUtil)
 
@@ -147,9 +148,7 @@ ThirdPartyUtil::GetOriginatingURI(nsIChannel *aChannel, nsIURI **aURI)
   }
 
   // case 3)
-  if (!topWin)
-    return NS_ERROR_INVALID_ARG;
-
+  if (topWin) {
   // case 4)
   if (ourWin == topWin) {
     // Check whether this is the document channel for this window (representing
@@ -176,9 +175,14 @@ ThirdPartyUtil::GetOriginatingURI(nsIChannel *aChannel, nsIURI **aURI)
   NS_ENSURE_TRUE(prin, NS_ERROR_UNEXPECTED);
 
   prin->GetURI(aURI);
+  }
 
-  if (!*aURI)
-    return NS_ERROR_NULL_POINTER;
+  if (!*aURI && httpChannelInternal) {
+    httpChannelInternal->GetDocumentURI(aURI);
+    if (!*aURI) {
+      return NS_ERROR_NULL_POINTER;
+    }
+  }
 
   // all done!
   return NS_OK;
@@ -441,12 +445,13 @@ ThirdPartyUtil::IsFirstPartyIsolationActive(nsIChannel *aChannel,
 // is deactivated, then aOutput will return null.
 // Not scriptable due to the use of an nsIDocument parameter.
 NS_IMETHODIMP
-ThirdPartyUtil::GetFirstPartyIsolationURI(nsIChannel *aChannel, nsIDocument *aDoc, nsIURI **aOutput)
+ThirdPartyUtil::GetFirstPartyIsolationURI(nsIChannel *aChannel, nsINode *aNode, nsIURI **aOutput)
 {
+  nsCOMPtr<nsIDocument> aDoc(aNode ? aNode->GetCurrentDoc() : nullptr);
   bool isolationActive = false;
   (void)IsFirstPartyIsolationActive(aChannel, aDoc, &isolationActive);
   if (isolationActive) {
-    return GetFirstPartyURI(aChannel, aDoc, aOutput);
+    return GetFirstPartyURI(aChannel, aNode, aOutput);
   } else {
     // We return a null pointer when isolation is off.
     *aOutput = nullptr;
@@ -457,15 +462,15 @@ ThirdPartyUtil::GetFirstPartyIsolationURI(nsIChannel *aChannel, nsIDocument *aDo
 // Not scriptable due to the use of an nsIDocument parameter.
 NS_IMETHODIMP
 ThirdPartyUtil::GetFirstPartyURI(nsIChannel *aChannel,
-                                 nsIDocument *aDoc,
+                                 nsINode *aNode,
                                  nsIURI **aOutput)
 {
-  return GetFirstPartyURIInternal(aChannel, aDoc, true, aOutput);
+  return GetFirstPartyURIInternal(aChannel, aNode, true, aOutput);
 }
 
 nsresult
 ThirdPartyUtil::GetFirstPartyURIInternal(nsIChannel *aChannel,
-                                         nsIDocument *aDoc,
+                                         nsINode *aNode,
                                          bool aLogErrors,
                                          nsIURI **aOutput)
 {
@@ -476,6 +481,8 @@ ThirdPartyUtil::GetFirstPartyURIInternal(nsIChannel *aChannel,
     return rv;
 
   *aOutput = nullptr;
+
+  nsCOMPtr<nsIDocument> aDoc(aNode ? aNode->GetCurrentDoc() : nullptr);
 
   if (!aChannel && aDoc) {
     aChannel = aDoc->GetChannel();
@@ -501,6 +508,12 @@ ThirdPartyUtil::GetFirstPartyURIInternal(nsIChannel *aChannel,
         }
       }
     }
+  }
+
+  if (aNode && aNode->IsContent()) {
+    nsString firstparty;
+    aNode->AsContent()->GetAttr(kNameSpaceID_None, nsGkAtoms::firstparty, firstparty);
+    NS_NewURI(aOutput, NS_ConvertUTF16toUTF8(firstparty));
   }
 
   // If the channel was missing, closed or broken, try the
@@ -553,18 +566,19 @@ ThirdPartyUtil::GetFirstPartyURIInternal(nsIChannel *aChannel,
       nsCString spec;
       nsCString srcSpec("unknown");
 
-      if (srcURI)
+      if (srcURI) {
         srcURI->GetSpec(srcSpec);
+      }
 
       if (*aOutput)
         (*aOutput)->GetSpec(spec);
       if (spec.Length() > 0) {
-        nsPrintfCString msg("getFirstPartyURI failed for %s: no host in first party URI %s",
-                            srcSpec.get(), spec.get()); // TODO: L10N
-        console->LogStringMessage(NS_ConvertUTF8toUTF16(msg).get());
+	nsContentUtils::LogMessageToConsole(
+          "getFirstPartyURI failed for %s: no host in first party URI %s",
+          srcSpec.get(), spec.get()); // TODO: L10N
       } else {
-        nsPrintfCString msg("getFirstPartyURI failed for %s: 0x%x", srcSpec.get(), rv);
-        console->LogStringMessage(NS_ConvertUTF8toUTF16(msg).get());
+	nsContentUtils::LogMessageToConsole(
+          "getFirstPartyURI failed for %s: error 0x%x", srcSpec.get(), rv);
       }
     }
 
