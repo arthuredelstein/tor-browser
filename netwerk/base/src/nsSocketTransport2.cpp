@@ -1084,6 +1084,7 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
         int32_t     proxyPort  = (int32_t) mProxyPort;
         uint32_t    proxyFlags = 0;
         nsCOMPtr<nsIProxyInfo> proxyInfo = mProxyInfo;
+        const char *isolationKey = mIsolationKey.IsEmpty() ? nullptr : mIsolationKey.get();
 
         uint32_t i;
         for (i=0; i<mTypeCount; ++i) {
@@ -1110,7 +1111,7 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
                 // service to allocate a new socket
                 rv = provider->NewSocket(mNetAddr.raw.family,
                                          host, port, proxyInfo,
-                                         proxyFlags, &fd,
+                                         isolationKey, proxyFlags, &fd,
                                          getter_AddRefs(secinfo));
 
                 if (NS_SUCCEEDED(rv) && !fd) {
@@ -1124,7 +1125,7 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
                 // to the stack (such as pushing an io layer)
                 rv = provider->AddToSocket(mNetAddr.raw.family,
                                            host, port, proxyInfo,
-                                           proxyFlags, fd,
+                                           isolationKey, proxyFlags, fd,
                                            getter_AddRefs(secinfo));
             }
             // proxyFlags = 0; not used below this point...
@@ -2168,6 +2169,20 @@ NS_IMETHODIMP
 nsSocketTransport::GetPort(int32_t *port)
 {
     *port = (int32_t) SocketPort();
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSocketTransport::GetIsolationKey(nsACString &value)
+{
+    value = mIsolationKey;
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSocketTransport::SetIsolationKey(const nsACString &value)
+{
+    mIsolationKey = value;
     return NS_OK;
 }
 
