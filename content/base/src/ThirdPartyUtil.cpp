@@ -18,6 +18,7 @@
 #include "nsPrintfCString.h"
 #include "nsIConsoleService.h"
 #include "nsContentUtils.h"
+#include "nsIContent.h"
 
 NS_IMPL_ISUPPORTS(ThirdPartyUtil, mozIThirdPartyUtil)
 
@@ -146,39 +147,41 @@ ThirdPartyUtil::GetOriginatingURI(nsIChannel *aChannel, nsIURI **aURI)
     ctx->GetAssociatedWindow(getter_AddRefs(ourWin));
   }
 
-  // case 3)
-  if (!topWin)
-    return NS_ERROR_INVALID_ARG;
+  // case 3 and 4)
+  if (topWin) {
+    if (ourWin == topWin) {
+      // Check whether this is the document channel for this window (representing
+      // a load of a new page).  This is a bit of a nasty hack, but we will
+      // hopefully flag these channels better later.
+      nsLoadFlags flags;
+      aChannel->GetLoadFlags(&flags);
 
-  // case 4)
-  if (ourWin == topWin) {
-    // Check whether this is the document channel for this window (representing
-    // a load of a new page).  This is a bit of a nasty hack, but we will
-    // hopefully flag these channels better later.
-    nsLoadFlags flags;
-    aChannel->GetLoadFlags(&flags);
+      if (flags & nsIChannel::LOAD_DOCUMENT_URI) {
+        // get the channel URI - the window's will be bogus
+        aChannel->GetURI(aURI);
+        if (!*aURI)
+          return NS_ERROR_NULL_POINTER;
 
-    if (flags & nsIChannel::LOAD_DOCUMENT_URI) {
-      // get the channel URI - the window's will be bogus
-      aChannel->GetURI(aURI);
-      if (!*aURI)
-        return NS_ERROR_NULL_POINTER;
-
-      return NS_OK;
+        return NS_OK;
+      }
     }
+
+    // case 5) - get the originating URI from the top window's principal
+    nsCOMPtr<nsIScriptObjectPrincipal> scriptObjPrin = do_QueryInterface(topWin);
+    NS_ENSURE_TRUE(scriptObjPrin, NS_ERROR_UNEXPECTED);
+
+    nsIPrincipal* prin = scriptObjPrin->GetPrincipal();
+    NS_ENSURE_TRUE(prin, NS_ERROR_UNEXPECTED);
+
+    prin->GetURI(aURI);
   }
 
-  // case 5) - get the originating URI from the top window's principal
-  nsCOMPtr<nsIScriptObjectPrincipal> scriptObjPrin = do_QueryInterface(topWin);
-  NS_ENSURE_TRUE(scriptObjPrin, NS_ERROR_UNEXPECTED);
-
-  nsIPrincipal* prin = scriptObjPrin->GetPrincipal();
-  NS_ENSURE_TRUE(prin, NS_ERROR_UNEXPECTED);
-
-  prin->GetURI(aURI);
-
-  if (!*aURI)
-    return NS_ERROR_NULL_POINTER;
+  if (!*aURI && httpChannelInternal) {
+    httpChannelInternal->GetDocumentURI(aURI);
+    if (!*aURI) {
+      return NS_ERROR_NULL_POINTER;
+    }
+  }
 
   // all done!
   return NS_OK;
@@ -441,12 +444,13 @@ ThirdPartyUtil::IsFirstPartyIsolationActive(nsIChannel *aChannel,
 // is deactivated, then aOutput will return null.
 // Not scriptable due to the use of an nsIDocument parameter.
 NS_IMETHODIMP
-ThirdPartyUtil::GetFirstPartyIsolationURI(nsIChannel *aChannel, nsIDocument *aDoc, nsIURI **aOutput)
+ThirdPartyUtil::GetFirstPartyIsolationURI(nsIChannel *aChannel, nsINode *aNode, nsIURI **aOutput)
 {
+  nsCOMPtr<nsIDocument> aDoc(aNode ? aNode->GetCurrentDoc() : nullptr);
   bool isolationActive = false;
   (void)IsFirstPartyIsolationActive(aChannel, aDoc, &isolationActive);
   if (isolationActive) {
-    return GetFirstPartyURI(aChannel, aDoc, aOutput);
+    return GetFirstPartyURI(aChannel, aNode, aOutput);
   } else {
     // We return a null pointer when isolation is off.
     *aOutput = nullptr;
@@ -457,15 +461,15 @@ ThirdPartyUtil::GetFirstPartyIsolationURI(nsIChannel *aChannel, nsIDocument *aDo
 // Not scriptable due to the use of an nsIDocument parameter.
 NS_IMETHODIMP
 ThirdPartyUtil::GetFirstPartyURI(nsIChannel *aChannel,
-                                 nsIDocument *aDoc,
+                                 nsINode *aNode,
                                  nsIURI **aOutput)
 {
-  return GetFirstPartyURIInternal(aChannel, aDoc, true, aOutput);
+  return GetFirstPartyURIInternal(aChannel, aNode, true, aOutput);
 }
 
 nsresult
 ThirdPartyUtil::GetFirstPartyURIInternal(nsIChannel *aChannel,
-                                         nsIDocument *aDoc,
+                                         nsINode *aNode,
                                          bool aLogErrors,
                                          nsIURI **aOutput)
 {
@@ -477,13 +481,24 @@ ThirdPartyUtil::GetFirstPartyURIInternal(nsIChannel *aChannel,
 
   *aOutput = nullptr;
 
+  // Favicons, or other items being loaded in chrome that belong
+  // to a particular web site should be assigned that site's first party.
+  if (aNode && aNode->IsContent() && aNode->OwnerDoc() &&
+      nsContentUtils::IsChromeDoc(aNode->OwnerDoc())) {
+    nsString firstparty;
+    aNode->AsContent()->GetAttr(kNameSpaceID_None, nsGkAtoms::firstparty, firstparty);
+    NS_NewURI(aOutput, NS_ConvertUTF16toUTF8(firstparty));
+  }
+
+  nsCOMPtr<nsIDocument> aDoc(aNode ? aNode->GetCurrentDoc() : nullptr);
+
   if (!aChannel && aDoc) {
     aChannel = aDoc->GetChannel();
   }
 
   // If aChannel is specified or available, use the official route
   // for sure
-  if (aChannel) {
+  if (!*aOutput && aChannel) {
     rv = GetOriginatingURI(aChannel, aOutput);
     aChannel->GetURI(getter_AddRefs(srcURI));
     if (NS_SUCCEEDED(rv) && *aOutput) {
@@ -508,7 +523,7 @@ ThirdPartyUtil::GetFirstPartyURIInternal(nsIChannel *aChannel,
   //
   // This might fail to work for first-party loads themselves, but
   // we don't need this codepath for that case.
-  if (NS_FAILED(rv) && aDoc) {
+  if (!*aOutput && NS_FAILED(rv) && aDoc) {
     nsCOMPtr<nsIDOMWindow> top;
     nsCOMPtr<nsIDOMDocument> topDDoc;
     nsIURI *docURI = nullptr;
@@ -553,18 +568,19 @@ ThirdPartyUtil::GetFirstPartyURIInternal(nsIChannel *aChannel,
       nsCString spec;
       nsCString srcSpec("unknown");
 
-      if (srcURI)
+      if (srcURI) {
         srcURI->GetSpec(srcSpec);
+      }
 
       if (*aOutput)
         (*aOutput)->GetSpec(spec);
       if (spec.Length() > 0) {
-        nsPrintfCString msg("getFirstPartyURI failed for %s: no host in first party URI %s",
-                            srcSpec.get(), spec.get()); // TODO: L10N
-        console->LogStringMessage(NS_ConvertUTF8toUTF16(msg).get());
+	nsContentUtils::LogMessageToConsole(
+          "getFirstPartyURI failed for %s: no host in first party URI %s",
+          srcSpec.get(), spec.get()); // TODO: L10N
       } else {
-        nsPrintfCString msg("getFirstPartyURI failed for %s: 0x%x", srcSpec.get(), rv);
-        console->LogStringMessage(NS_ConvertUTF8toUTF16(msg).get());
+	nsContentUtils::LogMessageToConsole(
+          "getFirstPartyURI failed for %s: error 0x%x", srcSpec.get(), rv);
       }
     }
 

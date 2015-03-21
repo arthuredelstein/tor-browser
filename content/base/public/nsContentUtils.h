@@ -645,7 +645,7 @@ public:
    * @return the imgIRequest for the image load
    */
   static nsresult LoadImage(nsIURI* aURI,
-                            nsIDocument* aLoadingDocument,
+                            nsINode* aLoadingNode,
                             nsIPrincipal* aLoadingPrincipal,
                             nsIURI* aReferrer,
                             imgINotificationObserver* aObserver,

@@ -31,7 +31,7 @@ private:
   bool SchemeIsWhiteListed(nsIURI *aURI);
   static already_AddRefed<nsIURI> GetURIFromWindow(nsIDOMWindow* aWin);
   static nsresult GetOriginatingURI(nsIChannel  *aChannel, nsIURI **aURI);
-  nsresult GetFirstPartyURIInternal(nsIChannel *aChannel, nsIDocument *aDoc,
+  nsresult GetFirstPartyURIInternal(nsIChannel *aChannel, nsINode *aNode,
                                     bool aLogErrors, nsIURI **aOutput);
 
   nsCOMPtr<nsIEffectiveTLDService> mTLDService;
