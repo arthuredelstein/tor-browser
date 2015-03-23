@@ -447,12 +447,12 @@ NS_IMPL_ISUPPORTS(NesteggReporter, nsIMemoryReporter)
 #endif /* MOZ_WEBM */
 
 // Anonymous namespace for customizing the default locale that JavaScript
-// uses, according to the value of the "javascript.default_locale" pref.
+// uses, according to the value of the "prviacy.resistFingerprinting" pref.
 // The current default locale can be detected in JavaScript by calling
 // `Intl.DateTimeFormat().resolvedOptions().locale`
 namespace {
 
-#define DEFAULT_LOCALE_PREF "javascript.default_locale"
+#define RESIST_FINGERPRINTING_PREF "privacy.resistFingerprinting"
 
 static char* sSystemLocale;
 static char* sJSLocale;
@@ -468,27 +468,26 @@ JSRuntime* GetRuntime() {
   return rt;
 }
 
-// Takes the "javascript.default_locale" pref value and applies it. If the locale
-// is empty, we fall back to the default system and JS locales.
+// If we are resisting fingerprinting, set all locales to US English.
+// Otherwise, fall back to the default system and JS locales.
 static
-void DefaultLocaleChangedCallback(const char* /* pref */, void* /* closure */) {
+void ResistFingerprintingPrefChangedCallback(const char* /* pref */, void* /* closure */) {
   // Get a pointer to the default JS Runtime.
   JSRuntime* rt = GetRuntime();
   if (rt) {
-    // Read the pref, which may contain a custom default locale to be used in JavaScript.
-    nsAutoCString prefLocale;
-    mozilla::Preferences::GetCString(DEFAULT_LOCALE_PREF, &prefLocale);
+    // Read the pref to see if we will resist fingerprinting.
+    bool resist = mozilla::Preferences::GetBool(RESIST_FINGERPRINTING_PREF, false);
     // Set the application-wide C-locale. Needed for Date.toLocaleFormat().
-    setlocale(LC_ALL, prefLocale.IsEmpty() ? sSystemLocale : prefLocale.get());
+    setlocale(LC_ALL, resist ? "en_US" : sSystemLocale);
     // Now override the JavaScript Runtime Locale that is used by the Intl API
     // as well as Date.toLocaleString, Number.toLocaleString, and String.localeCompare.
-    JS_SetDefaultLocale(rt, prefLocale.IsEmpty() ? sJSLocale : prefLocale.get());
+    JS_SetDefaultLocale(rt, resist ? "en-US" : sJSLocale);
   }
 }
 
 static
-void StartWatchingDefaultLocalePref() {
-  // Get the default system locale. To be used if pref is not available.
+void StartWatchingResistFingerprintingPref() {
+  // Get the default system locale. To be used if resistance pref is deactivated.
   sSystemLocale = strdup(setlocale(LC_ALL,NULL));
   // Store the default JavaScript locale.
   JSRuntime* rt = GetRuntime();
@@ -496,17 +495,17 @@ void StartWatchingDefaultLocalePref() {
     sJSLocale = strdup(JS_GetDefaultLocale(rt));
   }
   // Now keep the locale updated with the current pref value.
-  mozilla::Preferences::RegisterCallbackAndCall(DefaultLocaleChangedCallback, DEFAULT_LOCALE_PREF);
+  mozilla::Preferences::RegisterCallbackAndCall(ResistFingerprintingPrefChangedCallback, RESIST_FINGERPRINTING_PREF);
 }
 
 static
-void StopWatchingDefaultLocalePref() {
-  mozilla::Preferences::UnregisterCallback(DefaultLocaleChangedCallback, DEFAULT_LOCALE_PREF);
+void StopWatchingResistFingerprintingPref() {
+  mozilla::Preferences::UnregisterCallback(ResistFingerprintingPrefChangedCallback, RESIST_FINGERPRINTING_PREF);
   if (sSystemLocale) free(sSystemLocale);
   if (sJSLocale) JS_free(nullptr, sJSLocale);
 }
 
-} // anonymous namespace for locale pref
+} // anonymous namespace for locale hiding
 
 EXPORT_XPCOM_API(nsresult)
 NS_InitXPCOM2(nsIServiceManager* *result,
@@ -766,8 +765,8 @@ NS_InitXPCOM2(nsIServiceManager* *result,
     mozilla::eventtracer::Init();
 #endif
 
-    // Start watching the javascript.default_locale pref.
-    StartWatchingDefaultLocalePref();
+  // Start watching the "privacy.resistFingerprinting" pref.
+  StartWatchingResistFingerprintingPref();
     return NS_OK;
 }
 
@@ -1033,7 +1032,7 @@ ShutdownXPCOM(nsIServiceManager* servMgr)
         sExitManager = nullptr;
     }
 
-    StopWatchingDefaultLocalePref();
+    StopWatchingResistFingerprintingPref();
 
     Omnijar::CleanUp();
 
