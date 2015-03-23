@@ -202,7 +202,7 @@ OCSPCache::Put(const CERTCertificate* aCert,
 
   MutexAutoLock lock(mMutex);
 
-  int32_t index = FindInternal(aCert, aIssuerCert, lock);
+  int32_t index = FindInternal(aCert, aIssuerCert, aIsolationKey, lock);
 
   if (index >= 0) {
     // Never replace an entry indicating a revoked certificate.
