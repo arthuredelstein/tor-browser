@@ -2677,6 +2677,11 @@ this.AddonManagerPrivate = {
     AddonManagerInternal.callAddonListeners.apply(AddonManagerInternal, aArgs);
   },
 
+  callManagerListeners: function AMP_callManagerListeners(...aArgs) {
+    AddonManagerInternal.callManagerListeners.apply(AddonManagerInternal,
+                                                    aArgs);
+  },
+
   AddonAuthor: AddonAuthor,
 
   AddonScreenshot: AddonScreenshot,
