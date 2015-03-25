@@ -478,7 +478,7 @@ void UseUSEnglishLocalePrefChangedCallback(const char* /* pref */, void* /* clos
     // Read the pref to see if we will use US English locale.
     bool useUSEnglishLocale = mozilla::Preferences::GetBool(USE_US_ENGLISH_LOCALE_PREF, false);
     // Set the application-wide C-locale. Needed for Date.toLocaleFormat().
-    setlocale(LC_ALL, useUSEnglishLocale ? "en_US" : sSystemLocale);
+    setlocale(LC_ALL, useUSEnglishLocale ? "C" : sSystemLocale);
     // Now override the JavaScript Runtime Locale that is used by the Intl API
     // as well as Date.toLocaleString, Number.toLocaleString, and String.localeCompare.
     JS_SetDefaultLocale(rt, useUSEnglishLocale ? "en-US" : sJSLocale);
