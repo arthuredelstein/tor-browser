@@ -95,6 +95,7 @@ pref("network.http.spdy.enabled", false); // Stores state and may have keepalive
 pref("network.http.spdy.enabled.v2", false); // Seems redundant, but just in case
 pref("network.http.spdy.enabled.v3", false); // Seems redundant, but just in case
 pref("privacy.thirdparty.isolate", 2); // Always enforce third party isolation
+pref("dom.workers.sharedWorkers.enabled", false); // See https://bugs.torproject.org/15562
 
 // Proxy and proxy security
 pref("network.proxy.socks", "127.0.0.1");
