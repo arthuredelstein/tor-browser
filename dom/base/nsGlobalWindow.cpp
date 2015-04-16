@@ -4867,9 +4867,9 @@ nsGlobalWindow::GetOuterSize(ErrorResult& aError)
   MOZ_ASSERT(IsOuterWindow());
 
   if (!IsChrome()) {
-    CSSIntSize size;                                                                                                                                                                                       
-    aError = GetInnerSize(size);                                                                                                                                                                           
-    return nsIntSize(size.width, size.height);  
+    CSSIntSize size;
+    aError = GetInnerSize(size);
+    return nsIntSize(size.width, size.height);
   }
 
   nsCOMPtr<nsIBaseWindow> treeOwnerAsWin = GetTreeOwnerWindow();
@@ -5113,6 +5113,11 @@ float
 nsGlobalWindow::GetDevicePixelRatio(ErrorResult& aError)
 {
   FORWARD_TO_OUTER_OR_THROW(GetDevicePixelRatio, (aError), aError, 0.0);
+
+  // For non-chrome callers, always return 1.0 to prevent fingerprinting.
+  if (!IsChrome()) {
+    return 1.0;
+  }
 
   if (!mDocShell) {
     return 1.0;
