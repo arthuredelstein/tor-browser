@@ -13,7 +13,8 @@
  */
 
 // [Constructor(DOMString url, optional (URL or DOMString) base = "about:blank")]
-[Constructor(DOMString url, URL base),
+[ChromeOnly,
+ Constructor(DOMString url, URL base),
  Constructor(DOMString url, optional DOMString base = "about:blank")]
 interface URL {
 };
