@@ -20,10 +20,11 @@ interface URL {
 URL implements URLUtils;
 
 partial interface URL {
-  [Throws]
+  [ChromeOnly, Throws]
   static DOMString? createObjectURL(Blob blob, optional objectURLOptions options);
-  [Throws]
+  [ChromeOnly, Throws]
   static DOMString? createObjectURL(MediaStream stream, optional objectURLOptions options);
+  [ChromeOnly]
   static void revokeObjectURL(DOMString url);
 };
 
@@ -34,6 +35,6 @@ dictionary objectURLOptions
 
 // https://dvcs.w3.org/hg/html-media/raw-file/default/media-source/media-source.html
 partial interface URL {
-  [Throws]
+  [ChromeOnly, Throws]
   static DOMString? createObjectURL(MediaSource source, optional objectURLOptions options);
 };
