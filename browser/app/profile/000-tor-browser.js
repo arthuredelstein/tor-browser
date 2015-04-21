@@ -89,6 +89,8 @@ pref("javascript.use_us_english_locale", true);
 // pref("intl.charsetmenu.browser.cache", "UTF-8"); // Set by Torbutton
 // Disable video statistics fingerprinting vector (bug 15757)
 pref("media.video_stats.enabled", false);
+// Disable device sensors as possible fingerprinting vector (bug 15758)
+pref("device.sensors.enabled", false);
 
 // Third party stuff
 pref("network.cookie.cookieBehavior", 1);
