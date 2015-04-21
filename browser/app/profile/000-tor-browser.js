@@ -87,6 +87,8 @@ pref("javascript.use_us_english_locale", true);
 // pref("intl.accept_languages", "en-us, en"); // Set by Torbutton
 // pref("intl.accept_charsets", "iso-8859-1,*,utf-8"); // Set by Torbutton
 // pref("intl.charsetmenu.browser.cache", "UTF-8"); // Set by Torbutton
+// Disable video statistics fingerprinting vector (bug 15757)
+pref("media.video_stats.enabled", false);
 
 // Third party stuff
 pref("network.cookie.cookieBehavior", 1);
