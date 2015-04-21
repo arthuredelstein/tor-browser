@@ -1735,6 +1735,9 @@ private:
   // be seeked even before the media is loaded.
   double mDefaultPlaybackStartPosition;
 
+  // The unrounded current time
+  double CurrentTimeImpl() const;
+
   // True if the audio track is not silent.
   bool mIsAudioTrackAudible;
 
