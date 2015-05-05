@@ -5115,7 +5115,7 @@ nsGlobalWindow::GetDevicePixelRatio(ErrorResult& aError)
   FORWARD_TO_OUTER_OR_THROW(GetDevicePixelRatio, (aError), aError, 0.0);
 
   // For non-chrome callers, always return 1.0 to prevent fingerprinting.
-  if (!IsChrome()) {
+  if (!nsContentUtils::IsCallerChrome()) {
     return 1.0;
   }
 
