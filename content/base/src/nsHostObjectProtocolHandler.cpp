@@ -31,6 +31,8 @@ struct DataInfo
 static nsClassHashtable<nsCStringHashKey, DataInfo>* gDataTable;
 static nsCOMPtr<mozIThirdPartyUtil> gThirdPartyUtilService;
 
+// Returns whatever the current first party host of the content
+// calling us is. If the caller is chrome, returns an empty string.
 static nsCString GetFirstPartyHostFromCaller() {
   if (!gThirdPartyUtilService) {
     gThirdPartyUtilService = do_GetService(THIRDPARTYUTIL_CONTRACTID);
@@ -415,9 +417,11 @@ GetDataObject(nsIURI* aURI)
   aURI->GetSpec(spec);
 
   DataInfo* info = GetDataInfo(spec);
-  // Deny access to this object if the current first-party host
-  // doesn't match the originating first-party host.
-  return (info && info->mFirstPartyHost == GetFirstPartyHostFromCaller())
+  // Deny access to this object unless the current first-party host
+  // is chrome or matches the originating first-party host.
+  nsCString callerFirstPartyHost = GetFirstPartyHostFromCaller();
+  return (info && (callerFirstPartyHost.IsEmpty() ||
+                   info->mFirstPartyHost == callerFirstPartyHost))
          ? info->mObject : nullptr;
 }
 
@@ -474,9 +478,11 @@ nsHostObjectProtocolHandler::NewChannel(nsIURI* uri, nsIChannel* *result)
 
   DataInfo* info = GetDataInfo(spec);
 
-  // Deny access to this URI if the current first party host
-  // doesn't match the first party host when it was created.
-  if (!info || (info->mFirstPartyHost != GetFirstPartyHostFromCaller())) {
+  // Deny access to this URI if the current first party host is non-chrome
+  // and doesn't match the first party host when it was created.
+  nsCString callerFirstPartyHost = GetFirstPartyHostFromCaller();
+  if (!info || (!callerFirstPartyHost.IsEmpty() &&
+                info->mFirstPartyHost != callerFirstPartyHost)) {
     return NS_ERROR_DOM_BAD_URI;
   }
   nsCOMPtr<nsIDOMBlob> blob = do_QueryInterface(info->mObject);
