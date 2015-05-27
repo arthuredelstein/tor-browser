@@ -53,9 +53,9 @@
 #endif
 @RESPATH@/hyphenation/*
 @RESPATH@/browser/@PREF_DIR@/firefox-l10n.js
-#ifdef HAVE_MAKENSISU
-@BINPATH@/uninstall/helper.exe
-#endif
+;#ifdef HAVE_MAKENSISU
+;@BINPATH@/uninstall/helper.exe
+;#endif
 #ifdef MOZ_UPDATER
 @RESPATH@/update.locale
 @RESPATH@/updater.ini
