@@ -6,9 +6,16 @@
 #include "mozilla/dom/KeyboardEvent.h"
 #include "mozilla/TextEvents.h"
 #include "prtime.h"
+#include "KeyCodeConsensus.h"
+#include "nsContentUtils.h"
 
 namespace mozilla {
 namespace dom {
+
+static bool ResistFingerprinting() {
+  return nsContentUtils::ResistFingerprinting() &&
+         !nsContentUtils::IsCallerChrome();
+}
 
 KeyboardEvent::KeyboardEvent(EventTarget* aOwner,
                              nsPresContext* aPresContext,
@@ -26,6 +33,7 @@ KeyboardEvent::KeyboardEvent(EventTarget* aOwner,
     mEvent->time = PR_Now();
     mEvent->AsKeyboardEvent()->mKeyNameIndex = KEY_NAME_INDEX_USE_STRING;
   }
+  createKeyCodes();
 }
 
 NS_IMPL_ADDREF_INHERITED(KeyboardEvent, UIEvent)
@@ -66,7 +74,16 @@ KeyboardEvent::GetCtrlKey(bool* aIsDown)
 bool
 KeyboardEvent::ShiftKey()
 {
-  return mEvent->AsKeyboardEvent()->IsShift();
+  bool shiftState = mEvent->AsKeyboardEvent()->IsShift();
+  if (!ResistFingerprinting()) {
+    return shiftState;
+  }
+  // Find a consensus fake shift state for the given key name.
+  bool fakeShiftState;
+  nsString keyName;
+  GetKey(keyName);
+  bool exists = gShiftStates->Get(keyName, &fakeShiftState);
+  return exists ? fakeShiftState : shiftState;
 }
 
 NS_IMETHODIMP
@@ -131,7 +148,17 @@ KeyboardEvent::GetKey(nsAString& aKeyName)
 void
 KeyboardEvent::GetCode(nsAString& aCodeName)
 {
-  mEvent->AsKeyboardEvent()->GetDOMCodeName(aCodeName);
+  if (!ResistFingerprinting()) {
+    mEvent->AsKeyboardEvent()->GetDOMCodeName(aCodeName);
+  } else {
+    // Use a consensus code name corresponding to the
+    // key name.
+    nsString keyName, codeNameTemp;
+    GetKey(keyName);
+    if (gCodes->Get(keyName, &codeNameTemp)) {
+      aCodeName = codeNameTemp;
+    }
+  }
 }
 
 NS_IMETHODIMP
@@ -157,7 +184,7 @@ KeyboardEvent::CharCode()
   case NS_KEY_BEFORE_UP:
   case NS_KEY_UP:
   case NS_KEY_AFTER_UP:
-    return 0;
+    //   return 0;
   case NS_KEY_PRESS:
     return mEvent->AsKeyboardEvent()->charCode;
   }
@@ -176,12 +203,19 @@ uint32_t
 KeyboardEvent::KeyCode()
 {
   // If this event is initialized with ctor, we shouldn't check event type.
-  if (mInitializedByCtor) {
-    return mEvent->AsKeyboardEvent()->keyCode;
-  }
-
-  if (mEvent->HasKeyEventMessage()) {
-    return mEvent->AsKeyboardEvent()->keyCode;
+  if (mInitializedByCtor || mEvent->HasKeyEventMessage()) {
+    if (!ResistFingerprinting()) {
+      return mEvent->AsKeyboardEvent()->keyCode;
+    } else {
+      if (CharCode() != 0) {
+        return 0;
+      }
+      // Find a consensus key code for the given key name.
+      nsString keyName;
+      GetKey(keyName);
+      uint32_t keyCode;
+      return gKeyCodes->Get(keyName, &keyCode) ? keyCode : 0;
+    }
   }
   return 0;
 }
@@ -206,7 +240,7 @@ KeyboardEvent::Which()
       //Special case for 4xp bug 62878.  Try to make value of which
       //more closely mirror the values that 4.x gave for RETURN and BACKSPACE
       {
-        uint32_t keyCode = mEvent->AsKeyboardEvent()->keyCode;
+        uint32_t keyCode = KeyCode();
         if (keyCode == NS_VK_RETURN || keyCode == NS_VK_BACK) {
           return keyCode;
         }
@@ -229,7 +263,19 @@ KeyboardEvent::GetLocation(uint32_t* aLocation)
 uint32_t
 KeyboardEvent::Location()
 {
-  return mEvent->AsKeyboardEvent()->location;
+  uint32_t location = mEvent->AsKeyboardEvent()->location;
+  if (!ResistFingerprinting()) {
+    return location;
+  }
+  // To resist fingerprinting, hide right modifier keys, as
+  // well as the numpad.
+  switch (location) {
+    case 0 : return 0;
+    case 1 : return 1;
+    case 2 : return 1;
+    case 3 : return 0;
+    default: return 0;
+  }
 }
 
 // static
