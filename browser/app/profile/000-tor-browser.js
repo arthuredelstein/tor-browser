@@ -124,6 +124,14 @@ pref("plugin.state.flash", 1);
 pref("plugins.hide_infobar_for_missing_plugin", true);
 pref("plugins.hideMissingPluginsNotification", true);
 pref("media.peerconnection.enabled", false); // Disable WebRTC interfaces
+// EME prefs: Strictly speaking these prefs don't need to be set as we are
+// using the --disable-eme compile flag. However, in order to not confuse users,
+// who might stumble upon them while looking into about:config, we set them to
+// 'false' communicating that EME is really disabled.
+pref("browser.eme.ui.enabled", false);
+pref("media.gmp-eme-adobe.enabled", false);
+pref("media.eme.enabled", false);
+pref("media.eme.apiVisible", false);
 
 // Security slider
 pref("svg.in-content.enabled", true);
