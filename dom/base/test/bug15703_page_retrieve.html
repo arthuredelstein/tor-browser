@@ -1,0 +1,44 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugs.torproject.org/15502
+-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Page mediaSource retriever for Tor Browser Bug 15703</title>
+  <script type="text/javascript;version=1.7" src="task_spawn.js"></script>
+  <script type="text/javascript;version=1.7" src="bug15502_utils.js"></script>
+</head>
+<body>
+<div id="display" style="white-space:pre; font-family:monospace; display:inline;"></div>
+<video id="testvideo"></video>
+<script type="text/javascript;version=1.7">
+
+let messageSent = false,
+    mediaSourceURL;
+
+let sendSingleMessage = function(message) {
+  if (!messageSent) {
+    sendMessage(window.parent, message);
+    appendLine("display", mediaSourceURL + " -> " + message);
+  //  messageSent = true;
+  }
+};
+
+spawn(function* () {
+  sendMessage(window.parent, "ready");
+  mediaSourceURL = yield receiveMessage(window.parent);
+  let videoElement = document.getElementById("testvideo");
+  videoElement.addEventListener("error", function (e) {
+    sendSingleMessage("setting videoElement.src failed");
+    console.log("error message: " + e.message);
+  });
+  videoElement.src = mediaSourceURL;
+  setTimeout(function() {
+    sendSingleMessage("retrieved");
+  }, 100);
+});
+
+</script>
+</body>
+</html>
