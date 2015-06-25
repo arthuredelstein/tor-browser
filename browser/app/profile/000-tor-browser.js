@@ -104,8 +104,11 @@ pref("security.enable_tls_session_tickets", false);
 pref("network.http.spdy.enabled", false); // Stores state and may have keepalive issues (both fixable)
 pref("network.http.spdy.enabled.v2", false); // Seems redundant, but just in case
 pref("network.http.spdy.enabled.v3", false); // Seems redundant, but just in case
+pref("network.http.spdy.enabled.v3-1", false); // Seems redundant, but just in case
 pref("privacy.thirdparty.isolate", 2); // Always enforce third party isolation
 pref("dom.workers.sharedWorkers.enabled", false); // See https://bugs.torproject.org/15562
+pref("network.http.spdy.enabled.http2", false); // Temporarily disabled pending implementation review
+pref("network.http.spdy.enabled.http2draft", false); // Temporarily disabled pending implementation review
 
 // Proxy and proxy security
 pref("network.proxy.socks", "127.0.0.1");
