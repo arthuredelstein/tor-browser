@@ -22,6 +22,7 @@
 #include "nsISupportsPriority.h"
 #include "nsContentUtils.h"
 #include <algorithm>
+#include "nsIHttpChannelInternal.h"
 
 using namespace mozilla::places;
 using namespace mozilla::storage;
@@ -558,6 +559,13 @@ AsyncFetchAndSetIconFromNetwork::Run()
   nsCOMPtr<nsISupportsPriority> priorityChannel = do_QueryInterface(channel);
   if (priorityChannel) {
     priorityChannel->AdjustPriority(nsISupportsPriority::PRIORITY_LOWEST);
+  }
+
+  nsCOMPtr<nsIHttpChannelInternal> channelInternal(do_QueryInterface(channel));
+  if (channelInternal) {
+    nsCOMPtr<nsIURI> pageURI;
+    nsresult rv = NS_NewURI(getter_AddRefs(pageURI), mPage.spec);
+    channelInternal->SetDocumentURI(pageURI);
   }
 
   return channel->AsyncOpen(this, nullptr);
