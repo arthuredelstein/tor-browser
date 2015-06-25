@@ -139,6 +139,11 @@ pref("browser.eme.ui.enabled", false);
 pref("media.gmp-eme-adobe.enabled", false);
 pref("media.eme.enabled", false);
 pref("media.eme.apiVisible", false);
+// WebIDE can bypass proxy settings for remote debugging. It also downloads
+// some additional addons that we have not reviewed. Turn all that off.
+pref("devtools.webide.autoinstallADBHelper", false);
+pref("devtools.webide.autoinstallFxdtAdapters", false);
+pref("devtools.webide.enabled", false);
 
 // Security slider
 pref("svg.in-content.enabled", true);
