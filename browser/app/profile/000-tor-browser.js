@@ -91,6 +91,8 @@ pref("javascript.use_us_english_locale", true);
 pref("media.video_stats.enabled", false);
 // Disable device sensors as possible fingerprinting vector (bug 15758)
 pref("device.sensors.enabled", false);
+pref("dom.enable_resource_timing", false); // Bug 13024: To hell with this API
+pref("dom.enable_user_timing", false); // Bug 16336: To hell with this API
 
 // Third party stuff
 pref("network.cookie.cookieBehavior", 1);
