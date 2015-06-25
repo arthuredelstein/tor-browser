@@ -59,6 +59,9 @@ pref("services.sync.engine.addons", false);
 pref("services.sync.engine.tabs", false);
 pref("extensions.getAddons.cache.enabled", false); // https://blog.mozilla.org/addons/how-to-opt-out-of-add-on-metadata-updates/
 pref("browser.newtabpage.enhanced", false); // Bug 16316 - Avoid potential confusion over tiles for now.
+pref("browser.search.countryCode", "US"); // The next three prefs disable GeoIP search lookups (#16254)
+pref("browser.search.region", "US");
+pref("browser.search.geoip.url", "");
 
 // Fingerprinting
 pref("webgl.min_capability_mode", true);
