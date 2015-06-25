@@ -27,14 +27,14 @@ public:
 
   static mozIThirdPartyUtil* gThirdPartyUtilService;
 
-  static nsresult GetFirstPartyHost(nsIChannel* aChannel, nsIDocument* aDocument, nsACString& aResult);
+  static nsresult GetFirstPartyHost(nsIChannel* aChannel, nsINode* aNode, nsACString& aResult);
 
   static nsresult GetFirstPartyHost(nsIChannel* aChannel, nsACString& aResult) {
     return GetFirstPartyHost(aChannel, nullptr, aResult);
   }
 
-  static nsresult GetFirstPartyHost(nsIDocument* aDocument, nsACString& aResult) {
-    return GetFirstPartyHost(nullptr, aDocument, aResult);
+  static nsresult GetFirstPartyHost(nsINode* aNode, nsACString& aResult) {
+    return GetFirstPartyHost(nullptr, aNode, aResult);
   }
 
   static nsresult GetFirstPartyHost(nsIGlobalObject* aGlobalObject, nsACString& aResult);
@@ -47,7 +47,7 @@ private:
   bool IsFirstPartyIsolationActive(nsIChannel* aChannel, nsIDocument* aDoc);
   bool SchemeIsWhiteListed(nsIURI *aURI);
   static nsresult GetOriginatingURI(nsIChannel  *aChannel, nsIURI **aURI);
-  nsresult GetFirstPartyURIInternal(nsIChannel *aChannel, nsIDocument *aDoc,
+  nsresult GetFirstPartyURIInternal(nsIChannel *aChannel, nsINode *aNode,
                                     bool aLogErrors, nsIURI **aOutput);
 
   nsCOMPtr<nsIEffectiveTLDService> mTLDService;
