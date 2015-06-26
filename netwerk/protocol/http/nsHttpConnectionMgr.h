@@ -220,7 +220,7 @@ public:
                                   nsHttpConnection *,
                                   uint32_t);
 
-    void ReportFailedToProcess(nsIURI *uri, const nsACString& isolationDomain);
+    void ReportFailedToProcess(nsIURI *uri);
 
     // Causes a large amount of connection diagnostic information to be
     // printed to the javascript console
