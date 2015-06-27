@@ -2401,7 +2401,7 @@ private:
   static bool sIsExperimentalAutocompleteEnabled;
   static bool sEncodeDecodeURLHash;
   static bool sPrivacyResistFingerprinting;
-  
+
   static nsHtml5StringParser* sHTMLFragmentParser;
   static nsIParser* sXMLFragmentParser;
   static nsIFragmentContentSink* sXMLFragmentSink;

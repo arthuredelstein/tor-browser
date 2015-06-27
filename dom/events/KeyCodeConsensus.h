@@ -4,7 +4,7 @@
 // the numpad, right modifer keys, and any non-QWERTY US English keyboard.
 
 #include "nsString.h"
-#include "nsClassHashTable.h"
+#include "nsDataHashtable.h"
 
 // KEY_INTERNAL is called by KEY or SHIFT.
 #define KEY_INTERNAL(key, code, keyCode, shift)                    \
