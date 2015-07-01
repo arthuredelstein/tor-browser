@@ -24,6 +24,32 @@ public:
 
   nsresult Init();
 
+  static nsCOMPtr<mozIThirdPartyUtil> gThirdPartyUtilService;
+
+  static nsCString GetFirstPartyHost(nsIDocument* document)
+  {
+    if (!gThirdPartyUtilService) {
+      gThirdPartyUtilService = do_GetService(THIRDPARTYUTIL_CONTRACTID);
+    }
+    nsCOMPtr<nsIURI> isolationURI;
+    gThirdPartyUtilService->GetFirstPartyIsolationURI(nullptr, document, getter_AddRefs(isolationURI));
+    nsCString firstPartyHost;
+    gThirdPartyUtilService->GetFirstPartyHostForIsolation(isolationURI, firstPartyHost);
+    return firstPartyHost;
+  }
+
+  static nsCString GetFirstPartyHost(nsIChannel* channel)
+  {
+    if (!gThirdPartyUtilService) {
+      gThirdPartyUtilService = do_GetService(THIRDPARTYUTIL_CONTRACTID);
+    }
+    nsCOMPtr<nsIURI> isolationURI;
+    gThirdPartyUtilService->GetFirstPartyIsolationURI(channel, nullptr, getter_AddRefs(isolationURI));
+    nsCString firstPartyHost;
+    gThirdPartyUtilService->GetFirstPartyHostForIsolation(isolationURI, firstPartyHost);
+    return firstPartyHost;
+  }
+
 private:
   ~ThirdPartyUtil() {}
 
@@ -38,6 +64,8 @@ private:
   nsCOMPtr<nsIEffectiveTLDService> mTLDService;
   nsCOMPtr<nsICookiePermission> mCookiePermissions;
 };
+
+nsCOMPtr<mozIThirdPartyUtil> ThirdPartyUtil::gThirdPartyUtilService;
 
 #endif
 
