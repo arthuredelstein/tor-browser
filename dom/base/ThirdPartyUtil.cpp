@@ -33,6 +33,9 @@ static PRLogModuleInfo *gThirdPartyLog;
 #undef LOG
 #define LOG(args)     PR_LOG(gThirdPartyLog, PR_LOG_DEBUG, args)
 
+// static
+nsCOMPtr<mozIThirdPartyUtil> ThirdPartyUtil::gThirdPartyUtilService;
+
 nsresult
 ThirdPartyUtil::Init()
 {
@@ -745,13 +748,4 @@ ThirdPartyUtil::GetFirstPartyHostForIsolation(nsIURI *aFirstPartyURI,
 
   aHost.Append("--");
   return NS_OK;
-}
-
-NS_IMETHODIMP
-ThirdPartyUtil::GetFirstPartyHostFromCaller(nsACString& aHost) {
-  nsCOMPtr<nsIURI> uri;
-  nsresult rv = GetFirstPartyIsolationURI(nullptr,
-                 nsContentUtils::GetDocumentFromCaller(), getter_AddRefs(uri));
-  NS_ENSURE_SUCCESS(rv, rv);
-  return GetFirstPartyHostForIsolation(uri, aHost);
 }
