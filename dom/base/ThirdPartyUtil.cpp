@@ -33,6 +33,9 @@ static PRLogModuleInfo *gThirdPartyLog;
 #undef LOG
 #define LOG(args)     PR_LOG(gThirdPartyLog, PR_LOG_DEBUG, args)
 
+// static
+nsCOMPtr<mozIThirdPartyUtil> ThirdPartyUtil::gThirdPartyUtilService;
+
 nsresult
 ThirdPartyUtil::Init()
 {
