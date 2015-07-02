@@ -13,6 +13,7 @@
 #include "nsIEffectiveTLDService.h"
 #include "nsICookiePermission.h"
 #include "mozilla/Attributes.h"
+#include "nsIGlobalObject.h"
 
 class nsIURI;
 
@@ -35,6 +36,8 @@ public:
   static nsresult GetFirstPartyHost(nsIDocument* aDocument, nsACString& aResult) {
     return GetFirstPartyHost(nullptr, aDocument, aResult);
   }
+
+  static nsresult GetFirstPartyHost(nsIGlobalObject* aGlobalObject, nsACString& aResult);
 
 private:
   ~ThirdPartyUtil() {}

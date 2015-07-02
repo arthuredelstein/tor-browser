@@ -69,6 +69,8 @@ public:
   Constructor(nsISupports* aParent, const nsAString& aUrl,
               nsIURI* aBase, ErrorResult& aRv);
 
+  static nsCString GetFirstParty(const GlobalObject& aGlobal);
+
   static void CreateObjectURL(const GlobalObject& aGlobal,
                               Blob& aBlob,
                               const objectURLOptions& aOptions,

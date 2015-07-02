@@ -18,6 +18,7 @@
 #include "nsHostObjectProtocolHandler.h"
 
 #include "mozilla/Preferences.h"
+#include "ThirdPartyUtil.h"
 
 NS_IMPL_NS_NEW_HTML_ELEMENT(Source)
 
@@ -129,7 +130,9 @@ HTMLSourceElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
       nsCOMPtr<nsIURI> uri;
       NewURIFromString(srcStr, getter_AddRefs(uri));
       if (uri && IsMediaSourceURI(uri)) {
-        NS_GetSourceForMediaSourceURI(uri, getter_AddRefs(mSrcMediaSource));
+        nsCString isolationKey;
+        ThirdPartyUtil::GetFirstPartyHost(GetOwnerDocument(), isolationKey);
+        NS_GetSourceForMediaSourceURI(uri, isolationKey, getter_AddRefs(mSrcMediaSource));
       }
     }
   }
