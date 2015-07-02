@@ -24,6 +24,21 @@ public:
 
   nsresult Init();
 
+  static mozIThirdPartyUtil* gThirdPartyUtilService;
+
+  static nsCString
+  GetFirstPartyHost(nsIChannel* aChannel, nsIDocument* aDocument);
+
+  static nsCString
+  GetFirstPartyHost(nsIChannel* aChannel) {
+    return GetFirstPartyHost(aChannel, nullptr);
+  }
+
+  static nsCString
+  GetFirstPartyHost(nsIDocument* aDocument) {
+    return GetFirstPartyHost(nullptr, aDocument);
+  }
+
 private:
   ~ThirdPartyUtil() {}
 

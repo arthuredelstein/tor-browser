@@ -33,6 +33,29 @@ static PRLogModuleInfo *gThirdPartyLog;
 #undef LOG
 #define LOG(args)     PR_LOG(gThirdPartyLog, PR_LOG_DEBUG, args)
 
+// static
+mozIThirdPartyUtil* ThirdPartyUtil::gThirdPartyUtilService = nullptr;
+
+//static
+nsCString
+ThirdPartyUtil::GetFirstPartyHost(nsIChannel* aChannel, nsIDocument* aDocument)
+{
+  if (!gThirdPartyUtilService) {
+    CallGetService(THIRDPARTYUTIL_CONTRACTID, &gThirdPartyUtilService);
+  }
+  nsCOMPtr<nsIURI> isolationURI;
+  nsresult rv = gThirdPartyUtilService->GetFirstPartyIsolationURI(aChannel, aDocument, getter_AddRefs(isolationURI));
+  if (NS_FAILED(rv)) {
+    return nsCString("--ISOLATION-FAILED-");
+  }
+  nsCString firstPartyHost;
+  rv = gThirdPartyUtilService->GetFirstPartyHostForIsolation(isolationURI, firstPartyHost);
+  if (NS_FAILED(rv)) {
+    return nsCString("--NO-ISOLATION-URI-");
+  }
+  return firstPartyHost;
+}
+
 nsresult
 ThirdPartyUtil::Init()
 {
