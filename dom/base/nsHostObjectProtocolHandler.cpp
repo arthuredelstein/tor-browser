@@ -505,11 +505,8 @@ nsHostObjectProtocolHandler::NewChannel2(nsIURI* uri,
   nsCString spec;
   uri->GetSpec(spec);
 
-  // Find the first party domain for this channel request.
-  nsCOMPtr<nsIDOMDocument> loadingDOMDocument;
-  aLoadInfo->GetLoadingDocument(getter_AddRefs(loadingDOMDocument));
-  nsCOMPtr<nsIDocument> loadingDocument = do_QueryInterface(loadingDOMDocument);
-  nsCString firstPartyHost = ThirdPartyUtil::GetFirstPartyHost(loadingDocument);
+  nsCOMPtr<nsIDocument> document = nsContentUtils::GetDocumentFromCaller();
+  nsCString firstPartyHost = ThirdPartyUtil::GetFirstPartyHost(document);
 
   DataInfo* info = GetDataInfo(spec);
   // Deny access to this URI if the current first party host

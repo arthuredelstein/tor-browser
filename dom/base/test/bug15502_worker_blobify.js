@@ -6,7 +6,7 @@ self.addEventListener("message", function (e) {
     var blob = new Blob([e.data]),
         blobURL = URL.createObjectURL(blob);
     postMessage(blobURL);
-  } catch (e) {
-    postMessage(e.message);
+  } catch (error) {
+    postMessage(error.message);
   }
 }, false);
