@@ -699,3 +699,19 @@ ThirdPartyUtil::GetFirstPartyHostForIsolation(nsIURI *aFirstPartyURI,
   aHost.Append("--");
   return NS_OK;
 }
+
+// static
+nsresult
+ThirdPartyUtil::GetFirstPartyHost(nsIGlobalObject* aGlobalObject, nsACString& aResult)
+{
+  nsCString isolationKey;
+  nsCOMPtr<nsPIDOMWindow> w = do_QueryInterface(aGlobalObject);
+  nsGlobalWindow* window = static_cast<nsGlobalWindow*>(w.get());
+  if (window) {
+    nsIDocument* doc = window->GetExtantDoc();
+    if (doc) {
+      return ThirdPartyUtil::GetFirstPartyHost(doc, aResult);
+    }
+  }
+  return NS_OK;
+}
