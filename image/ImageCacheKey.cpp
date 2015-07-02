@@ -33,13 +33,13 @@ URISchemeIs(ImageURL* aURI, const char* aScheme)
 }
 
 static Maybe<uint64_t>
-BlobSerial(ImageURL* aURI)
+BlobSerial(ImageURL* aURI, const nsCString& isolationKey)
 {
   nsAutoCString spec;
   aURI->GetSpec(spec);
 
   RefPtr<BlobImpl> blob;
-  if (NS_SUCCEEDED(NS_GetBlobForBlobURISpec(spec, getter_AddRefs(blob))) &&
+  if (NS_SUCCEEDED(NS_GetBlobForBlobURISpec(spec, isolationKey, getter_AddRefs(blob))) &&
       blob) {
     return Some(blob->GetSerialNumber());
   }
@@ -54,12 +54,12 @@ ImageCacheKey::ImageCacheKey(nsIURI* aURI, nsIDOMDocument* aDocument)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (URISchemeIs(mURI, "blob")) {
-    mBlobSerial = BlobSerial(mURI);
-  }
-
   nsCOMPtr<nsIDocument> doc = do_QueryInterface(aDocument);
   /* rv = */ ThirdPartyUtil::GetFirstPartyHost(doc, mIsolationKey);
+
+  if (URISchemeIs(mURI, "blob")) {
+    mBlobSerial = BlobSerial(mURI, mIsolationKey);
+  }
 
   mHash = ComputeHash(mURI, mBlobSerial, mControlledDocument, mIsolationKey);
 }
@@ -71,12 +71,12 @@ ImageCacheKey::ImageCacheKey(ImageURL* aURI, nsIDOMDocument* aDocument)
 {
   MOZ_ASSERT(aURI);
 
-  if (URISchemeIs(mURI, "blob")) {
-    mBlobSerial = BlobSerial(mURI);
-  }
-
   nsCOMPtr<nsIDocument> doc = do_QueryInterface(aDocument);
   /* rv = */ ThirdPartyUtil::GetFirstPartyHost(doc, mIsolationKey);
+
+  if (URISchemeIs(mURI, "blob")) {
+    mBlobSerial = BlobSerial(mURI, mIsolationKey);
+  }
 
   mHash = ComputeHash(mURI, mBlobSerial, mControlledDocument, mIsolationKey);
 }
