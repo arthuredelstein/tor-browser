@@ -688,6 +688,11 @@ gfxMacPlatformFontList::InitFontList()
 
         // add the family entry to the hash table
         ToLowerCase(familyName);
+
+        if (!IsFontFamilyNameAllowed(familyName)) {
+            continue;
+        }
+
         if (!hiddenSystemFont) {
             mFontFamilies.Put(familyName, familyEntry);
         } else {
@@ -740,7 +745,7 @@ gfxMacPlatformFontList::InitSingleFaceList()
 #endif
 
             // add only if doesn't exist already
-            if (!mFontFamilies.GetWeak(key)) {
+            if (IsFontFamilyNameAllowed(key) && !mFontFamilies.GetWeak(key)) {
                 gfxFontFamily *familyEntry =
                     new gfxSingleFaceMacFontFamily(familyName);
                 // LookupLocalFont sets this, need to clear

@@ -264,8 +264,9 @@ protected:
     // commonly used fonts for which the name table should be loaded at startup
     virtual void PreloadNamesList();
 
-    // load the bad underline blacklist from pref.
-    void LoadBadUnderlineList();
+    // load a special list from pref.
+    void LoadFamilyNames(const char *aPrefName,
+                         nsTHashtable<nsStringHashKey>* aNames);
 
     void GenerateFontListKey(const nsAString& aKeyName, nsAString& aResult);
 
@@ -296,6 +297,14 @@ protected:
 
     // canonical family name ==> family entry (unique, one name per family entry)
     nsRefPtrHashtable<nsStringHashKey, gfxFontFamily> mFontFamilies;
+
+    // A list of white-listed system fonts. If the list is empty, we permit
+    // all fonts.
+    nsTHashtable<nsStringHashKey> mWhitelistFamilyNames;
+
+    // Returns true only if the font family name is whitelisted or the
+    // whitelist is empty.
+    bool IsFontFamilyNameAllowed(const nsAString& aFontFamilyName);
 
 #if defined(XP_MACOSX)
     // hidden system fonts used within UI elements
