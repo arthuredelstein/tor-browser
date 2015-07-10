@@ -167,6 +167,7 @@ gfxPlatformFontList::MemoryReporter::CollectReports(
 gfxPlatformFontList::gfxPlatformFontList(bool aNeedFullnamePostscriptNames)
     : mFontFamilies(64), mOtherFamilyNames(16),
       mPrefFonts(8), mBadUnderlineFamilyNames(8), mSharedCmaps(8),
+      mWhitelistFamilyNames(8),
       mStartIndex(0), mIncrement(1), mNumFamilies(0)
 {
     mOtherFamilyNamesInitialized = false;
@@ -176,7 +177,8 @@ gfxPlatformFontList::gfxPlatformFontList(bool aNeedFullnamePostscriptNames)
     }
     mFaceNameListsInitialized = false;
 
-    LoadBadUnderlineList();
+    LoadFamilyNames("font.blacklist.underline_offset", &mBadUnderlineFamilyNames);
+    LoadFamilyNames("font.system.whitelist", &mWhitelistFamilyNames);
 
     // pref changes notification setup
     NS_ASSERTION(!gFontListPrefObserver,
@@ -432,15 +434,16 @@ gfxPlatformFontList::PreloadNamesList()
 }
 
 void
-gfxPlatformFontList::LoadBadUnderlineList()
+gfxPlatformFontList::LoadFamilyNames(const char *aPrefName,
+                                     nsTHashtable<nsStringHashKey>* aNames)
 {
-    nsAutoTArray<nsString, 10> blacklist;
-    gfxFontUtils::GetPrefsFontList("font.blacklist.underline_offset", blacklist);
-    uint32_t numFonts = blacklist.Length();
+    nsAutoTArray<nsString, 10> list;
+    gfxFontUtils::GetPrefsFontList(aPrefName, list);
+    uint32_t numFonts = list.Length();
     for (uint32_t i = 0; i < numFonts; i++) {
         nsAutoString key;
-        GenerateFontListKey(blacklist[i], key);
-        mBadUnderlineFamilyNames.PutEntry(key);
+        GenerateFontListKey(list[i], key);
+        aNames->PutEntry(key);
     }
 }
 
@@ -1213,4 +1216,13 @@ gfxPlatformFontList::AddSizeOfIncludingThis(MallocSizeOf aMallocSizeOf,
 {
     aSizes->mFontListSize += aMallocSizeOf(this);
     AddSizeOfExcludingThis(aMallocSizeOf, aSizes);
+}
+
+bool
+gfxPlatformFontList::IsFontFamilyNameAllowed(const nsAString& aFontFamilyName)
+{
+    // If whitelist is empty, any family name is allowed. If whitelist
+    // has entries, then only allow family names in the whitelist.
+    return mWhitelistFamilyNames.Count() == 0 ||
+           mWhitelistFamilyNames.Contains(aFontFamilyName);
 }
