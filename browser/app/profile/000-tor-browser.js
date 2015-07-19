@@ -156,6 +156,7 @@ pref("media.eme.apiVisible", false);
 pref("devtools.webide.autoinstallADBHelper", false);
 pref("devtools.webide.autoinstallFxdtAdapters", false);
 pref("devtools.webide.enabled", false);
+pref("devtools.appmanager.enabled", false);
 
 // Security slider
 pref("svg.in-content.enabled", true);
