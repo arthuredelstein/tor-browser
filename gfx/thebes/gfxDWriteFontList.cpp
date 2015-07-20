@@ -1807,7 +1807,7 @@ private:
     BundledFontFileEnumerator() = delete;
     BundledFontFileEnumerator(const BundledFontFileEnumerator&) = delete;
     BundledFontFileEnumerator& operator=(const BundledFontFileEnumerator&) = delete;
-    ~BundledFontFileEnumerator() {};
+    virtual ~BundledFontFileEnumerator() {}
     
     nsRefPtr<IDWriteFactory>      mFactory;
 
