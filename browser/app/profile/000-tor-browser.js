@@ -114,6 +114,7 @@ pref("privacy.thirdparty.isolate", 2); // Always enforce third party isolation
 pref("dom.workers.sharedWorkers.enabled", false); // See https://bugs.torproject.org/15562
 pref("network.http.spdy.enabled.http2", false); // Temporarily disabled pending implementation review
 pref("network.http.spdy.enabled.http2draft", false); // Temporarily disabled pending implementation review
+pref("network.predictor.enabled", false); // Temporarily disabled. See https://bugs.torproject.org/16633
 
 // Proxy and proxy security
 pref("network.proxy.socks", "127.0.0.1");
