@@ -158,6 +158,10 @@ pref("devtools.webide.autoinstallADBHelper", false);
 pref("devtools.webide.autoinstallFxdtAdapters", false);
 pref("devtools.webide.enabled", false);
 pref("devtools.appmanager.enabled", false);
+// The in-browser debugger for debugging chrome code is not coping with our
+// restrictive DNS look-up policy. We use "127.0.0.1" instead of "localhost" as
+// a workaround. See bug 16523 for more details.
+pref("devtools.debugger.chrome-debugging-host", "127.0.0.1");
 
 // Security slider
 pref("svg.in-content.enabled", true);
