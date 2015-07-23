@@ -587,6 +587,9 @@ gfxFontconfigUtils::UpdateFontListInternal(bool aForce)
     ActivateBundledFonts();
 #endif
 
+    ApplyWhitelist();
+    currentConfig = FcConfigGetCurrent();
+
     // These FcFontSets are owned by fontconfig
     FcFontSet *fontSets[] = {
         FcConfigGetFonts(currentConfig, FcSetSystem)
@@ -1085,6 +1088,27 @@ gfxFontconfigUtils::ActivateBundledFonts()
     if (!mBundledFontsPath.IsEmpty()) {
         FcConfigAppFontAddDir(nullptr, (const FcChar8*)mBundledFontsPath.get());
     }
+}
+
+void
+gfxFontconfigUtils::ApplyWhitelist()
+{
+    // Get the font family for font file loaded in the old configuration.
+    FcPattern *pattern = FcPatternCreate();
+    FcObjectSet *objectSet = FcObjectSetBuild(FC_FILE, FC_FAMILY, nullptr);
+    FcFontSet *fontSet = FcFontList(nullptr, pattern, objectSet);
+    FcConfig *newConfig = FcConfigCreate();
+    for (int i = 0; i < fontSet->nfont; ++i) {
+        FcPattern *font = fontSet->fonts[i];
+        FcChar8 *file, *family;
+        FcPatternGetString(font, FC_FILE, 0, &file);
+        FcPatternGetString(font, FC_FAMILY, 0, &family);
+        nsAutoCString strFamily((char *) family);
+        if (gfxFontUtils::IsFontFamilyNameAllowed(NS_ConvertUTF8toUTF16(strFamily))) {
+            FcConfigAppFontAddFile(newConfig, file);
+        }
+    }
+    FcConfigSetCurrent(newConfig);
 }
 
 #endif
