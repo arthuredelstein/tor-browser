@@ -4,13 +4,16 @@
 
 // Please maintain unit tests at ./tbb-tests/browser_tor_TB4.js
 
-// Disable browser automatic updates and associated homepage notifications
-pref("app.update.auto", false);
+// Disable initial homepage notifications
 pref("browser.search.update", false);
 pref("browser.rights.3.shown", true);
 pref("browser.startup.homepage_override.mstone", "ignore");
 pref("startup.homepage_welcome_url", "");
 pref("startup.homepage_override_url", "");
+
+// Try to nag a bit more about updates: Pop up a restart dialog an hour after the initial dialog
+pref("app.update.promptWaitTime", 3600);
+pref("app.update.badge", true);
 
 // Disable "Slow startup" warnings and associated disk history
 // (bug #13346)
