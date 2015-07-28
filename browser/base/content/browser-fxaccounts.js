@@ -5,6 +5,7 @@
 var gFxAccounts = {
 
   PREF_SYNC_START_DOORHANGER: "services.sync.ui.showSyncStartDoorhanger",
+  PREF_SYNC_UI_HIDDEN: "services.sync.ui.hidden",
   DOORHANGER_ACTIVATE_DELAY_MS: 5000,
   SYNC_MIGRATION_NOTIFICATION_TITLE: "fxa-migration",
 
@@ -103,6 +104,8 @@ var gFxAccounts = {
       Services.obs.addObserver(this, topic, false);
     }
 
+    Services.prefs.addObserver(this.PREF_SYNC_UI_HIDDEN, this, false);
+
     addEventListener("activate", this);
     gNavToolbox.addEventListener("customizationstarting", this);
     gNavToolbox.addEventListener("customizationending", this);
@@ -125,6 +128,8 @@ var gFxAccounts = {
     for (let topic of this.topics) {
       Services.obs.removeObserver(this, topic);
     }
+
+    Services.prefs.removeObserver(this.PREF_SYNC_UI_HIDDEN, this);
 
     this._initialized = false;
   },
@@ -149,6 +154,9 @@ var gFxAccounts = {
           // it's an [x] on our notification, so record telemetry.
           this.fxaMigrator.recordTelemetry(this.fxaMigrator.TELEMETRY_DECLINED);
         }
+        break;
+      case this.PREF_SYNC_UI_HIDDEN:
+        this.updateAppMenuItem();
         break;
       case this.FxAccountsCommon.ONPROFILE_IMAGE_CHANGE_NOTIFICATION:
         this.updateUI();
@@ -232,7 +240,11 @@ var gFxAccounts = {
     } catch (e) { }
 
     // Bail out if FxA is disabled.
-    if (!this.weave.fxAccountsEnabled) {
+    let hideSyncUI = false;
+    try {
+      hideSyncUI = Services.prefs.getBoolPref(this.PREF_SYNC_UI_HIDDEN);
+    } catch (e) {}
+    if (hideSyncUI || !this.weave.fxAccountsEnabled) {
       // When migration transitions from needs-verification to the null state,
       // fxAccountsEnabled is false because migration has not yet finished.  In
       // that case, hide the button.  We'll get another notification with a null
