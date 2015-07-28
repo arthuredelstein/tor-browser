@@ -5,14 +5,15 @@
 
 #include "nsString.h"
 #include "nsDataHashtable.h"
+#include "mozilla/StaticMutex.h"
 
 // KEY_INTERNAL is called by KEY or SHIFT.
-#define KEY_INTERNAL(key, code, keyCode, shift)                    \
+#define KEY_INTERNAL(key, code, keyCode, shift)                     \
     gCodes->Put(NS_LITERAL_STRING(key), NS_LITERAL_STRING(#code));  \
     gKeyCodes->Put(NS_LITERAL_STRING(key), keyCode);                \
     gShiftStates->Put(NS_LITERAL_STRING(key), shift);
 
-// KEY and SHIFT Assign a consensus codeName and keyCode for the given keyName.
+// KEY and SHIFT assign a consensus codeName and keyCode for the given keyName.
 // KEY indicates that shift is off.
 #define KEY(key, code, keyCode) KEY_INTERNAL(key, code, keyCode, false)
 // SHIFT indicates that shift is on.
@@ -26,11 +27,15 @@ static nsDataHashtable<nsStringHashKey, uint32_t>* gKeyCodes;
 // gShiftStates provides a shift value for each keyName.
 static nsDataHashtable<nsStringHashKey, bool>* gShiftStates;
 
+static StaticMutex createKeyCodesMutex;
+
 // Populate the global static maps gCodes, gKeCodes, gShiftStates
 // with their constant values.
 static void createKeyCodes()
 {
   if (gCodes) return;
+
+  StaticMutexAutoLock lock(createKeyCodesMutex);
 
   gCodes = new nsDataHashtable<nsStringHashKey, nsString>();
   gKeyCodes = new nsDataHashtable<nsStringHashKey, uint32_t>();

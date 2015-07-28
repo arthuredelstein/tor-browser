@@ -46,7 +46,15 @@ NS_INTERFACE_MAP_END_INHERITING(UIEvent)
 bool
 KeyboardEvent::AltKey()
 {
-  return mEvent->AsKeyboardEvent()->IsAlt();
+  bool altState = mEvent->AsKeyboardEvent()->IsAlt();
+  if (ResistFingerprinting()) {
+    nsString keyName;
+    GetKey(keyName);
+    bool exists = gCodes->Get(keyName, nullptr);
+    return exists ? false : altState;
+  } else {
+    return altState;
+  }
 }
 
 NS_IMETHODIMP
