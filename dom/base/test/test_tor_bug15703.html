@@ -1,11 +1,11 @@
 <!DOCTYPE HTML>
 <html>
 <!--
-https://bugs.torproject.org/15502
+https://bugs.torproject.org/15703
 -->
 <head>
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
-  <title>Test for Tor Browser Bug 15502</title>
+  <title>Test for Tor Browser Bug 15703</title>
   <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
   <script type="text/javascript;version=1.7" src="bug15502_utils.js"></script>
@@ -31,10 +31,10 @@ let setPref = function* (key, value) {
 let domain1 = "http://example.com",
     domain2 = "http://example.net",
     path = "/tests/dom/base/test/",
-    page_blob = "bug15502_page_blobify.html",
-    page_deblob = "bug15502_page_deblobify.html"
-    worker_blob = "bug15502_worker_blobify.html",
-    worker_deblob = "bug15502_worker_deblobify.html";
+    page_create = "bug15703_page_create.html",
+    page_retrieve = "bug15703_page_retrieve.html"
+    worker_create = "bug15703_worker_create.html",
+    worker_retrieve = "bug15703_worker_retrieve.html";
 
 // __tabIO(domain, child, input)__.
 // Open a tab at the given `domain` and `child` page. Post an
@@ -48,34 +48,37 @@ let tabIO = function* (domain, child, input) {
   return yield receiveMessage(tab);
 };
 
-// __blobTest(isolationOn, domainA, domainB, blobPage, deblobPage)__.
-// Run a test where we set the pref "privacy.thirdparty.isolate` to on or off,
-// and then create a blob URL in `domainA`, using the page `blobPage`,
-// and then attempt to retrieve the object from the blobURL in `domainB`, using
-// the page `deblobPage`.
-let blobTest = function* (isolationOn, domainA, domainB, blobPage, deblobPage) {
+// __mediaSourceTest(isolationOn, domainA, domainB, createPage, retrievePage)__.
+// Run a test where we set the pref "privacy.thirdparty.isolate" to on or off,
+// and then create a media source in `domainA`, using the page `createPage`,
+// and then attempt to retrive a media source in `domainB`, using
+// the page `retrievePage`.
+let mediaSourceTest = function* (isolationOn, domainA, domainB, createPage, retrievePage) {
   yield setPref("privacy.thirdparty.isolate", isolationOn ? 2 : 0);
-  let input = "" + Math.random(),
-      blobURL = yield tabIO(domainA, blobPage, input),
-      result = yield tabIO(domainB, deblobPage, blobURL),
-      description = domainA + ":" + blobPage + "->" + domainB + ":" + deblobPage + ", isolation " + (isolationOn ? "on." : "off.");
+  let input = "create",
+      mediaSourceURL = yield tabIO(domainA, createPage, input),
+      result = yield tabIO(domainB, retrievePage, mediaSourceURL),
+      description = domainA + ":" + createPage + "->" + domainB + ":" + retrievePage + ", isolation " + (isolationOn ? "on." : "off.");
   if (isolationOn && domainA !== domainB) {
-    ok(input !== result, description + " Deny retrieval");
+    ok(result !== "retrieved", description + " Deny retrieval");
   } else {
-    ok(input === result, description + " Allow retrieval");
+    ok(result === "retrieved", description + " Allow retrieval");
   }
 };
 
 
 // ## The main test
-// Run a coroutine that tests various combinations of domains
-// methods, and isolation states for reading and writing blob URLs.
+// Run a Task.jsm coroutine that tests various combinations of domains
+// methods, and isolation states for reading and writing mediasource URLs.
 spawnTask(function* () {
+  yield setPref("media.mediasource.whitelist", false);
   for (let isolate of [false, true]) {
     for (let domainB of [domain1, domain2]) {
-      for (let blob of [page_blob, worker_blob]) {
-        for (let deblob of [page_deblob, worker_deblob]) {
-          yield blobTest(isolate, domain1, domainB, blob, deblob);
+      // There doesn't appear to be a way to create a MediaSource object in a worker.
+      for (let create of [page_create, /* worker_create */]) {
+        // No way I could find to retrieve a MediaSource object in a worker.
+        for (let retrieve of [page_retrieve, /* worker_retrieve */]) {
+          yield mediaSourceTest(isolate, domain1, domainB, create, retrieve);
         }
       }
     }

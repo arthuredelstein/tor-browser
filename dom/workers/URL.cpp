@@ -24,6 +24,7 @@
 
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
+#include "ThirdPartyUtil.h"
 
 BEGIN_WORKERS_NAMESPACE
 using mozilla::dom::GlobalObject;
@@ -140,10 +141,17 @@ public:
       principal = mWorkerPrivate->GetPrincipal();
     }
 
+    nsCString firstPartyHost;
+    nsresult rv = ThirdPartyUtil::GetFirstPartyHost(doc, firstPartyHost);
+    if (NS_FAILED(rv)) {
+      NS_WARNING("Isolation failed; blob URL creation denied.");
+      return false;
+    }
+
     nsCString url;
-    nsresult rv = nsHostObjectProtocolHandler::AddDataEntry(
+    rv = nsHostObjectProtocolHandler::AddDataEntry(
         NS_LITERAL_CSTRING(BLOBURI_SCHEME),
-        mBlobImpl, principal, url);
+        mBlobImpl, principal, firstPartyHost, url);
 
     if (NS_FAILED(rv)) {
       NS_WARNING("Failed to add data entry for the blob!");
@@ -209,8 +217,13 @@ public:
       if (doc) {
         doc->UnregisterHostObjectUri(url);
       }
-
-      nsHostObjectProtocolHandler::RemoveDataEntry(url);
+      nsCString isolationKey;
+      nsresult rv = ThirdPartyUtil::GetFirstPartyHost(doc, isolationKey);
+      if (NS_FAILED(rv)) {
+        NS_WARNING("Isolation failed; blob removal denied.");
+        return false;
+      }
+      nsHostObjectProtocolHandler::RemoveDataEntry(url, isolationKey);
     }
 
     if (!window) {
@@ -888,13 +901,6 @@ URL::CreateObjectURL(const GlobalObject& aGlobal, File& aBlob,
 {
   JSContext* cx = aGlobal.Context();
   WorkerPrivate* workerPrivate = GetWorkerPrivateFromContext(cx);
-
-  if (!workerPrivate->IsChromeWorker()) {
-    workerPrivate->ReportError(cx, "Worker attempted to use createObjectURL; denied.", nullptr);
-    NS_NAMED_LITERAL_STRING(argStr, "URL.createObjectURL");
-    aRv.ThrowTypeError(MSG_METHOD_THIS_UNWRAPPING_DENIED, &argStr);
-    return;
-  }
 
   nsRefPtr<FileImpl> blobImpl = aBlob.Impl();
   MOZ_ASSERT(blobImpl);
