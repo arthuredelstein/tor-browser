@@ -55,7 +55,7 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
     return true;
 
   // Don't show canvas prompt for chrome scripts (e.g. Page Inspector)
-  if (nsContentUtils::IsCallerChrome())
+  if (nsContentUtils::ThreadsafeIsCallerChrome())
     return true;
 
   JS::AutoFilename scriptFile;
