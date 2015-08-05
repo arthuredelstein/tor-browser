@@ -14,7 +14,7 @@ namespace dom {
 
 static bool ResistFingerprinting() {
   return nsContentUtils::ResistFingerprinting() &&
-         !nsContentUtils::IsCallerChrome();
+         !nsContentUtils::ThreadsafeIsCallerChrome();
 }
 
 KeyboardEvent::KeyboardEvent(EventTarget* aOwner,
