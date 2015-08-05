@@ -2997,7 +2997,6 @@ nsContentUtils::LoadImage(nsIURI* aURI, nsINode* aLoadingNode,
                           uint32_t aContentPolicyType)
 {
   NS_PRECONDITION(aURI, "Must have a URI");
-  NS_PRECONDITION(aLoadingDocument, "Must have a document");
   NS_PRECONDITION(aLoadingPrincipal, "Must have a principal");
   NS_PRECONDITION(aRequest, "Null out param");
 
