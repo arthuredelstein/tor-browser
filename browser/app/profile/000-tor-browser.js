@@ -240,32 +240,63 @@ pref("security.cert_pinning.enforcement_level", 2);
 #endif
 
 // If we are bundling fonts, only allow bundled fonts to be used.
+
 #ifdef MOZ_BUNDLED_FONTS
+
+#ifdef XP_MACOSX
+#define LATIN_SANS "Verdana"
+#define LATIN_SERIF "Georgia"
+#define LATIN_MONO "Courier"
+#define UNICODE_SANS "Verdana, Noto Sans Canadian Aboriginal, Noto Sans Cherokee, Noto Sans Lao, Noto Sans Myanmar, Noto Sans Mongolian, Noto Sans Thaana, Noto Sans Yi"
+#define UNICODE_SERIF "Georgia, Noto Sans Canadian Aboriginal, Noto Sans Cherokee, Noto Serif Lao, Noto Sans Myanmar, Noto Sans Mongolian, Noto Sans Thaana, Noto Sans Yi"
+#define UNICODE_MONO "Courier, Noto Sans Canadian Aboriginal, Noto Sans Cherokee, Noto Sans Lao, Noto Sans Myanmar, Noto Sans Mongolian, Noto Sans Thaana, Noto Sans Yi"
+pref("font.system.whitelist", "Courier, Georgia, Verdana, Noto Naskh Arabic, Noto Naskh Arabic, Noto Sans Armenian, Noto Sans Bengali, Noto Sans Buginese, Noto Sans CJK SC Regular, Noto Sans Canadian Aboriginal, Noto Sans Cherokee, Noto Sans Devanagari, Noto Sans Ethiopic, Noto Sans Georgian, Noto Sans Gujarati, Noto Sans Gurmukhi, Noto Sans Hebrew, Noto Sans Kannada, Noto Sans Khmer, Noto Sans Lao, Noto Sans Malayalam, Noto Sans Mongolian, Noto Sans Myanmar, Noto Sans Oriya, Noto Sans Sinhala, Noto Sans Tamil, Noto Sans Telugu, Noto Sans Thaana, Noto Sans Thai, Noto Sans Tibetan, Noto Sans Yi, Noto Serif Armenian, Noto Serif Khmer, Noto Serif Lao, Noto Serif Thai");
+#endif
+
+#ifdef XP_WIN
+#define LATIN_SANS "Arial"
+#define LATIN_SERIF "Georgia"
+#define LATIN_MONO "Courier New"
+#define UNICODE_SANS "Arial, Noto Sans Canadian Aboriginal, Noto Sans Cherokee, Noto Sans Lao, Noto Sans Myanmar, Noto Sans Mongolian, Noto Sans Thaana, Noto Sans Yi"
+#define UNICODE_SERIF "Georgia, Noto Sans Canadian Aboriginal, Noto Sans Cherokee, Noto Serif Lao, Noto Sans Myanmar, Noto Sans Mongolian, Noto Sans Thaana, Noto Sans Yi"
+#define UNICODE_MONO "Courier New, Noto Sans Canadian Aboriginal, Noto Sans Cherokee, Noto Sans Lao, Noto Sans Myanmar, Noto Sans Mongolian, Noto Sans Thaana, Noto Sans Yi"
+pref("font.system.whitelist", "Courier New, Georgia, Arial, Noto Naskh Arabic, Noto Naskh Arabic, Noto Sans Armenian, Noto Sans Bengali, Noto Sans Buginese, Noto Sans CJK SC Regular, Noto Sans Canadian Aboriginal, Noto Sans Cherokee, Noto Sans Devanagari, Noto Sans Ethiopic, Noto Sans Georgian, Noto Sans Gujarati, Noto Sans Gurmukhi, Noto Sans Hebrew, Noto Sans Kannada, Noto Sans Khmer, Noto Sans Lao, Noto Sans Malayalam, Noto Sans Mongolian, Noto Sans Myanmar, Noto Sans Oriya, Noto Sans Sinhala, Noto Sans Tamil, Noto Sans Telugu, Noto Sans Thaana, Noto Sans Thai, Noto Sans Tibetan, Noto Sans Yi, Noto Serif Armenian, Noto Serif Khmer, Noto Serif Lao, Noto Serif Thai");
+#endif
+
+#ifdef XP_UNIX
+#define LATIN_SANS "Noto Sans"
+#define LATIN_SERIF "Noto Serif"
+#define LATIN_MONO "Cousine"
+#define UNICODE_SANS "Noto Sans, Noto Sans Canadian Aboriginal, Noto Sans Cherokee, Noto Sans Lao, Noto Sans Myanmar, Noto Sans Mongolian, Noto Sans Thaana, Noto Sans Yi"
+#define UNICODE_SERIF "Noto Serif, Noto Sans Canadian Aboriginal, Noto Sans Cherokee, Noto Serif Lao, Noto Sans Myanmar, Noto Sans Mongolian, Noto Sans Thaana, Noto Sans Yi"
+#define UNICODE_MONO "Cousine, Noto Sans Canadian Aboriginal, Noto Sans Cherokee, Noto Sans Lao, Noto Sans Myanmar, Noto Sans Mongolian, Noto Sans Thaana, Noto Sans Yi"
+pref("font.system.whitelist", "Cousine, Noto Serif, Noto Sans, Noto Naskh Arabic, Noto Naskh Arabic, Noto Sans Armenian, Noto Sans Bengali, Noto Sans Buginese, Noto Sans CJK SC Regular, Noto Sans Canadian Aboriginal, Noto Sans Cherokee, Noto Sans Devanagari, Noto Sans Ethiopic, Noto Sans Georgian, Noto Sans Gujarati, Noto Sans Gurmukhi, Noto Sans Hebrew, Noto Sans Kannada, Noto Sans Khmer, Noto Sans Lao, Noto Sans Malayalam, Noto Sans Mongolian, Noto Sans Myanmar, Noto Sans Oriya, Noto Sans Sinhala, Noto Sans Tamil, Noto Sans Telugu, Noto Sans Thaana, Noto Sans Thai, Noto Sans Tibetan, Noto Sans Yi, Noto Serif Armenian, Noto Serif Khmer, Noto Serif Lao, Noto Serif Thai");
+#endif
+
 pref("font.default.lo", "Noto Sans Lao");
 pref("font.default.my", "Noto Sans Myanmar");
 pref("font.default.x-western", "sans-serif");
-pref("font.internaluseonly.changed", true);
 pref("font.name-list.cursive.ar", "Noto Naskh Arabic");
-pref("font.name-list.cursive.el", "Noto Serif");
+pref("font.name-list.cursive.el", LATIN_SERIF);
 pref("font.name-list.cursive.he", "Noto Sans Hebrew");
-pref("font.name-list.cursive.x-cyrillic", "Noto Serif");
-pref("font.name-list.cursive.x-unicode", "Noto Serif, Noto Sans Canadian Aboriginal, Noto Sans Cherokee, Noto Sans Lao\, Noto Sans Myanmar, Noto Sans Mongolian, Noto Sans Thaana, Noto Sans Yi, Noto Serif Lao");
-pref("font.name-list.cursive.x-western", "Noto Serif");
-pref("font.name-list.fantasy.ar", "Noto Kufi Arabic");
-pref("font.name-list.fantasy.el", "Noto Serif");
+pref("font.name-list.cursive.x-cyrillic", LATIN_SERIF);
+pref("font.name-list.cursive.x-unicode", UNICODE_SERIF);
+pref("font.name-list.cursive.x-western", LATIN_SERIF);
+pref("font.name-list.fantasy.ar", "Noto Naskh Arabic");
+pref("font.name-list.fantasy.el", LATIN_SERIF);
 pref("font.name-list.fantasy.he", "Noto Sans Hebrew");
-pref("font.name-list.fantasy.x-cyrillic", "Noto Serif");
-pref("font.name-list.fantasy.x-unicode", "Noto Serif, Noto Sans Canadian Aboriginal, Noto Sans Cherokee, Noto Sans Lao\, Noto Sans Myanmar, Noto Sans Mongolian, Noto Sans Thaana, Noto Sans Yi, Noto Serif Lao");
-pref("font.name-list.fantasy.x-western", "Noto Serif");
-pref("font.name-list.monospace.ar", "Noto Kufi Arabic");
-pref("font.name-list.monospace.el", "Cousine");
+pref("font.name-list.fantasy.x-cyrillic", LATIN_SERIF);
+pref("font.name-list.fantasy.x-unicode", UNICODE_SERIF);
+pref("font.name-list.fantasy.x-western", LATIN_SERIF);
+pref("font.name-list.monospace.ar", "Noto Naskh Arabic");
+pref("font.name-list.monospace.el", LATIN_MONO);
 pref("font.name-list.monospace.he", "Noto Sans Hebrew");
 pref("font.name-list.monospace.ja", "Noto Sans CJK SC Regular");
 pref("font.name-list.monospace.ko", "Noto Sans CJK SC Regular");
 pref("font.name-list.monospace.th", "Noto Sans Thai");
 pref("font.name-list.monospace.x-armn", "Noto Sans Armenian");
 pref("font.name-list.monospace.x-beng", "Noto Sans Bengali");
-pref("font.name-list.monospace.x-cyrillic", "Cousine");
+pref("font.name-list.monospace.x-cyrillic", LATIN_MONO);
 pref("font.name-list.monospace.x-devanagari", "Noto Sans Devanagari");
 pref("font.name-list.monospace.x-ethi", "Noto Sans Ethiopic");
 pref("font.name-list.monospace.x-geor", "Noto Sans Georgian");
@@ -279,20 +310,20 @@ pref("font.name-list.monospace.x-sinh", "Noto Sans Sinhala");
 pref("font.name-list.monospace.x-tamil", "Noto Sans Tamil");
 pref("font.name-list.monospace.x-telu", "Noto Sans Telugu");
 pref("font.name-list.monospace.x-tibt", "Noto Sans Tibetan");
-pref("font.name-list.monospace.x-unicode", "Cousine, Noto Sans Lao, Noto Sans Myanmar, Noto Sans Mongolian, Noto Sans Thaana, Noto Serif Lao");
-pref("font.name-list.monospace.x-western", "Cousine");
+pref("font.name-list.monospace.x-unicode", UNICODE_MONO);
+pref("font.name-list.monospace.x-western", LATIN_MONO);
 pref("font.name-list.monospace.zh-CN", "Noto Sans CJK SC Regular");
 pref("font.name-list.monospace.zh-HK", "Noto Sans CJK SC Regular");
 pref("font.name-list.monospace.zh-TW", "Noto Sans CJK SC Regular");
 pref("font.name-list.sans-serif.ar", "Noto Naskh Arabic");
-pref("font.name-list.sans-serif.el", "Noto Sans");
+pref("font.name-list.sans-serif.el", LATIN_SANS);
 pref("font.name-list.sans-serif.he", "Noto Sans Hebrew");
 pref("font.name-list.sans-serif.ja", "Noto Sans CJK SC Regular");
 pref("font.name-list.sans-serif.ko", "Noto Sans CJK SC Regular");
 pref("font.name-list.sans-serif.th", "Noto Sans Thai");
 pref("font.name-list.sans-serif.x-armn", "Noto Sans Armenian");
 pref("font.name-list.sans-serif.x-beng", "Noto Sans Bengali");
-pref("font.name-list.sans-serif.x-cyrillic", "Noto Sans");
+pref("font.name-list.sans-serif.x-cyrillic", LATIN_SANS);
 pref("font.name-list.sans-serif.x-devanagari", "Noto Sans Devanagari");
 pref("font.name-list.sans-serif.x-ethi", "Noto Sans Ethiopic");
 pref("font.name-list.sans-serif.x-geor", "Noto Sans Georgian");
@@ -306,13 +337,13 @@ pref("font.name-list.sans-serif.x-sinh", "Noto Sans Sinhala");
 pref("font.name-list.sans-serif.x-tamil", "Noto Sans Tamil");
 pref("font.name-list.sans-serif.x-telu", "Noto Sans Telugu");
 pref("font.name-list.sans-serif.x-tibt", "Noto Sans Tibetan");
-pref("font.name-list.sans-serif.x-unicode", "Noto Sans, Noto Sans Lao, Noto Sans Myanmar, Noto Sans Mongolian, Noto Sans Thaana, Noto Serif Lao");
-pref("font.name-list.sans-serif.x-western", "Noto Sans");
+pref("font.name-list.sans-serif.x-unicode", UNICODE_SANS);
+pref("font.name-list.sans-serif.x-western", LATIN_SANS);
 pref("font.name-list.sans-serif.zh-CN", "Noto Sans CJK SC Regular");
 pref("font.name-list.sans-serif.zh-HK", "Noto Sans CJK SC Regular");
 pref("font.name-list.sans-serif.zh-TW", "Noto Sans CJK SC Regular");
 pref("font.name-list.serif.ar", "Noto Naskh Arabic");
-pref("font.name-list.serif.el", "Noto Serif");
+pref("font.name-list.serif.el", LATIN_SERIF);
 pref("font.name-list.serif.he", "Noto Sans Hebrew");
 pref("font.name-list.serif.ja", "Noto Sans CJK SC Regular");
 pref("font.name-list.serif.ko", "Noto Sans CJK SC Regular");
@@ -320,7 +351,7 @@ pref("font.name-list.serif.th", "Noto Sans Thai");
 pref("font.name-list.serif.th", "Noto Serif Thai");
 pref("font.name-list.serif.x-armn", "Noto Serif Armenian");
 pref("font.name-list.serif.x-beng", "Noto Sans Bengali");
-pref("font.name-list.serif.x-cyrillic", "Noto Serif");
+pref("font.name-list.serif.x-cyrillic", LATIN_SERIF);
 pref("font.name-list.serif.x-devanagari", "Noto Sans Devanagari");
 pref("font.name-list.serif.x-ethi", "Noto Sans Ethiopic");
 pref("font.name-list.serif.x-geor", "Noto Sans Georgian");
@@ -334,25 +365,25 @@ pref("font.name-list.serif.x-sinh", "Noto Sans Sinhala");
 pref("font.name-list.serif.x-tamil", "Noto Sans Tamil");
 pref("font.name-list.serif.x-telu", "Noto Sans Telugu");
 pref("font.name-list.serif.x-tibt", "Noto Sans Tibetan");
-pref("font.name-list.serif.x-unicode", "Noto Serif, Noto Sans Canadian Aboriginal, Noto Sans Cherokee, Noto Sans Lao, Noto Sans Myanmar, Noto Sans Mongolian, Noto Sans Thaana, Noto Sans Yi, Noto Serif Lao");
-pref("font.name-list.serif.x-western", "Noto Serif");
+pref("font.name-list.serif.x-unicode", UNICODE_SERIF);
+pref("font.name-list.serif.x-western", LATIN_SERIF);
 pref("font.name-list.serif.zh-CN", "Noto Sans CJK SC Regular");
 pref("font.name-list.serif.zh-HK", "Noto Sans CJK SC Regular");
 pref("font.name-list.serif.zh-TW", "Noto Sans CJK SC Regular");
 pref("font.name.cursive.ar", "Noto Naskh Arabic");
-pref("font.name.cursive.el", "Noto Serif");
+pref("font.name.cursive.el", LATIN_SERIF);
 pref("font.name.cursive.he", "Noto Sans Hebrew");
-pref("font.name.cursive.x-cyrillic", "Noto Serif");
-pref("font.name.cursive.x-unicode", "Noto Serif");
-pref("font.name.cursive.x-western", "Noto Serif");
-pref("font.name.fantasy.ar", "Noto Kufi Arabic");
-pref("font.name.fantasy.el", "Noto Serif");
+pref("font.name.cursive.x-cyrillic", LATIN_SERIF);
+pref("font.name.cursive.x-unicode", LATIN_SERIF);
+pref("font.name.cursive.x-western", LATIN_SERIF);
+pref("font.name.fantasy.ar", "Noto Naskh Arabic");
+pref("font.name.fantasy.el", LATIN_SERIF);
 pref("font.name.fantasy.he", "Noto Sans Hebrew");
-pref("font.name.fantasy.x-cyrillic", "Noto Serif");
-pref("font.name.fantasy.x-unicode", "Noto Serif");
-pref("font.name.fantasy.x-western", "Noto Serif");
-pref("font.name.monospace.ar", "Noto Kufi Arabic");
-pref("font.name.monospace.el", "Cousine");
+pref("font.name.fantasy.x-cyrillic", LATIN_SERIF);
+pref("font.name.fantasy.x-unicode", LATIN_SERIF);
+pref("font.name.fantasy.x-western", LATIN_SERIF);
+pref("font.name.monospace.ar", "Noto Naskh Arabic");
+pref("font.name.monospace.el", LATIN_MONO);
 pref("font.name.monospace.he", "Noto Sans Hebrew");
 pref("font.name.monospace.ja", "Noto Sans CJK SC Regular");
 pref("font.name.monospace.ko", "Noto Sans CJK SC Regular");
@@ -360,7 +391,7 @@ pref("font.name.monospace.my", "Noto Sans Myanmar");
 pref("font.name.monospace.th", "Noto Sans Thai");
 pref("font.name.monospace.x-armn", "Noto Sans Armenian");
 pref("font.name.monospace.x-beng", "Noto Sans Bengali");
-pref("font.name.monospace.x-cyrillic", "Cousine");
+pref("font.name.monospace.x-cyrillic", LATIN_MONO);
 pref("font.name.monospace.x-devanagari", "Noto Sans Devanagari");
 pref("font.name.monospace.x-ethi", "Noto Sans Ethiopic");
 pref("font.name.monospace.x-geor", "Noto Sans Georgian");
@@ -374,20 +405,20 @@ pref("font.name.monospace.x-sinh", "Noto Sans Sinhala");
 pref("font.name.monospace.x-tamil", "Noto Sans Tamil");
 pref("font.name.monospace.x-telu", "Noto Sans Telugu");
 pref("font.name.monospace.x-tibt", "Noto Sans Tibetan");
-pref("font.name.monospace.x-unicode", "Cousine");
-pref("font.name.monospace.x-western", "Cousine");
+pref("font.name.monospace.x-unicode", LATIN_MONO);
+pref("font.name.monospace.x-western", LATIN_MONO);
 pref("font.name.monospace.zh-CN", "Noto Sans CJK SC Regular");
 pref("font.name.monospace.zh-HK", "Noto Sans CJK SC Regular");
 pref("font.name.monospace.zh-TW", "Noto Sans CJK SC Regular");
 pref("font.name.sans-serif.ar", "Noto Naskh Arabic");
-pref("font.name.sans-serif.el", "Noto Sans");
+pref("font.name.sans-serif.el", LATIN_SANS);
 pref("font.name.sans-serif.he", "Noto Sans Hebrew");
 pref("font.name.sans-serif.ja", "Noto Sans CJK SC Regular");
 pref("font.name.sans-serif.ko", "Noto Sans CJK SC Regular");
 pref("font.name.sans-serif.th", "Noto Sans Thai");
 pref("font.name.sans-serif.x-armn", "Noto Sans Armenian");
 pref("font.name.sans-serif.x-beng", "Noto Sans Bengali");
-pref("font.name.sans-serif.x-cyrillic", "Noto Sans");
+pref("font.name.sans-serif.x-cyrillic", LATIN_SANS);
 pref("font.name.sans-serif.x-devanagari", "Noto Sans Devanagari");
 pref("font.name.sans-serif.x-ethi", "Noto Sans Ethiopic");
 pref("font.name.sans-serif.x-geor", "Noto Sans Georgian");
@@ -401,14 +432,14 @@ pref("font.name.sans-serif.x-sinh", "Noto Sans Sinhala");
 pref("font.name.sans-serif.x-tamil", "Noto Sans Tamil");
 pref("font.name.sans-serif.x-telu", "Noto Sans Telugu");
 pref("font.name.sans-serif.x-tibt", "Noto Sans Tibetan");
-pref("font.name.sans-serif.x-unicode", "Noto Sans");
-pref("font.name.sans-serif.x-western", "Noto Sans");
+pref("font.name.sans-serif.x-unicode", LATIN_SANS);
+pref("font.name.sans-serif.x-western", LATIN_SANS);
 pref("font.name.sans-serif.zh-CN", "Noto Sans CJK SC Regular");
 pref("font.name.sans-serif.zh-HK", "Noto Sans CJK SC Regular");
 pref("font.name.sans-serif.zh-TW", "Noto Sans CJK SC Regular");
 pref("font.name.sans.my", "Noto Sans Myanmar");
 pref("font.name.serif.ar", "Noto Naskh Arabic");
-pref("font.name.serif.el", "Noto Serif");
+pref("font.name.serif.el", LATIN_SERIF);
 pref("font.name.serif.he", "Noto Sans Hebrew");
 pref("font.name.serif.ja", "Noto Sans CJK SC Regular");
 pref("font.name.serif.ko", "Noto Sans CJK SC Regular");
@@ -416,7 +447,7 @@ pref("font.name.serif.my", "Noto Sans Myanmar");
 pref("font.name.serif.th", "Noto Serif Thai");
 pref("font.name.serif.x-armn", "Noto Serif Armenian");
 pref("font.name.serif.x-beng", "Noto Sans Bengali");
-pref("font.name.serif.x-cyrillic", "Noto Serif");
+pref("font.name.serif.x-cyrillic", LATIN_SERIF);
 pref("font.name.serif.x-devanagari", "Noto Sans Devanagari");
 pref("font.name.serif.x-ethi", "Noto Sans Ethiopic");
 pref("font.name.serif.x-geor", "Noto Sans Georgian");
@@ -430,10 +461,10 @@ pref("font.name.serif.x-sinh", "Noto Sans Sinhala");
 pref("font.name.serif.x-tamil", "Noto Sans Tamil");
 pref("font.name.serif.x-telu", "Noto Sans Telugu");
 pref("font.name.serif.x-tibt", "Noto Sans Tibetan");
-pref("font.name.serif.x-unicode", "Noto Serif");
-pref("font.name.serif.x-western", "Noto Serif");
+pref("font.name.serif.x-unicode", LATIN_SERIF);
+pref("font.name.serif.x-western", LATIN_SERIF);
 pref("font.name.serif.zh-CN", "Noto Sans CJK SC Regular");
 pref("font.name.serif.zh-HK", "Noto Sans CJK SC Regular");
 pref("font.name.serif.zh-TW", "Noto Sans CJK SC Regular");
-pref("font.system.whitelist", "Cousine, Noto Kufi Arabic, Noto Naskh Arabic, Noto Sans, Noto Sans Armenian, Noto Sans Bengali, Noto Sans Buginese, Noto Sans CJK SC Regular, Noto Sans Canadian Aboriginal, Noto Sans Cherokee, Noto Sans Devanagari, Noto Sans Ethiopic, Noto Sans Georgian, Noto Sans Gujarati, Noto Sans Gurmukhi, Noto Sans Hebrew, Noto Sans Kannada, Noto Sans Khmer, Noto Sans Lao, Noto Sans Malayalam, Noto Sans Mongolian, Noto Sans Myanmar, Noto Sans Oriya, Noto Sans Sinhala, Noto Sans Tamil, Noto Sans Telugu, Noto Sans Thaana, Noto Sans Thai, Noto Sans Tibetan, Noto Sans Yi, Noto Serif, Noto Serif Armenian, Noto Serif Khmer, Noto Serif Lao, Noto Serif Thai");
+
 #endif
