@@ -50,8 +50,9 @@ KeyboardEvent::AltKey()
   if (ResistFingerprinting()) {
     nsString keyName;
     GetKey(keyName);
-    bool exists = gCodes->Get(keyName, nullptr);
-    return exists ? false : altState;
+    bool fakeShiftState;
+    gShiftStates->Get(keyName, &fakeShiftState);
+    return fakeShiftState ? false : altState;
   } else {
     return altState;
   }

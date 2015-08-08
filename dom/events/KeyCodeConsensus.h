@@ -9,9 +9,9 @@
 
 // KEY_INTERNAL is called by KEY or SHIFT.
 #define KEY_INTERNAL(key, code, keyCode, shift)                     \
-    gCodes->Put(NS_LITERAL_STRING(key), NS_LITERAL_STRING(#code));  \
-    gKeyCodes->Put(NS_LITERAL_STRING(key), keyCode);                \
-    gShiftStates->Put(NS_LITERAL_STRING(key), shift);
+  gCodes->Put(NS_LITERAL_STRING(key), NS_LITERAL_STRING(#code));    \
+  gKeyCodes->Put(NS_LITERAL_STRING(key), keyCode);                  \
+  gShiftStates->Put(NS_LITERAL_STRING(key), shift);
 
 // KEY and SHIFT assign a consensus codeName and keyCode for the given keyName.
 // KEY indicates that shift is off.
@@ -29,7 +29,7 @@ static nsDataHashtable<nsStringHashKey, bool>* gShiftStates;
 
 static StaticMutex createKeyCodesMutex;
 
-// Populate the global static maps gCodes, gKeCodes, gShiftStates
+// Populate the global static maps gCodes, gKeyCodes, gShiftStates
 // with their constant values.
 static void createKeyCodes()
 {
@@ -41,32 +41,33 @@ static void createKeyCodes()
   gKeyCodes = new nsDataHashtable<nsStringHashKey, uint32_t>();
   gShiftStates = new nsDataHashtable<nsStringHashKey, bool>();
 
-  KEY("AltLeft", AltLeft, 18)
-  KEY("AltRight", AltRight, 18)
-  KEY("CapsLock", CapsLock, 20)
-  KEY("Control", ControlLeft, 17)
-  KEY("Meta", OSLeft, 91)
-  KEY("Shift", ShiftLeft, 16)
-  KEY("ContextMenu", ContextMenu, 93)
-  KEY("Enter", Enter, 13)
-  KEY(" ", Space, 32)
-  KEY("Tab", Tab, 9)
-  KEY("Delete", Delete, 46)
-  KEY("End", End, 35)
-  KEY("Help", Help, 6)
-  KEY("Home", Home, 36)
-  KEY("Insert", Insert, 45)
-  KEY("PageDown", PageDown, 34)
-  KEY("PageUp", PageUp, 33)
+  KEY("Alt", AltLeft, 18)
   KEY("ArrowDown", ArrowDown, 40)
   KEY("ArrowLeft", ArrowLeft, 37)
   KEY("ArrowRight", ArrowRight, 39)
   KEY("ArrowUp", ArrowUp, 38)
+  KEY("Backspace", Backspace, 8)
+  KEY("CapsLock", CapsLock, 20)
+  KEY("ContextMenu", ContextMenu, 93)
+  KEY("Control", ControlLeft, 17)
+  KEY("Delete", Delete, 46)
+  KEY("End", End, 35)
+  KEY("Enter", Enter, 13)
   KEY("Escape", Escape, 27)
+  KEY("Help", Help, 6)
+  KEY("Home", Home, 36)
+  KEY("Insert", Insert, 45)
+  KEY("Meta", OSLeft, 91)
+  KEY("PageDown", PageDown, 34)
+  KEY("PageUp", PageUp, 33)
+  KEY("Pause", Pause, 19)
   KEY("PrintScreen", PrintScreen, 44)
   KEY("ScrollLock", ScrollLock, 145)
-  KEY("Pause", Pause, 19)
+  KEY("Shift", ShiftLeft, 16)
+  KEY("Tab", Tab, 9)
+  // Leaving "Clear" key unimplemented; it's inconsistent between platforms.
 
+  KEY(" ", Space, 32)
   KEY(",", Comma, 188)
   SHIFT("<", Comma, 188)
   KEY(".", Period, 190)
