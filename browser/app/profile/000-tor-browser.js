@@ -55,6 +55,9 @@ pref("extensions.ui.lastCategory", "addons://list/extension");
 pref("datareporting.healthreport.service.enabled", false); // Yes, all three of these must be set
 pref("datareporting.healthreport.uploadEnabled", false);
 pref("datareporting.policy.dataSubmissionEnabled", false);
+// Don't fetch a localized remote page that Tor Browser interacts with, see
+// #16727. And, yes, it is "reportUrl" and not "reportURL".
+pref("datareporting.healthreport.about.reportUrl", "data:text/plain,");
 pref("security.mixed_content.block_active_content", false); // Disable until https://bugzilla.mozilla.org/show_bug.cgi?id=878890 is patched
 pref("browser.syncPromoViewsLeftMap", "{\"addons\":0, \"passwords\":0, \"bookmarks\":0}"); // Don't promote sync
 pref("services.sync.engine.prefs", false); // Never sync prefs, addons, or tabs with other browsers
