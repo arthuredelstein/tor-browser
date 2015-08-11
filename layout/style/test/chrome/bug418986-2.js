@@ -4,8 +4,6 @@
 /* jshint loopfunc:true */
 /* global window, screen, ok, SpecialPowers, matchMedia */
 
-SimpleTest.waitForExplicitFinish();
-
 // Expected values. Format: [name, pref_off_value, pref_on_value]
 // If pref_*_value is an array with two values, then we will match
 // any value in between those two values. If a value is null, then
@@ -244,33 +242,60 @@ let testOSXFontSmoothing = function (resisting) {
                "-moz-osx-font-smoothing");
 };
 
-// An iterator yielding pref values for two consecutive tests.
-let prefVals = (for (prefVal of [false, true]) prefVal);
+// __sleep(timeoutMs)__.
+// Returns a promise that resolves after the given timeout.
+let sleep = function (timeoutMs) {
+  return new Promise(function(resolve, reject)) {
+    window.setTimeout(resolve);
+  };
+};
+
+// Test media queries in picture elements (Tor Bug #16315)
+let testMediaQueriesInPictureElements = function* (resisting) {
+  let lines = "";
+  for (let [key, offVal, onVal] of expected_values) {
+    let expected = resisting ? onVal : offVal;
+    lines += "<picture>\n";
+    lines += " <source srcset='match.png' media='(" + query + ": " + expected + ")'>\n";
+    lines += " <img class='testImage' src='mismatch.png' alt='" + query + "'>\n";
+    lines += "</picture><br>\n";
+  }
+  document.getElementById("pictures").innerHTML = lines;
+  var testImages = document.getElementsByClassName("testImage");
+  yield sleep(0);
+  for (let testImage of testImages) {
+    ok(testImage.currentSrc.endsWith("/match.png"), "Media query in picture should match.");
+  }
+};
+
+// __pushPref(key, value)__.
+// Set a pref value asynchronously, returning a promise that resolves
+// when it succeeds.
+let pushPref = function (key, value) {
+  return new Promise(function(resolve, reject) {
+    SpecialPowers.pushPrefEnv({"set": [[key, value]]}, resolve);
+  });
+};
 
 // __test(isContent)__.
 // Run all tests.
-let test = function(isContent) {
-  let {value: prefValue, done} = prefVals.next();
-  if (done) {
-    SimpleTest.finish();
-    return;
+let test = function* (isContent) {
+  for (prefValue of [false, true]) {
+    yield pushPref("privacy.resistFingerprinting", prefValue);
+    let resisting = prefValue && isContent;
+    expected_values.forEach(
+      function ([key, offVal, onVal]) {
+        testMatch(key, resisting ? onVal : offVal);
+      });
+    testToggles(resisting);
+    if (OS === "WINNT") {
+      testWindowsSpecific(resisting, "-moz-os-version", windows_versions);
+      testWindowsSpecific(resisting, "-moz-windows-theme", windows_themes);
+    }
+    testCSS(resisting);
+    if (OS === "Darwin") {
+      testOSXFontSmoothing(resisting);
+    }
+    yield testMediaQueriesInPictureElements(resisting);
   }
-  SpecialPowers.pushPrefEnv({set: [["privacy.resistFingerprinting", prefValue]]},
-    function () {
-      let resisting = prefValue && isContent;
-      expected_values.forEach(
-        function ([key, offVal, onVal]) {
-          testMatch(key, resisting ? onVal : offVal);
-        });
-      testToggles(resisting);
-      if (OS === "WINNT") {
-        testWindowsSpecific(resisting, "-moz-os-version", windows_versions);
-        testWindowsSpecific(resisting, "-moz-windows-theme", windows_themes);
-      }
-      testCSS(resisting);
-      if (OS === "Darwin") {
-        testOSXFontSmoothing(resisting);
-      }
-      test(isContent);
-    });
 };
