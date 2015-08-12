@@ -351,7 +351,7 @@ nsHostObjectProtocolHandler::RemoveDataEntry(const nsACString& aUri,
 {
   if (gDataTable) {
     DataInfo* info = GetDataInfo(aUri);
-    if (info->mFirstPartyHost == aIsolationKey) {
+    if (info && info->mFirstPartyHost == aIsolationKey) {
       nsCString uriIgnoringRef;
       int32_t hashPos = aUri.FindChar('#');
       if (hashPos < 0) {
