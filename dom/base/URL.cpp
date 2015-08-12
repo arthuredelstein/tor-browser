@@ -17,7 +17,6 @@
 #include "nsNetCID.h"
 #include "nsNetUtil.h"
 #include "nsIURL.h"
-#include "ThirdPartyUtil.h"
 
 namespace mozilla {
 namespace dom {
@@ -153,6 +152,12 @@ URL::CreateObjectURLInternal(const GlobalObject& aGlobal, nsISupports* aObject,
   nsCOMPtr<nsIPrincipal> principal = nsContentUtils::ObjectPrincipal(aGlobal.Get());
 
   nsCString url;
+  nsresult rv = nsHostObjectProtocolHandler::AddDataEntry(aScheme, aObject,
+                                                          principal, url);
+  if (NS_FAILED(rv)) {
+    aError.Throw(rv);
+    return;
+  }
 
   nsCOMPtr<nsPIDOMWindow> w = do_QueryInterface(aGlobal.GetAsSupports());
   nsGlobalWindow* window = static_cast<nsGlobalWindow*>(w.get());
@@ -167,18 +172,6 @@ URL::CreateObjectURLInternal(const GlobalObject& aGlobal, nsISupports* aObject,
 
     nsIDocument* doc = window->GetExtantDoc();
     if (doc) {
-      nsCString isolationKey;
-      nsresult rv = ThirdPartyUtil::GetFirstPartyHost(doc, isolationKey);
-      if (NS_FAILED(rv)) {
-        aError.Throw(rv);
-        return;
-      }
-      rv = nsHostObjectProtocolHandler::AddDataEntry(aScheme, aObject,
-                                                              principal, isolationKey, url);
-      if (NS_FAILED(rv)) {
-        aError.Throw(rv);
-        return;
-      }
       doc->RegisterHostObjectUri(url);
     }
   }
@@ -200,17 +193,10 @@ URL::RevokeObjectURL(const GlobalObject& aGlobal, const nsAString& aURL)
     nsCOMPtr<nsPIDOMWindow> w = do_QueryInterface(aGlobal.GetAsSupports());
     nsGlobalWindow* window = static_cast<nsGlobalWindow*>(w.get());
 
-    if (window) {
-      nsCOMPtr<nsIDocument> doc = window->GetExtantDoc();
-      if (doc) {
-        doc->UnregisterHostObjectUri(asciiurl);
-        nsCString isolationKey;
-        nsresult rv = ThirdPartyUtil::GetFirstPartyHost(doc, isolationKey);
-        if (NS_SUCCEEDED(rv)) {
-          nsHostObjectProtocolHandler::RemoveDataEntry(asciiurl, isolationKey);
-        }
-      }
+    if (window && window->GetExtantDoc()) {
+      window->GetExtantDoc()->UnregisterHostObjectUri(asciiurl);
     }
+    nsHostObjectProtocolHandler::RemoveDataEntry(asciiurl);
   }
 }
 

@@ -28,7 +28,6 @@
 #include "Fetch.h"
 #include "InternalRequest.h"
 #include "InternalResponse.h"
-#include "mozilla/dom/ThirdPartyUtil.h"
 
 namespace mozilla {
 namespace dom {
@@ -37,12 +36,9 @@ NS_IMPL_ISUPPORTS(FetchDriver,
                   nsIStreamListener, nsIChannelEventSink, nsIInterfaceRequestor,
                   nsIAsyncVerifyRedirectCallback)
 
-FetchDriver::FetchDriver(InternalRequest* aRequest,
-                         nsIPrincipal* aPrincipal,
-                         const nsACString& aIsolationKey,
+FetchDriver::FetchDriver(InternalRequest* aRequest, nsIPrincipal* aPrincipal,
                          nsILoadGroup* aLoadGroup)
   : mPrincipal(aPrincipal)
-  , mIsolationKey(aIsolationKey)
   , mLoadGroup(aLoadGroup)
   , mRequest(aRequest)
   , mFetchRecursionCount(0)
@@ -191,7 +187,7 @@ FetchDriver::BasicFetch()
 
   if (scheme.LowerCaseEqualsLiteral("blob")) {
     nsRefPtr<FileImpl> blobImpl;
-    rv = NS_GetBlobForBlobURI(uri, mIsolationKey, getter_AddRefs(blobImpl));
+    rv = NS_GetBlobForBlobURI(uri, getter_AddRefs(blobImpl));
     FileImpl* blob = static_cast<FileImpl*>(blobImpl.get());
     if (NS_WARN_IF(NS_FAILED(rv))) {
       FailWithNetworkError();

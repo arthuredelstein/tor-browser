@@ -53,9 +53,7 @@ public:
   NS_DECL_NSIINTERFACEREQUESTOR
   NS_DECL_NSIASYNCVERIFYREDIRECTCALLBACK
 
-  explicit FetchDriver(InternalRequest* aRequest,
-                       nsIPrincipal* aPrincipal,
-                       const nsACString& isolationKey,
+  explicit FetchDriver(InternalRequest* aRequest, nsIPrincipal* aPrincipal,
                        nsILoadGroup* aLoadGroup);
   NS_IMETHOD Fetch(FetchDriverObserver* aObserver);
 
@@ -69,7 +67,6 @@ public:
 
 private:
   nsCOMPtr<nsIPrincipal> mPrincipal;
-  nsAutoCString mIsolationKey;
   nsCOMPtr<nsILoadGroup> mLoadGroup;
   nsRefPtr<InternalRequest> mRequest;
   nsRefPtr<InternalResponse> mResponse;

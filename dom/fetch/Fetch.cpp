@@ -27,7 +27,6 @@
 #include "mozilla/dom/Request.h"
 #include "mozilla/dom/Response.h"
 #include "mozilla/dom/ScriptSettings.h"
-#include "mozilla/dom/ThirdPartyUtil.h"
 #include "mozilla/dom/URLSearchParams.h"
 
 #include "InternalRequest.h"
@@ -175,18 +174,13 @@ public:
 
     nsCOMPtr<nsIPrincipal> principal = mResolver->GetWorkerPrivate()->GetPrincipal();
     nsCOMPtr<nsILoadGroup> loadGroup = mResolver->GetWorkerPrivate()->GetLoadGroup();
+    nsRefPtr<FetchDriver> fetch = new FetchDriver(mRequest, principal, loadGroup);
     nsIDocument* doc = mResolver->GetWorkerPrivate()->GetDocument();
-    nsCString isolationKey;
-    nsresult rv = ThirdPartyUtil::GetFirstPartyHost(doc, isolationKey);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-    nsRefPtr<FetchDriver> fetch = new FetchDriver(mRequest, principal, isolationKey, loadGroup);
     if (doc) {
       fetch->SetReferrerPolicy(doc->GetReferrerPolicy());
     }
 
-    rv = fetch->Fetch(mResolver);
+    nsresult rv = fetch->Fetch(mResolver);
     // Right now we only support async fetch, which should never directly fail.
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
@@ -236,15 +230,10 @@ FetchRequest(nsIGlobalObject* aGlobal, const RequestOrUSVString& aInput,
       return nullptr;
     }
 
-    nsCString isolationKey;
-    nsresult rv = ThirdPartyUtil::GetFirstPartyHost(doc, isolationKey);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return nullptr;
-    }
     nsRefPtr<MainThreadFetchResolver> resolver = new MainThreadFetchResolver(p);
     nsCOMPtr<nsILoadGroup> loadGroup = doc->GetDocumentLoadGroup();
     nsRefPtr<FetchDriver> fetch =
-      new FetchDriver(r, doc->NodePrincipal(), isolationKey, loadGroup);
+      new FetchDriver(r, doc->NodePrincipal(), loadGroup);
     fetch->SetReferrerPolicy(doc->GetReferrerPolicy());
     aRv = fetch->Fetch(resolver);
     if (NS_WARN_IF(aRv.Failed())) {

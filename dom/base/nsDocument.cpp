@@ -226,7 +226,6 @@
 #include "nsLocation.h"
 #include "mozilla/dom/FontFaceSet.h"
 #include "mozilla/dom/BoxObject.h"
-#include "ThirdPartyUtil.h"
 
 #ifdef MOZ_MEDIA_NAVIGATOR
 #include "mozilla/MediaManager.h"
@@ -1778,12 +1777,8 @@ nsDocument::~nsDocument()
 
   mPendingTitleChangeEvent.Revoke();
 
-  nsCString isolationKey;
-  nsresult rv = ThirdPartyUtil::GetFirstPartyHost(this, isolationKey);
-  if (NS_SUCCEEDED(rv)) {
-    for (uint32_t i = 0; i < mHostObjectURIs.Length(); ++i) {
-      nsHostObjectProtocolHandler::RemoveDataEntry(mHostObjectURIs[i], isolationKey);
-    }
+  for (uint32_t i = 0; i < mHostObjectURIs.Length(); ++i) {
+    nsHostObjectProtocolHandler::RemoveDataEntry(mHostObjectURIs[i]);
   }
 
   // We don't want to leave residual locks on images. Make sure we're in an
@@ -2162,12 +2157,8 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsDocument)
     NS_IMPL_CYCLE_COLLECTION_UNLINK(mCSSLoader)
   }
 
-  nsCString isolationKey;
-  nsresult rv = ThirdPartyUtil::GetFirstPartyHost(tmp, isolationKey);
-  if (NS_SUCCEEDED(rv)) {
-    for (uint32_t i = 0; i < tmp->mHostObjectURIs.Length(); ++i) {
-      nsHostObjectProtocolHandler::RemoveDataEntry(tmp->mHostObjectURIs[i], isolationKey);
-    }
+  for (uint32_t i = 0; i < tmp->mHostObjectURIs.Length(); ++i) {
+    nsHostObjectProtocolHandler::RemoveDataEntry(tmp->mHostObjectURIs[i]);
   }
 
   // We own only the items in mDOMMediaQueryLists that have listeners;

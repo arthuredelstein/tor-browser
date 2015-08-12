@@ -24,7 +24,6 @@
 
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
-#include "ThirdPartyUtil.h"
 
 BEGIN_WORKERS_NAMESPACE
 using mozilla::dom::GlobalObject;
@@ -141,17 +140,10 @@ public:
       principal = mWorkerPrivate->GetPrincipal();
     }
 
-    nsCString firstPartyHost;
-    nsresult rv = ThirdPartyUtil::GetFirstPartyHost(doc, firstPartyHost);
-    if (NS_FAILED(rv)) {
-      NS_WARNING("Isolation failed; blob URL creation denied.");
-      return false;
-    }
-
     nsCString url;
-    rv = nsHostObjectProtocolHandler::AddDataEntry(
+    nsresult rv = nsHostObjectProtocolHandler::AddDataEntry(
         NS_LITERAL_CSTRING(BLOBURI_SCHEME),
-        mBlobImpl, principal, firstPartyHost, url);
+        mBlobImpl, principal, url);
 
     if (NS_FAILED(rv)) {
       NS_WARNING("Failed to add data entry for the blob!");
@@ -217,13 +209,8 @@ public:
       if (doc) {
         doc->UnregisterHostObjectUri(url);
       }
-      nsCString isolationKey;
-      nsresult rv = ThirdPartyUtil::GetFirstPartyHost(doc, isolationKey);
-      if (NS_FAILED(rv)) {
-        NS_WARNING("Isolation failed; blob removal denied.");
-        return false;
-      }
-      nsHostObjectProtocolHandler::RemoveDataEntry(url, isolationKey);
+
+      nsHostObjectProtocolHandler::RemoveDataEntry(url);
     }
 
     if (!window) {
