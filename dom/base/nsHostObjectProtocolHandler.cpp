@@ -319,10 +319,33 @@ nsHostObjectProtocolHandler::AddDataEntry(const nsACString& aScheme,
   return NS_OK;
 }
 
+static DataInfo*
+GetDataInfo(const nsACString& aUri)
+{
+  if (!gDataTable) {
+    return nullptr;
+  }
+
+  DataInfo* res;
+  nsCString uriIgnoringRef;
+  int32_t hashPos = aUri.FindChar('#');
+  if (hashPos < 0) {
+    uriIgnoringRef = aUri;
+  }
+  else {
+    uriIgnoringRef = StringHead(aUri, hashPos);
+  }
+  gDataTable->Get(uriIgnoringRef, &res);
+  
+  return res;
+}
+
 void
 nsHostObjectProtocolHandler::RemoveDataEntry(const nsACString& aUri)
 {
   if (gDataTable) {
+    DataInfo* info = GetDataInfo(aUri);
+    MOZ_RELEASE_ASSERT(info);
     nsCString uriIgnoringRef;
     int32_t hashPos = aUri.FindChar('#');
     if (hashPos < 0) {
@@ -373,27 +396,6 @@ nsHostObjectProtocolHandler::GenerateURIString(const nsACString &aScheme,
   aUri += Substring(chars + 1, chars + NSID_LENGTH - 2);
 
   return NS_OK;
-}
-
-static DataInfo*
-GetDataInfo(const nsACString& aUri)
-{
-  if (!gDataTable) {
-    return nullptr;
-  }
-
-  DataInfo* res;
-  nsCString uriIgnoringRef;
-  int32_t hashPos = aUri.FindChar('#');
-  if (hashPos < 0) {
-    uriIgnoringRef = aUri;
-  }
-  else {
-    uriIgnoringRef = StringHead(aUri, hashPos);
-  }
-  gDataTable->Get(uriIgnoringRef, &res);
-  
-  return res;
 }
 
 nsIPrincipal*
