@@ -310,9 +310,6 @@ protected:
     nsCString mBundledFontsPath;
     bool      mBundledFontsInitialized;
 #endif
-
-private:
-    void      ApplyWhitelist();
 };
 
 #endif /* GFX_FONTCONFIG_UTILS_H */
