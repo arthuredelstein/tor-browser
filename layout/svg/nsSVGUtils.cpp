@@ -66,8 +66,12 @@ static bool sSVGDisplayListHitTestingEnabled;
 static bool sSVGDisplayListPaintingEnabled;
 static bool sSVGNewGetBBoxEnabled;
 
+static bool IsWhitelisted(nsIURI *aURI);
+
 // Determine if SVG should be enabled for aDoc.  The svg.in-content.enabled
-// preference is checked as well as whether aDoc is a content or chrome doc.
+// preference is checked, then we check whether aDoc is a chrome doc, and
+// finally as a fallback we check whether the top-level document is
+// whitelisted (e.g., about:preferences).
 // If aDoc is NULL, the pref. value is returned.
 // Once we determine whether SVG is allowed for a given document, we record
 // that fact inside the document.  This is necessary to avoid crashes due
@@ -92,8 +96,9 @@ NS_SVGEnabled(nsIDocument *aDoc)
 }
 
 // Determine if SVG should be enabled for aChannel.  The svg.in-content.enabled
-// preference is checked as well as whether the load context associated with
-// aChannel is content or chrome.
+// preference is checked, then we check whether the load context associated
+// with aChannel is a chrome doc, and finally as a fallback we check whether
+// the top-level document is whitelisted (e.g., about:preferences).
 // If aChannel is NULL, the pref. value is returned.
 bool
 NS_SVGEnabledForChannel(nsIChannel *aChannel)
@@ -104,13 +109,84 @@ NS_SVGEnabledForChannel(nsIChannel *aChannel)
   if (!aChannel)
     return false;
 
-  bool isContent = true;
+#ifdef DEBUG_SVG_ENABLE
+  nsAutoCString topDocSpec;  // Set if approved via a whitelisted top doc.
+#endif
+
+  bool isSVGAllowed = false;
   nsCOMPtr<nsILoadContext> ctx;
   NS_QueryNotificationCallbacks(aChannel, ctx);
-  if (ctx)
+  if (ctx) {
+    bool isContent = true;
     ctx->GetIsContent(&isContent);
+    if (!isContent) {
+      isSVGAllowed = true;
+    } else {
+      // Disallowed.  As a fallback, check for whitelisted URLs.
+      uint32_t loadFlags = 0;
+      aChannel->GetLoadFlags(&loadFlags);
+      if (loadFlags & nsIChannel::LOAD_INITIAL_DOCUMENT_URI) {
+        // This is the top-level load; just check the channel's URL.
+        nsCOMPtr<nsIURI> uri;
+        aChannel->GetOriginalURI(getter_AddRefs(uri));
+        isSVGAllowed = IsWhitelisted(uri);
+#ifdef DEBUG_SVG_ENABLE
+        if (isSVGAllowed)
+          uri->GetSpec(topDocSpec);
+#endif
+      } else {
+        // Obtain the top window's document and check it's URL.
+        nsCOMPtr<nsIDOMWindow> topWin;
+        ctx->GetTopWindow(getter_AddRefs(topWin));
+        if (topWin) {
+          nsCOMPtr<nsIDOMDocument> topDOMDoc;
+          topWin->GetDocument(getter_AddRefs(topDOMDoc));
+          nsCOMPtr<nsIDocument> topDoc = do_QueryInterface(topDOMDoc);
+          if (topDoc) {
+            nsIURI *topDocURI = topDoc->GetDocumentURI();
+            isSVGAllowed = IsWhitelisted(topDocURI);
+#ifdef DEBUG_SVG_ENABLE
+            if (isSVGAllowed)
+              topDocURI->GetSpec(topDocSpec);
+#endif
+          }
+        }
+      }
+    }
+  }
 
-  return !isContent;
+#ifdef DEBUG_SVG_ENABLE
+  nsAutoCString spec;
+  nsCOMPtr<nsIURI> uri;
+  aChannel->GetOriginalURI(getter_AddRefs(uri));
+  if (uri)
+    uri->GetSpec(spec);
+
+  if (topDocSpec.IsEmpty()) {
+    printf("NS_SVGEnabledForChannel for %s: %s\n", spec.get(),
+           isSVGAllowed ? "YES" : "NO");
+  } else {
+    printf("NS_SVGEnabledForChannel for %s: %s (via whitelisted top doc %s)\n",
+           spec.get(), isSVGAllowed ? "YES" : "NO", topDocSpec.get());
+  }
+#endif
+
+  return isSVGAllowed;
+}
+
+// Always allow SVG for about: URLs so that about:preferences and other
+// built-in browser pages function correctly.  Exclude about:blank because
+// iframes initially contain about:blank documents, and since we cache the
+// SVG status we must avoid enabling SVG in that case.
+static bool
+IsWhitelisted(nsIURI *aURI)
+{
+  if (!aURI)
+    return false;
+
+  nsAutoCString scheme;
+  aURI->GetScheme(scheme);
+  return scheme.EqualsLiteral("about") && !NS_IsAboutBlank(aURI);
 }
 
 bool
