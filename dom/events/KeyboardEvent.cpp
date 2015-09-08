@@ -369,6 +369,15 @@ NS_NewDOMKeyboardEvent(nsIDOMEvent** aInstancePtrResult,
                        nsPresContext* aPresContext,
                        WidgetKeyboardEvent* aEvent)
 {
+  if (ResistFingerprinting()) {
+    nsString keyName;
+    aEvent->AsKeyboardEvent()->GetDOMKeyName(keyName);
+    if (keyName.Equals(NS_LITERAL_STRING("Shift")) ||
+        keyName.Equals(NS_LITERAL_STRING("Alt"))) {
+      return NS_OK;
+    }
+  }
+
   KeyboardEvent* it = new KeyboardEvent(aOwner, aPresContext, aEvent);
   NS_ADDREF(it);
   *aInstancePtrResult = static_cast<Event*>(it);
