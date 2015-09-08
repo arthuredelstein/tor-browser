@@ -53,7 +53,16 @@ public:
 
   bool GetModifierState(const nsAString& aKey)
   {
-    return GetModifierStateInternal(aKey);
+    if (ResistFingerprinting()) {
+      if (aKey.Equals(NS_LITERAL_STRING("Alt")) ||
+          aKey.Equals(NS_LITERAL_STRING("AltGraph"))) {
+        return AltKey();
+      }
+      if (aKey.Equals(NS_LITERAL_STRING("Shift"))) {
+        return ShiftKey();
+      }
+      return GetModifierStateInternal(aKey);
+    }
   }
 
   bool Repeat();
@@ -85,6 +94,8 @@ protected:
                                  ErrorResult& aRv);
 
 private:
+  bool ResistFingerprinting();
+
   // True, if the instance is created with Constructor().
   bool mInitializedByCtor;
 
