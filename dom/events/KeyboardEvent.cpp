@@ -12,11 +12,6 @@
 namespace mozilla {
 namespace dom {
 
-static bool ResistFingerprinting() {
-  return nsContentUtils::ResistFingerprinting() &&
-         !nsContentUtils::ThreadsafeIsCallerChrome();
-}
-
 KeyboardEvent::KeyboardEvent(EventTarget* aOwner,
                              nsPresContext* aPresContext,
                              WidgetKeyboardEvent* aEvent)
@@ -42,6 +37,12 @@ NS_IMPL_RELEASE_INHERITED(KeyboardEvent, UIEvent)
 NS_INTERFACE_MAP_BEGIN(KeyboardEvent)
   NS_INTERFACE_MAP_ENTRY(nsIDOMKeyEvent)
 NS_INTERFACE_MAP_END_INHERITING(UIEvent)
+
+bool
+KeyboardEvent::ResistFingerprinting() {
+  return nsContentUtils::ResistFingerprinting() &&
+         !nsContentUtils::ThreadsafeIsCallerChrome();
+}
 
 bool
 KeyboardEvent::AltKey()
