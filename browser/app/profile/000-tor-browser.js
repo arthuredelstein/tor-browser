@@ -243,6 +243,11 @@ pref("security.tls.version.max", 3);
 // Enforce certificate pinning, see: https://bugs.torproject.org/16206
 pref("security.cert_pinning.enforcement_level", 2);
 
+// Workaround for https://bugs.torproject.org/13579. Progress on
+// `about:downloads` is only shown if the following preference is set to `true`
+// in case the download panel got removed from the toolbar.
+pref("browser.download.panel.shown", true);
+
 #ifdef TOR_BROWSER_VERSION
 #expand pref("torbrowser.version", __TOR_BROWSER_VERSION__);
 #endif
