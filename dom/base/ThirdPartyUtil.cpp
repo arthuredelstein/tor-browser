@@ -593,16 +593,22 @@ ThirdPartyUtil::GetFirstPartyURIInternal(nsIChannel *aChannel,
   // to a particular web site should be assigned that site's first party.
   if (aNode && aNode->IsElement() && aNode->OwnerDoc() &&
       nsContentUtils::IsChromeDoc(aNode->OwnerDoc())) {
-    nsString firstparty;
-    aNode->AsElement()->GetAttribute(NS_LITERAL_STRING("firstparty"), firstparty);
-    if (!firstparty.IsEmpty()) {
-      nsCOMPtr<nsIURI> tempURI;
-      rv = NS_NewURI(getter_AddRefs(tempURI), firstparty);
-      if (rv != NS_OK) {
-        return rv;
-      } else {
-        NS_ADDREF(*aOutput = tempURI);
-        return NS_OK;
+    nsTArray<nsINode*> nodeAncestors;
+    nsContentUtils::GetAncestors(aNode, nodeAncestors);
+    for (nsINode* nodeAncestor : nodeAncestors) {
+      if (nodeAncestor->IsElement()) {
+        nsString firstparty;
+        nodeAncestor->AsElement()->GetAttribute(NS_LITERAL_STRING("firstparty"), firstparty);
+        if (!firstparty.IsEmpty()) {
+          nsCOMPtr<nsIURI> tempURI;
+          rv = NS_NewURI(getter_AddRefs(tempURI), firstparty);
+          if (rv != NS_OK) {
+            return rv;
+          } else {
+            NS_ADDREF(*aOutput = tempURI);
+            return NS_OK;
+          }
+        }
       }
     }
   }

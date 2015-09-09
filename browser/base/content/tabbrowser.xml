@@ -5042,7 +5042,7 @@
                      class="tab-throbber"
                      role="presentation"
                      layer="true" />
-          <xul:image xbl:inherits="src=image,fadein,pinned,selected,busy,crashed,firstparty"
+          <xul:image xbl:inherits="src=image,fadein,pinned,selected,busy,crashed"
                      anonid="tab-icon-image"
                      class="tab-icon-image"
                      validate="never"
@@ -5286,6 +5286,7 @@
             aMenuitem.setAttribute("busy", aTab.getAttribute("busy"));
             aMenuitem.removeAttribute("image");
           } else {
+            aMenuitem.setAttribute("firstparty", aTab.getAttribute("firstparty"));
             aMenuitem.setAttribute("image", aTab.getAttribute("image"));
             aMenuitem.removeAttribute("busy");
           }
