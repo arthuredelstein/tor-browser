@@ -113,6 +113,7 @@ pref("media.video_stats.enabled", false);
 pref("device.sensors.enabled", false);
 pref("dom.enable_resource_timing", false); // Bug 13024: To hell with this API
 pref("dom.enable_user_timing", false); // Bug 16336: To hell with this API
+pref("dom.event.highrestimestamp.enabled", true); // Bug 17046: Don't leak system uptime in Events
 pref("privacy.resistFingerprinting", true);
 
 // Third party stuff
