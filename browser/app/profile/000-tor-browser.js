@@ -19,6 +19,7 @@ pref("startup.homepage_override_url", "https://blog.torproject.org/category/tags
 // Try to nag a bit more about updates: Pop up a restart dialog an hour after the initial dialog
 pref("app.update.promptWaitTime", 3600);
 pref("app.update.badge", true);
+pref("extensions.hotfix.id", ""); // Bug 16837: Disable hotfix updates as they may cause compat issues
 
 // Disable "Slow startup" warnings and associated disk history
 // (bug #13346)
@@ -78,6 +79,7 @@ pref("browser.newtabpage.preload", false); // Bug 16316 - Avoid potential confus
 pref("browser.search.countryCode", "US"); // The next three prefs disable GeoIP search lookups (#16254)
 pref("browser.search.region", "US");
 pref("browser.search.geoip.url", "");
+pref("browser.fixup.alternate.enabled", false); // Bug #16783: Prevent .onion fixups
 
 // Fingerprinting
 pref("webgl.min_capability_mode", true);
@@ -114,6 +116,7 @@ pref("device.sensors.enabled", false);
 pref("dom.enable_resource_timing", false); // Bug 13024: To hell with this API
 pref("dom.enable_user_timing", false); // Bug 16336: To hell with this API
 pref("privacy.resistFingerprinting", true);
+pref("dom.event.highrestimestamp.enabled", true); // Bug #17046: "Highres" (but truncated) timestamps prevent uptime leaks
 
 // Third party stuff
 pref("network.cookie.cookieBehavior", 1);
