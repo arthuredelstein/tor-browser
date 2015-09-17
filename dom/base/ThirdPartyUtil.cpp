@@ -41,7 +41,8 @@ nsresult
 ThirdPartyUtil::GetFirstPartyHost(nsIChannel* aChannel, nsIDocument* aDocument, nsACString& aResult)
 {
   if (!gThirdPartyUtilService) {
-    CallGetService(THIRDPARTYUTIL_CONTRACTID, &gThirdPartyUtilService);
+    nsresult rv = CallGetService(THIRDPARTYUTIL_CONTRACTID, &gThirdPartyUtilService);
+    NS_ENSURE_SUCCESS(rv, rv);
   }
   nsCOMPtr<nsIURI> isolationURI;
   nsresult rv = gThirdPartyUtilService->GetFirstPartyIsolationURI(aChannel, aDocument, getter_AddRefs(isolationURI));
