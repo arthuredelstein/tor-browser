@@ -648,13 +648,17 @@ ThirdPartyUtil::GetFirstPartyURIInternal(nsIChannel *aChannel,
 
     if (aDoc->GetWindow()) {
       aDoc->GetWindow()->GetTop(getter_AddRefs(top));
-      top->GetDocument(getter_AddRefs(topDDoc));
+      if (top) {
+        top->GetDocument(getter_AddRefs(topDDoc));
 
-      nsCOMPtr<nsIDocument> topDoc(do_QueryInterface(topDDoc));
-      docURI = topDoc->GetOriginalURI();
-      if (docURI) {
-        // Give us a mutable URI and also addref
-        rv = NS_EnsureSafeToReturn(docURI, aOutput);
+        nsCOMPtr<nsIDocument> topDoc(do_QueryInterface(topDDoc));
+        if (topDoc) {
+          docURI = topDoc->GetOriginalURI();
+          if (docURI) {
+            // Give us a mutable URI and also addref
+            rv = NS_EnsureSafeToReturn(docURI, aOutput);
+          }
+        }
       }
     } else {
       // XXX: Chrome callers (such as NoScript) can end up here
