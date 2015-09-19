@@ -467,7 +467,4 @@ pref("font.name.serif.x-western", "Tinos, Georgia");
 pref("font.name.serif.zh-CN", "Noto Sans CJK SC Regular");
 pref("font.name.serif.zh-HK", "Noto Sans CJK SC Regular");
 pref("font.name.serif.zh-TW", "Noto Sans CJK SC Regular");
-
-#endif
-
 #endif
