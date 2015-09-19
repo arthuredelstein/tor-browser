@@ -276,6 +276,7 @@ pref("font.name.sans-serif.ar", "Arial");
 pref("font.system.whitelist", "Arial, Batang, Courier New, Euphemia, Gautami, Georgia, Gulim, GulimChe, Iskoola Pota, Kalinga, Kartika, Latha, Lucida Console, MS Gothic, MS Mincho, MS PGothic, MS PMincho, MV Boli, Mangal, Microsoft Himalaya, Microsoft YaHei, MingLiU, Noto Sans Buginese, Noto Sans Khmer, Noto Sans Lao, Noto Sans Myanmar, Noto Sans Yi, Nyala, PMingLiU, Plantagenet Cherokee, Raavi, Segoe UI, Shruti, SimSun, Sylfaen, Tahoma, Times New Roman, Tunga, Verdana, Vrinda");
 #endif
 
+#ifdef XP_LINUX
 pref("font.default.lo", "Noto Sans Lao");
 pref("font.default.my", "Noto Sans Myanmar");
 pref("font.default.x-western", "sans-serif");
@@ -467,4 +468,5 @@ pref("font.name.serif.x-western", "Tinos, Georgia");
 pref("font.name.serif.zh-CN", "Noto Sans CJK SC Regular");
 pref("font.name.serif.zh-HK", "Noto Sans CJK SC Regular");
 pref("font.name.serif.zh-TW", "Noto Sans CJK SC Regular");
+#endif
 #endif
