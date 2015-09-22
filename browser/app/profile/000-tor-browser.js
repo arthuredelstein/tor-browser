@@ -126,7 +126,7 @@ pref("network.http.spdy.enabled.v2", false); // Seems redundant, but just in cas
 pref("network.http.spdy.enabled.v3", false); // Seems redundant, but just in case
 pref("network.http.spdy.enabled.v3-1", false); // Seems redundant, but just in case
 pref("privacy.thirdparty.isolate", 2); // Always enforce third party isolation
-pref("dom.workers.sharedWorkers.enabled", false); // See https://bugs.torproject.org/15562
+pref("dom.workers.sharedWorkers.enabled", true); // See https://bugs.torproject.org/15562
 pref("network.http.spdy.enabled.http2", false); // Temporarily disabled pending implementation review
 pref("network.http.spdy.enabled.http2draft", false); // Temporarily disabled pending implementation review
 pref("network.predictor.enabled", false); // Temporarily disabled. See https://bugs.torproject.org/16633
