@@ -7187,6 +7187,17 @@ PresShell::HandleKeyboardEvent(nsINode* aTarget,
                                nsEventStatus* aStatus,
                                EventDispatchingCallback* aEventCB)
 {
+  if (nsContentUtils::ResistFingerprinting() &&
+      Preferences::GetBool("privacy.suppressModifierKeyEvents", false)) {
+    nsString keyName;
+    aEvent.GetDOMKeyName(keyName);
+    if (keyName.Equals(NS_LITERAL_STRING("Shift")) ||
+        keyName.Equals(NS_LITERAL_STRING("Alt")) ||
+        keyName.Equals(NS_LITERAL_STRING("AltGraph"))) {
+      aEvent.mFlags.mOnlyChromeDispatch = true;
+    }
+  }
+
   if (aEvent.message == NS_KEY_PRESS ||
       !BeforeAfterKeyboardEventEnabled()) {
     EventDispatcher::Dispatch(aTarget, mPresContext,
