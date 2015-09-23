@@ -370,6 +370,18 @@ NS_NewDOMKeyboardEvent(nsIDOMEvent** aInstancePtrResult,
                        nsPresContext* aPresContext,
                        WidgetKeyboardEvent* aEvent)
 {
+  if (aPresContext && !aPresContext->IsChrome() &&
+      nsContentUtils::ResistFingerprinting() &&
+      Preferences::GetBool("privacy.suppressModifierKeyEvents", false)) {
+    nsString keyName;
+    aEvent->AsKeyboardEvent()->GetDOMKeyName(keyName);
+    if (keyName.Equals(NS_LITERAL_STRING("Shift")) ||
+        keyName.Equals(NS_LITERAL_STRING("Alt")) ||
+        keyName.Equals(NS_LITERAL_STRING("AltGraph"))) {
+      return NS_OK;
+    }
+  }
+
   KeyboardEvent* it = new KeyboardEvent(aOwner, aPresContext, aEvent);
   NS_ADDREF(it);
   *aInstancePtrResult = static_cast<Event*>(it);
