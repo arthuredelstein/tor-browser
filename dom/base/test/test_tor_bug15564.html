@@ -1,0 +1,82 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugs.torproject.org/15564
+-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Test for Tor Browser Bug 15564</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <script type="text/javascript;version=1.7" src="bug15502_utils.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+<body>
+<p id="display"></p>
+<div id="content"></div>
+
+<script class="testbody" type="application/javascript;version=1.7">
+SimpleTest.waitForExplicitFinish();
+
+// __setPref(key, value)__.
+// Set a pref value asynchronously, returning a prmoise that resolves
+// when it succeeds.
+let setPref = function* (key, value) {
+  return new Promise(function(resolve, reject) {
+    SpecialPowers.pushPrefEnv({"set": [[key, value]]}, resolve);
+  });
+};
+
+// ## Testing constants
+let domain1 = "http://example.com",
+    domain2 = "http://example.net",
+    path = "/tests/dom/base/test/",
+    child_page = "bug15564_child_page.html";
+
+// __tabIO(domain, child, input)__.
+// Open a tab at the given `domain` and `child` page. Post an
+// `input` message to the tab.
+let tabIO = function* (domain, child, input) {
+  tab = window.open(domain + path + "bug15502_tab.html", "_blank");
+  yield receiveMessage(tab); // ready message
+  sendMessage(tab, "http://example.org" + path + child);
+  yield receiveMessage(tab); // ready message
+  sendMessage(tab, input);
+  return yield receiveMessage(tab);
+};
+
+// __sharedWorkerTest(isolationOn, domainA, domainB, childPage)__.
+// Run a test where we set the pref "privacy.thirdparty.isolate" to on or off,
+// and then create a shared worker under first party `domainA`, using the page `child_page`,
+// and then a matching SharedWorker under first party `domainB`, and see if they match.
+let sharedWorkerTest = function* (isolationOn, domainA, domainB, child_page) {
+  yield setPref("privacy.thirdparty.isolate", isolationOn ? 2 : 0);
+  let input = isolationOn + "|" + domainA + "|" + domainB,
+      firstResult = yield tabIO(domainA, child_page, input),
+      secondResult = yield tabIO(domainB, child_page, input),
+      description = domainA + ":" + child_page + "->" +
+                    domainB + ":" + child_page +
+                    ", isolation " + (isolationOn ? "on." : "off.");
+  if (isolationOn && domainA !== domainB) {
+    ok(firstResult !== secondResult, description + " Deny sharing SharedWorker");
+  } else {
+    ok(firstResult === secondResult, description + " Allow sharing SharedWorker");
+  }
+};
+
+// ## The main test
+// Run a Task.jsm coroutine that tests various combinations of domains
+// methods, and isolation states for sharing (or not sharing) SharedWorkers.
+spawnTask(function* () {
+  for (let isolate of [false, true]) {
+    for (let domainB of [domain1, domain2]) {
+       yield sharedWorkerTest(isolate, domain1, domainB, child_page);
+    }
+  }
+  SimpleTest.finish();
+});
+
+</script>
+
+</body>
+</html>
