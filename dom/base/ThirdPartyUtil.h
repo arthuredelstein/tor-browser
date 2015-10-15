@@ -26,8 +26,6 @@ public:
 
   static mozIThirdPartyUtil* gThirdPartyUtilService;
 
-  static nsresult GetFirstPartyHost(nsIChannel* aChannel, nsIDocument* aDocument, nsACString& aResult);
-
   static nsresult GetFirstPartyHost(nsIChannel* aChannel, nsACString& aResult) {
     return GetFirstPartyHost(aChannel, nullptr, aResult);
   }
@@ -43,6 +41,7 @@ private:
     nsIURI* aSecondURI, bool* aResult);
   bool IsFirstPartyIsolationActive(nsIChannel* aChannel, nsIDocument* aDoc);
   bool SchemeIsWhiteListed(nsIURI *aURI);
+  static nsresult GetFirstPartyHost(nsIChannel* aChannel, nsIDocument* aDocument, nsACString& aResult);
   static nsresult GetOriginatingURI(nsIChannel  *aChannel, nsIURI **aURI);
   nsresult GetFirstPartyURIInternal(nsIChannel *aChannel, nsINode *aNode,
                                     bool aLogErrors, nsIURI **aOutput);
