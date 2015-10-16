@@ -43,6 +43,12 @@ nsPluginArray::~nsPluginArray()
 {
 }
 
+static bool
+ResistFingerprinting() {
+  return !nsContentUtils::ThreadsafeIsCallerChrome() &&
+         nsContentUtils::ResistFingerprinting();
+}
+
 nsPIDOMWindow*
 nsPluginArray::GetParentObject() const
 {
@@ -174,7 +180,7 @@ nsPluginArray::IndexedGetter(uint32_t aIndex, bool &aFound)
 {
   aFound = false;
 
-  if (!AllowPlugins()) {
+  if (!AllowPlugins() || ResistFingerprinting()) {
     return nullptr;
   }
 
@@ -217,7 +223,7 @@ nsPluginArray::NamedGetter(const nsAString& aName, bool &aFound)
 {
   aFound = false;
 
-  if (!AllowPlugins()) {
+  if (!AllowPlugins() || ResistFingerprinting()) {
     return nullptr;
   }
 
@@ -241,7 +247,7 @@ nsPluginArray::NameIsEnumerable(const nsAString& aName)
 uint32_t
 nsPluginArray::Length()
 {
-  if (!AllowPlugins()) {
+  if (!AllowPlugins() || ResistFingerprinting()) {
     return 0;
   }
 
