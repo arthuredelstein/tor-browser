@@ -273,7 +273,7 @@ pref("font.name.sans-serif.ar", "Arial");
 #endif
 
 #ifdef XP_WIN
-pref("font.system.whitelist", "Arial, Batang, Cambria Math, Courier New, Euphemia, Gautami, Georgia, Gulim, GulimChe, Iskoola Pota, Kalinga, Kartika, Latha, Lucida Console, MS Gothic, MS Mincho, MS PGothic, MS PMincho, MV Boli, Mangal, Microsoft Himalaya, Microsoft YaHei, MingLiU, Noto Sans Buginese, Noto Sans Khmer, Noto Sans Lao, Noto Sans Myanmar, Noto Sans Yi, Nyala, PMingLiU, Plantagenet Cherokee, Raavi, Segoe UI, Shruti, SimSun, Sylfaen, Tahoma, Times New Roman, Tunga, Verdana, Vrinda");
+pref("font.system.whitelist", "Arial, Batang, 바탕, Cambria Math, Courier New, Euphemia, Gautami, Georgia, Gulim, 굴림, GulimChe, 굴림체, Iskoola Pota, Kalinga, Kartika, Latha, Lucida Console, MS Gothic, ＭＳ ゴシック, MS Mincho, ＭＳ 明朝, MS PGothic, ＭＳ Ｐゴシック, MS PMincho, ＭＳ Ｐ明朝, MV Boli, Mangal, Microsoft Himalaya, Microsoft YaHei, 微软雅黑, MingLiU, 細明體, Noto Sans Buginese, Noto Sans Khmer, Noto Sans Lao, Noto Sans Myanmar, Noto Sans Yi, Nyala, PMingLiU, 新細明體, Plantagenet Cherokee, Raavi, Segoe UI, Shruti, SimSun, 宋体, Sylfaen, Tahoma, Times New Roman, Tunga, Verdana, Vrinda");
 #endif
 
 #ifdef XP_LINUX
