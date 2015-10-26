@@ -5,6 +5,7 @@
 var gFxAccounts = {
 
   PREF_SYNC_START_DOORHANGER: "services.sync.ui.showSyncStartDoorhanger",
+  PREF_FX_ACCOUNTS_UI_HIDDEN: "identity.fxaccounts.ui.hidden",
   DOORHANGER_ACTIVATE_DELAY_MS: 5000,
   SYNC_MIGRATION_NOTIFICATION_TITLE: "fxa-migration",
 
@@ -97,6 +98,8 @@ var gFxAccounts = {
       Services.obs.addObserver(this, topic, false);
     }
 
+    Services.prefs.addObserver(this.PREF_FX_ACCOUNTS_UI_HIDDEN, this, false);
+
     addEventListener("activate", this);
     gNavToolbox.addEventListener("customizationstarting", this);
     gNavToolbox.addEventListener("customizationending", this);
@@ -116,6 +119,8 @@ var gFxAccounts = {
       Services.obs.removeObserver(this, topic);
     }
 
+    Services.prefs.removeObserver(this.PREF_FX_ACCOUNTS_UI_HIDDEN, this);
+
     this._initialized = false;
   },
 
@@ -129,6 +134,9 @@ var gFxAccounts = {
         break;
       case "fxa-migration:state-changed":
         this.onMigrationStateChanged(data, subject);
+        break;
+      case this.PREF_FX_ACCOUNTS_UI_HIDDEN:
+        this.updateAppMenuItem();
         break;
       case this.FxAccountsCommon.ONPROFILE_IMAGE_CHANGE_NOTIFICATION:
         this.updateUI();
@@ -223,11 +231,14 @@ var gFxAccounts = {
     } catch (e) { }
 
     // Bail out if FxA is disabled.
-    if (!this.weave.fxAccountsEnabled) {
+    let hideSyncUI = false;
+    try {
+      hideSyncUI = Services.prefs.getBoolPref(this.PREF_FX_ACCOUNTS_UI_HIDDEN);
+    } catch (e) {}
+    this.panelUIFooter.hidden = hideSyncUI;
+    if (hideSyncUI || !this.weave.fxAccountsEnabled) {
       return Promise.resolve();
     }
-
-    this.panelUIFooter.hidden = false;
 
     // Make sure the button is disabled in customization mode.
     if (this._inCustomizationMode) {

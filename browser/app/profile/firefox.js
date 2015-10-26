@@ -1474,6 +1474,9 @@ pref("browser.uiCustomization.debug", false);
 // CustomizableUI state of the browser's user interface
 pref("browser.uiCustomization.state", "");
 
+// If true, hides the fx accounts item on the hamburger menu.
+pref("identity.fxaccounts.ui.hidden", false);
+
 // The remote content URL shown for FxA signup. Must use HTTPS.
 pref("identity.fxaccounts.remote.signup.uri", "https://accounts.firefox.com/signup?service=sync&context=fx_desktop_v1");
 
