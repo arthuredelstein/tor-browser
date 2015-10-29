@@ -1015,6 +1015,10 @@ gfxFcPlatformFontList::AddFontSetFamilies(FcFontSet* aFontSet)
             nsAutoString keyName(familyName);
             ToLowerCase(keyName);
 
+            if (!IsFontFamilyNameAllowed(keyName)) {
+                continue;
+            }
+
             fontFamily = mFontFamilies.GetWeak(keyName);
             if (!fontFamily) {
                 fontFamily = new gfxFontconfigFontFamily(familyName);
@@ -1036,7 +1040,10 @@ gfxFcPlatformFontList::AddFontSetFamilies(FcFontSet* aFontSet)
             }
         }
 
-        NS_ASSERTION(fontFamily, "font must belong to a font family");
+        if (!fontFamily) {
+            continue;
+        }
+
         gfxFontconfigFontFamily* fcFamily =
             static_cast<gfxFontconfigFontFamily*>(fontFamily);
         fcFamily->AddFontPattern(font);
