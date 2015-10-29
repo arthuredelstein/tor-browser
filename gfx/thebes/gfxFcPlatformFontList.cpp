@@ -1015,6 +1015,10 @@ gfxFcPlatformFontList::AddFontSetFamilies(FcFontSet* aFontSet)
             nsAutoString keyName(familyName);
             ToLowerCase(keyName);
 
+            if (!IsFontFamilyNameAllowed(keyName)) {
+                continue;
+            }
+
             fontFamily = mFontFamilies.GetWeak(keyName);
             if (!fontFamily) {
                 fontFamily = new gfxFontconfigFontFamily(familyName);

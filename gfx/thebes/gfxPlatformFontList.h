@@ -236,6 +236,14 @@ public:
     mozilla::FontFamilyType
     GetDefaultGeneric(eFontPrefLang aLang);
 
+    // A list of white-listed system fonts. If the list is empty, we permit
+    // all fonts.
+    static nsTHashtable<nsStringHashKey>* sWhitelistFamilyNames;
+
+    // Returns true only if the font family name is whitelisted or the
+    // whitelist is empty.
+    static bool IsFontFamilyNameAllowed(const nsAString& aFontFamilyName);
+
 protected:
     class MemoryReporter final : public nsIMemoryReporter
     {

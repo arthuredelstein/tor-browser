@@ -1003,6 +1003,12 @@ gfxFT2FontList::AddFaceToList(const nsCString& aEntryName, uint32_t aIndex,
                               FT_Face aFace,
                               nsCString& aFaceList)
 {
+    NS_ConvertUTF8toUTF16 name(aFace->family_name);
+    BuildKeyNameFromFontName(name);
+    if (!IsFontFamilyNameAllowed(name)) {
+        return;
+    }
+
     if (FT_Err_Ok != FT_Select_Charmap(aFace, FT_ENCODING_UNICODE)) {
         // ignore faces that don't support a Unicode charmap
         return;
@@ -1018,8 +1024,6 @@ gfxFT2FontList::AddFaceToList(const nsCString& aEntryName, uint32_t aIndex,
                                                   mFontFamilies;
 
     if (fe) {
-        NS_ConvertUTF8toUTF16 name(aFace->family_name);
-        BuildKeyNameFromFontName(name);
         gfxFontFamily *family = fontFamilies.GetWeak(name);
         if (!family) {
             family = new FT2FontFamily(name);
@@ -1314,6 +1318,9 @@ void
 gfxFT2FontList::AppendFaceFromFontListEntry(const FontListEntry& aFLE,
                                             StandardFile aStdFile)
 {
+    if (!IsFontFamilyNameAllowed(aFLE.familyName())) {
+        return;
+    }
     FT2FontEntry* fe = FT2FontEntry::CreateFontEntry(aFLE);
     if (fe) {
         auto& fontFamilies =

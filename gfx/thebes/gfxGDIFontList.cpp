@@ -693,7 +693,8 @@ gfxGDIFontList::EnumFontFamExProc(ENUMLOGFONTEXW *lpelfe,
 
     gfxGDIFontList *fontList = PlatformFontList();
 
-    if (!fontList->mFontFamilies.GetWeak(name)) {
+    if (IsFontFamilyNameAllowed(name) &&
+        !fontList->mFontFamilies.GetWeak(name)) {
         nsDependentString faceName(lf.lfFaceName);
         RefPtr<gfxFontFamily> family = new GDIFontFamily(faceName);
         fontList->mFontFamilies.Put(name, family);
