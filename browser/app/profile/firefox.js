@@ -320,6 +320,9 @@ pref("browser.download.folderList", 1);
 pref("browser.download.manager.addToRecentDocs", true);
 pref("browser.download.manager.resumeOnWakeDelay", 10000);
 
+// Don't show "Open with" option on download dialog if true. See bug ???
+pref("browser.download.forbid_open_with", false);
+
 // This allows disabling the animated notifications shown by
 // the Downloads Indicator when a download starts or completes.
 pref("browser.download.animateNotifications", true);
