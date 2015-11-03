@@ -1255,7 +1255,7 @@ WebGLContext::GetContextAttributes(dom::Nullable<dom::WebGLContextAttributes>& r
     result.mAlpha.Construct(mOptions.alpha);
     result.mDepth = mOptions.depth;
     result.mStencil = mOptions.stencil;
-    result.mAntialias = mOptions.antialias;
+    result.mAntialias = nsContentUtils::ResistFingerprinting() ? false : mOptions.antialias;
     result.mPremultipliedAlpha = mOptions.premultipliedAlpha;
     result.mPreserveDrawingBuffer = mOptions.preserveDrawingBuffer;
     result.mFailIfMajorPerformanceCaveat = mOptions.failIfMajorPerformanceCaveat;

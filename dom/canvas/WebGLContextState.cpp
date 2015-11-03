@@ -140,6 +140,73 @@ WebGLContext::GetParameter(JSContext* cx, GLenum pname, ErrorResult& rv)
                 // Return the real value; we're not overriding this one
                 break;
         }
+    } else if (nsContentUtils::ResistFingerprinting()) {
+        switch(pname) {
+            ////////////////////////////
+            // Single-value params
+
+            // int
+            case LOCAL_GL_MAX_VERTEX_ATTRIBS:
+                return JS::Int32Value(COMMON_GL_MAX_VERTEX_ATTRIBS);
+
+            case LOCAL_GL_MAX_FRAGMENT_UNIFORM_VECTORS:
+                return JS::Int32Value(COMMON_GL_MAX_FRAGMENT_UNIFORM_VECTORS);
+
+            case LOCAL_GL_MAX_VERTEX_UNIFORM_VECTORS:
+                return JS::Int32Value(COMMON_GL_MAX_VERTEX_UNIFORM_VECTORS);
+
+            case LOCAL_GL_MAX_VARYING_VECTORS:
+                return JS::Int32Value(COMMON_GL_MAX_VARYING_VECTORS);
+
+            case LOCAL_GL_MAX_TEXTURE_SIZE:
+                return JS::Int32Value(COMMON_GL_MAX_TEXTURE_SIZE);
+
+            case LOCAL_GL_MAX_CUBE_MAP_TEXTURE_SIZE:
+                return JS::Int32Value(COMMON_GL_MAX_CUBE_MAP_TEXTURE_SIZE);
+
+            case LOCAL_GL_MAX_TEXTURE_IMAGE_UNITS:
+                return JS::Int32Value(COMMON_GL_MAX_TEXTURE_IMAGE_UNITS);
+
+            case LOCAL_GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS:
+                return JS::Int32Value(COMMON_GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS);
+
+            case LOCAL_GL_MAX_RENDERBUFFER_SIZE:
+                return JS::Int32Value(COMMON_GL_MAX_RENDERBUFFER_SIZE);
+
+            case LOCAL_GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS:
+                return JS::Int32Value(COMMON_GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+
+            case LOCAL_GL_ALIASED_POINT_SIZE_RANGE: {
+                GLfloat fv[2] = { 1, COMMON_GL_ALIASED_POINT_SIZE_RANGE };
+                JSObject* obj = Float32Array::Create(cx, this, 2, fv);
+                if (!obj) {
+                    rv = NS_ERROR_OUT_OF_MEMORY;
+                }
+                return JS::ObjectOrNullValue(obj);
+            }
+
+            case LOCAL_GL_ALIASED_LINE_WIDTH_RANGE: {
+                GLfloat fv[2] = { 1, COMMON_GL_ALIASED_LINE_WIDTH_RANGE };
+                JSObject* obj = Float32Array::Create(cx, this, 2, fv);
+                if (!obj) {
+                    rv = NS_ERROR_OUT_OF_MEMORY;
+                }
+                return JS::ObjectOrNullValue(obj);
+            }
+
+            case LOCAL_GL_MAX_VIEWPORT_DIMS: {
+                GLint iv[2] = { COMMON_GL_MAX_VIEWPORT_DIMS, COMMON_GL_MAX_VIEWPORT_DIMS };
+                JSObject* obj = Int32Array::Create(cx, this, 2, iv);
+                if (!obj) {
+                    rv = NS_ERROR_OUT_OF_MEMORY;
+                }
+                return JS::ObjectOrNullValue(obj);
+            }
+
+            default:
+                // Return the real value; we're not overriding this one
+                break;
+        }
     }
 
     if (IsExtensionEnabled(WebGLExtensionID::WEBGL_draw_buffers)) {
