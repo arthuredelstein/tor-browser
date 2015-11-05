@@ -470,6 +470,11 @@ JS_NewRuntime(uint32_t maxbytes, uint32_t maxNurseryBytes, JSRuntime* parentRunt
         return nullptr;
     }
 
+    if (parentRuntime) {
+        AssertHeapIsIdle(rt);
+        AssertHeapIsIdle(parentRuntime);
+        rt->setDefaultLocale(parentRuntime->getDefaultLocale());
+    }
     return rt;
 }
 
