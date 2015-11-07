@@ -1,3 +1,4 @@
+
 /* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,99 +47,109 @@ namespace CanvasUtils {
 // Check site-specific permission and display prompt if appropriate.
 bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
 {
-  if (!aDocument || !aCx)
+    // Don't proceed if we don't have a document or JavaScript context.
+    if (!aDocument || !aCx) {
+        return false;
+    }
+
+    // Documents with system principal can always extract canvas data.
+    nsPIDOMWindow *win = aDocument->GetWindow();
+    nsCOMPtr<nsIScriptObjectPrincipal> sop(do_QueryInterface(win));
+    if (sop && nsContentUtils::IsSystemPrincipal(sop->GetPrincipal())) {
+        return true;
+    }
+
+    // Always give permission to chrome scripts (e.g. Page Inspector).
+    if (nsContentUtils::ThreadsafeIsCallerChrome()) {
+        return true;
+    }
+
+    // Allow local files to extract canvas data.
+    nsIURI *docURI = aDocument->GetDocumentURI();
+    bool isFileURL;
+    (void) docURI->SchemeIs("file", &isFileURL);
+    if (isFileURL) {
+        return true;
+    }
+
+    // Get calling script file and line for logging.
+    JS::AutoFilename scriptFile;
+    unsigned scriptLine = 0;
+    bool isScriptKnown = false;
+    if (JS::DescribeScriptedCaller(aCx, &scriptFile, &scriptLine)) {
+        isScriptKnown = true;
+        // Don't show canvas prompt for PDF.js
+        if (scriptFile.get() &&
+            strcmp(scriptFile.get(), "resource://pdf.js/build/pdf.js") == 0) {
+            return true;
+        }
+    }
+
+    // Load Third Party Util service.
+    nsresult rv;
+    nsCOMPtr<mozIThirdPartyUtil> thirdPartyUtil =
+        do_GetService(THIRDPARTYUTIL_CONTRACTID, &rv);
+    NS_ENSURE_SUCCESS(rv, false);
+
+    // Get the First Party URI and its spec.
+    nsCOMPtr<nsIURI> firstPartyURI;
+    rv = thirdPartyUtil->GetFirstPartyURI(NULL, aDocument,
+                                                   getter_AddRefs(firstPartyURI));
+    NS_ENSURE_SUCCESS(rv, false);
+    nsCString firstPartySpec;
+    firstPartyURI->GetSpec(firstPartySpec);
+
+    // Block all third-party attempts to extract canvas.
+    bool isThirdParty = true;
+    rv = thirdPartyUtil->IsThirdPartyURI(firstPartyURI, docURI, &isThirdParty);
+    NS_ENSURE_SUCCESS(rv, false);
+    if (isThirdParty) {
+        nsCString docURISpec;
+        docURI->GetSpec(docURISpec);
+        nsAutoCString message;
+        message.AppendPrintf("Blocked third party %s in page %s from extracting canvas data.",
+                             docURISpec.get(), firstPartySpec.get());
+        if (isScriptKnown) {
+          message.AppendPrintf(" %s:%u.",
+                               scriptFile.get(), scriptLine);
+        }
+        nsContentUtils::LogMessageToConsole(message.get());
+        return false;
+    }
+
+    // Load Permission Manager service.
+    nsCOMPtr<nsIPermissionManager> permissionManager =
+        do_GetService(NS_PERMISSIONMANAGER_CONTRACTID);
+    NS_ENSURE_SUCCESS(rv, false);
+
+    // Check if the site has permission to extract canvas data.
+    // Either permit or block extraction if a stored permission setting exists.
+    uint32_t permission;
+    rv = permissionManager->TestPermission(firstPartyURI,
+                                           PERMISSION_CANVAS_EXTRACT_DATA, &permission);
+    NS_ENSURE_SUCCESS(rv, false);
+    if (permission == nsIPermissionManager::ALLOW_ACTION) {
+        return true;
+    } else if (permission == nsIPermissionManager::DENY_ACTION) {
+      nsAutoCString message;
+      message.AppendPrintf("Blocked page %s from extracting canvas data.",
+                           firstPartySpec.get());
+      if (isScriptKnown) {
+        message.AppendPrintf(" %s:%u.",
+                             scriptFile.get(), scriptLine);
+      }
+      nsContentUtils::LogMessageToConsole(message.get());
+      return false;
+    }
+
+    // At this point, permission is unknown (nsIPermissionManager::UNKNOWN_ACTION).
+    // Prompt the user (asynchronous).
+    nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+    obs->NotifyObservers(win, TOPIC_CANVAS_PERMISSIONS_PROMPT,
+                         NS_ConvertUTF8toUTF16(firstPartySpec).get());
+
+    // We don't extract the image for now -- user may override at prompt.
     return false;
-
-  nsPIDOMWindow *win = aDocument->GetWindow();
-  nsCOMPtr<nsIScriptObjectPrincipal> sop(do_QueryInterface(win));
-  if (sop && nsContentUtils::IsSystemPrincipal(sop->GetPrincipal()))
-    return true;
-
-  // Don't show canvas prompt for chrome scripts (e.g. Page Inspector)
-  if (nsContentUtils::ThreadsafeIsCallerChrome())
-    return true;
-
-  JS::AutoFilename scriptFile;
-  unsigned scriptLine = 0;
-  bool isScriptKnown = false;
-  if (JS::DescribeScriptedCaller(aCx, &scriptFile, &scriptLine)) {
-    isScriptKnown = true;
-    // Don't show canvas prompt for PDF.js
-    if (scriptFile.get() &&
-        strcmp(scriptFile.get(), "resource://pdf.js/build/pdf.js") == 0)
-      return true;
-  }
-  bool isAllowed = false;
-  nsCOMPtr<mozIThirdPartyUtil> thirdPartyUtil =
-                                do_GetService(THIRDPARTYUTIL_CONTRACTID);
-  nsCOMPtr<nsIPermissionManager> permissionManager =
-                          do_GetService(NS_PERMISSIONMANAGER_CONTRACTID);
-  if (thirdPartyUtil && permissionManager) {
-    nsCOMPtr<nsIURI> uri;
-    nsresult rv = thirdPartyUtil->GetFirstPartyURI(NULL, aDocument,
-                                                   getter_AddRefs(uri));
-    uint32_t permission = nsIPermissionManager::UNKNOWN_ACTION;
-    if (NS_SUCCEEDED(rv)) {
-      // Allow local files to access canvas data; check content permissions
-      // for remote pages.
-      bool isFileURL = false;
-      (void)uri->SchemeIs("file", &isFileURL);
-      if (isFileURL)
-        permission = nsIPermissionManager::ALLOW_ACTION;
-      else {
-        rv = permissionManager->TestPermission(uri,
-                                PERMISSION_CANVAS_EXTRACT_DATA, &permission);
-      }
-    }
-
-    if (NS_SUCCEEDED(rv)) {
-      isAllowed = (permission == nsIPermissionManager::ALLOW_ACTION);
-
-      if (!isAllowed && (permission != nsIPermissionManager::DENY_ACTION)) {
-        // Log all attempted canvas access and block access by third parties.
-        bool isThirdParty = true;
-        nsIURI *docURI = aDocument->GetDocumentURI();
-        rv = thirdPartyUtil->IsThirdPartyURI(uri, docURI, &isThirdParty);
-        NS_ENSURE_SUCCESS(rv, false);
-
-        nsCString firstPartySpec;
-        rv = uri->GetSpec(firstPartySpec);
-        nsCString docSpec;
-        docURI->GetSpec(docSpec);
-        nsPrintfCString msg("On %s: blocked access to canvas image data"
-                            " from document %s, ",  // L10n
-                            firstPartySpec.get(), docSpec.get());
-        if (isScriptKnown && scriptFile.get()) {
-          msg += nsPrintfCString("script from %s:%u",  // L10n
-                                 scriptFile.get(), scriptLine);
-        } else {
-          msg += nsPrintfCString("unknown script");  // L10n
-        }
-        nsCOMPtr<nsIConsoleService> console
-                              (do_GetService(NS_CONSOLESERVICE_CONTRACTID));
-        if (console)
-          console->LogStringMessage(NS_ConvertUTF8toUTF16(msg).get());
-
-        // Log every canvas access attempt to stdout if debugging:
-#ifdef DEBUG
-        printf("%s\n", msg.get());
-#endif
-        // Ensure URI is valid after logging, but before trying to notify the
-        // user:
-        NS_ENSURE_SUCCESS(rv, false);
-
-        if (!isThirdParty) {
-          // Send notification so that a prompt is displayed.
-          nsCOMPtr<nsIObserverService> obs =
-                                       mozilla::services::GetObserverService();
-          obs->NotifyObservers(win, TOPIC_CANVAS_PERMISSIONS_PROMPT,
-                               NS_ConvertUTF8toUTF16(firstPartySpec).get());
-        }
-      }
-    }
-  }
-
-  return isAllowed;
 }
 
 void
