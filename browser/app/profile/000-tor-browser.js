@@ -242,6 +242,9 @@ pref("network.jar.block-remote-files", false);
 // Enable TLS 1.1 and 1.2:
 // https://trac.torproject.org/projects/tor/ticket/11253
 pref("security.tls.version.max", 3);
+// Disable RC4 fallback. This will go live in Firefox 44, Chrome and IE/Edge:
+// https://blog.mozilla.org/security/2015/09/11/deprecating-the-rc4-cipher/
+pref("security.tls.unrestricted_rc4_fallback", false);
 
 // Enforce certificate pinning, see: https://bugs.torproject.org/16206
 pref("security.cert_pinning.enforcement_level", 2);
