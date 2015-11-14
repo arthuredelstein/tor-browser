@@ -8885,3 +8885,10 @@ nsContentUtils::SerializeNodeToMarkup(nsINode* aRoot,
     }
   }
 }
+
+bool
+nsContentUtils::IsChromeWindow(nsIDOMWindow* aWindow)
+{
+  nsCOMPtr<nsIDOMChromeWindow> chromeWindow(do_QueryInterface(aWindow));
+  return chromeWindow ? true : false;
+}

@@ -17,6 +17,7 @@
 #include "nsIPrincipal.h"
 #include "nsIScriptObjectPrincipal.h"
 #include "nsIURI.h"
+#include "nsIURL.h"
 #include "nsThreadUtils.h"
 #include "prlog.h"
 #include "nsPrintfCString.h"
@@ -650,23 +651,14 @@ ThirdPartyUtil::GetFirstPartyURIInternal(nsIChannel *aChannel,
   // This might fail to work for first-party loads themselves, but
   // we don't need this codepath for that case.
   if (NS_FAILED(rv) && aDoc) {
-    nsCOMPtr<nsIDOMWindow> top;
-    nsCOMPtr<nsIDOMDocument> topDDoc;
-    nsIURI *docURI = nullptr;
     srcURI = aDoc->GetDocumentURI();
 
     if (aDoc->GetWindow()) {
-      aDoc->GetWindow()->GetTop(getter_AddRefs(top));
-      if (top) {
-        top->GetDocument(getter_AddRefs(topDDoc));
-
-        nsCOMPtr<nsIDocument> topDoc(do_QueryInterface(topDDoc));
-        if (topDoc) {
-          docURI = topDoc->GetOriginalURI();
-          if (docURI) {
-            // Give us a mutable URI and also addref
-            rv = NS_EnsureSafeToReturn(docURI, aOutput);
-          }
+      nsCOMPtr<nsPIDOMWindow> topWindow = aDoc->GetWindow()->GetTop();
+      if (topWindow) {
+        nsCOMPtr<nsIURI> topDocumentURI = topWindow->GetDocumentURI();
+        if (topDocumentURI) {
+          NS_ADDREF(*aOutput = topDocumentURI);
         }
       }
     } else {

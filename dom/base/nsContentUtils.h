@@ -946,6 +946,11 @@ public:
   static bool IsChromeDoc(nsIDocument *aDocument);
 
   /**
+   * Returns true if aWindow is a chrome window
+   */
+  static bool IsChromeWindow(nsIDOMWindow *aWindow);
+
+  /**
    * Returns true if aDocument is in a docshell whose parent is the same type
    */
   static bool IsChildOfSameType(nsIDocument* aDoc);
