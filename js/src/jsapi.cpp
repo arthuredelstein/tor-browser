@@ -466,6 +466,16 @@ JS_NewRuntime(uint32_t maxbytes, uint32_t maxNurseryBytes, JSRuntime* parentRunt
     if (!rt)
         return nullptr;
 
+    if (parentRuntime) {
+        // Ensure that the new runtime has the same default locale
+        // as the parent runtime.
+        const char* defaultLocale = parentRuntime->getDefaultLocale();
+        if (!defaultLocale || !JS_SetDefaultLocale(rt, defaultLocale)) {
+            JS_DestroyRuntime(rt);
+            return nullptr;
+        }
+    }
+
     if (!rt->init(maxbytes, maxNurseryBytes)) {
         JS_DestroyRuntime(rt);
         return nullptr;
