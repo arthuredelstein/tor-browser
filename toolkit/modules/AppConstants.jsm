@@ -360,4 +360,10 @@ this.AppConstants = Object.freeze({
     false,
 #endif
 
+  TOR_BROWSER_UPDATE:
+#ifdef TOR_BROWSER_UPDATE
+    true,
+#else
+    false,
+#endif
 });
