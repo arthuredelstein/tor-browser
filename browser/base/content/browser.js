@@ -281,6 +281,9 @@ Object.defineProperty(this, "AddonManager", {
 
 var gInitialPages = [
   "about:tor",
+#ifdef TOR_BROWSER_UPDATE
+  "about:tbupdate",
+#endif
   "about:blank",
   "about:newtab",
   "about:home",
@@ -2696,8 +2699,14 @@ function URLBarSetURI(aURI) {
 
     // Replace initial page URIs with an empty string
     // only if there's no opener (bug 370555).
+#ifdef TOR_BROWSER_UPDATE
+    if (isInitialPage(uri.spec.split('?')[0]) &&
+        checkEmptyPageOrigin(gBrowser.selectedBrowser, uri))
+#else
     if (isInitialPage(uri.spec) &&
-        checkEmptyPageOrigin(gBrowser.selectedBrowser, uri)) {
+        checkEmptyPageOrigin(gBrowser.selectedBrowser, uri))
+#endif
+    {
       value = "";
     } else {
       // We should deal with losslessDecodeURI throwing for exotic URIs
@@ -7077,7 +7086,11 @@ var gIdentityHandler = {
    * RegExp used to decide if an about url should be shown as being part of
    * the browser UI.
    */
-  _secureInternalUIWhitelist: /^(?:accounts|addons|cache|config|crashes|customizing|downloads|healthreport|license|newaddon|permissions|preferences|rights|searchreset|sessionrestore|support|welcomeback)(?:[?#]|$)/i,
+#ifdef TOR_BROWSER_UPDATE
+  _secureInternalUIWhitelist: /^(?:accounts|addons|cache|config|crashes|customizing|downloads|healthreport|license|newaddon|permissions|preferences|rights|searchreset|sessionrestore|support|welcomeback|tor|tbupdate)(?:[?#]|$)/i,
+#else
+  _secureInternalUIWhitelist: /^(?:accounts|addons|cache|config|crashes|customizing|downloads|healthreport|license|newaddon|permissions|preferences|rights|searchreset|sessionrestore|support|welcomeback|tor)(?:[?#]|$)/i,
+#endif
 
   get _isBroken() {
     return this._state & Ci.nsIWebProgressListener.STATE_IS_BROKEN;
