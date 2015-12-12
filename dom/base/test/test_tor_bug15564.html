@@ -98,7 +98,7 @@ let sharedWorkerTest = function* (isolationOn, domainA, domainB, child_page) {
 
 // ## The main test
 // Run a coroutine that tests various combinations of domains
-// methods, and isolation states for sharing (or not sharing) SharedWorkers.
+// and isolation states for sharing (or not sharing) SharedWorkers.
 spawnTask(function* () {
   let domainA = domain1;
   for (let isolate of [false, true]) {
