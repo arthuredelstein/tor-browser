@@ -1,0 +1,147 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://trac.torproject.org/15646
+-->
+<head>
+  <title>Test for Bug 15646</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="application/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://trac.torproject.org/15466">Tor Bug 15646</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+
+</div>
+<pre id="test">
+</pre>
+<span id="testTarget" style="border: 1px solid black;">testTarget</span>
+<script type="application/javascript;version=1.7">
+  SimpleTest.waitForExplicitFinish();
+  let miscKeyData = [
+    ["Alt", 18],
+    ["ArrowDown", 40],
+    ["ArrowLeft", 37],
+    ["ArrowRight", 39],
+    ["ArrowUp", 38],
+    ["Backspace", 8],
+    ["CapsLock", 20],
+    ["ContextMenu", 93],
+    ["Control", 17],
+    ["Delete", 46],
+    ["End", 35],
+    ["Enter", 13],
+    ["Escape", 27],
+    ["Help", 6],
+    ["Home", 36],
+    ["Insert", 45],
+    ["Meta", 91],
+    ["PageDown", 34],
+    ["PageUp", 33],
+    ["Pause", 19],
+    ["PrintScreen", 44],
+    ["ScrollLock", 145],
+    ["Shift", 16],
+    ["Tab", 9],
+    [" ", 32],
+    [",", 188],
+    [".", 190],
+    ["/", 191],
+    [";", 59],
+    ["'", 222],
+    ["[", 219],
+    ["]", 221],
+    ["`", 192],
+    ["\\", 220],
+    ["-", 173],
+    ["=", 61],
+  ];
+  let uppers = [], lowers = [];
+  for (let i = 65; i < 91; ++i) {
+    lowers.push([String.fromCharCode(i).toLowerCase(), i]);
+    uppers.push([String.fromCharCode(i), i]);
+  }
+  let fnKeys = [];
+  for (let i = 1; i < 25; ++i) {
+    let keyName = "F" + i,
+        keyCode = i + 111;
+    fnKeys.push([keyName, keyCode]);
+  }
+  let digits = [];
+  for (let i = 0; i < 10; ++i) {
+    let keyName = "" + i,
+        keyCode = 48 + i;
+    digits.push([keyName, keyCode]);
+  }
+  let allKeyData = miscKeyData.concat(lowers).concat(fnKeys).concat(digits);
+  let pushPref = function (key, value) {
+    return new Promise(resolve => {
+      SpecialPowers.pushPrefEnv({"set": [[key, value]]}, resolve);
+    });
+  };
+  let miscShiftKeyData = [
+    ["!", 48],
+    ["@", 49],
+    ["#", 50],
+    ["$", 51],
+    ["%", 52],
+    ["^", 53],
+    ["&", 54],
+    ["*", 55],
+    ["(", 56],
+    [")", 57],
+    ["<", 188],
+    [">", 190],
+    ["?", 191],
+    [":", 59],
+    ["\"", 222],
+    ["{", 219],
+    ["}", 221],
+    ["~", 192],
+    ["|", 220],
+    ["_", 173],
+    ["+", 61],
+  ];
+  let allShiftKeyData = miscShiftKeyData.concat(uppers);
+
+  // __dispatchAndListen(target, eventObject)__.
+  // Dispatch the given event to the target object.
+  // Return a promise that resolves to the event when]
+  // that event is received by an event listener.
+  let dispatchAndListen = function (target, eventObject) {
+    let eventType = eventObject.type;
+    return new Promise(function (resolve, reject) {
+      let listenFunction = function (event) {
+        target.removeEventListener(eventType, listenFunction);
+        resolve(event);
+      };
+      target.addEventListener(eventType, listenFunction);
+      target.dispatchEvent(eventObject);
+    });
+  };
+
+  // Run tests asynchronously.
+  spawnTask(function* () {
+    for (let keyData of [allKeyData, allShiftKeyData]) {
+      for (let resistFingerprinting of [false, true]) {
+        let expectedShiftKey = keyData === allShiftKeyData && resistFingerprinting;
+        yield pushPref("privacy.resistFingerprinting", resistFingerprinting);
+        for (let [keyName, keyCode] of keyData) {
+          let keyboardEvent = new KeyboardEvent("keydown", { key : keyName });
+          let receivedEvent = yield dispatchAndListen(document.body, keyboardEvent);
+          let expectedKeyCode = resistFingerprinting ? keyCode : 0;
+          is(receivedEvent.keyCode, expectedKeyCode,
+             "Event.keyCode should be " + expectedKeyCode);
+          is(receivedEvent.shiftKey, expectedShiftKey,
+             "Event.shiftKey should be " + expectedShiftKey);
+        }
+      }
+    }
+    SimpleTest.finish();
+  });
+
+</script>
+</body>
+</html>
