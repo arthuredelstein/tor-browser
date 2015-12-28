@@ -90,11 +90,7 @@ ExecutableAllocator::addSizeOfCode(JS::CodeSizes* sizes) const
     }
 }
 
-#if TARGET_OS_IPHONE
 bool ExecutableAllocator::nonWritableJitCode = true;
-#else
-bool ExecutableAllocator::nonWritableJitCode = false;
-#endif
 
 // Limit on the number of bytes of executable memory to prevent JIT spraying
 // attacks.
