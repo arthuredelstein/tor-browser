@@ -104,7 +104,7 @@ Log(const char* aMessageType,
 #endif
 
   if (nsContentUtils::IsInitialized()) {
-    nsContentUtils::LogMessageToConsole(msg.c_str());
+    nsContentUtils::LogMessageToConsole("%s", msg.c_str());
   }
 }
 
