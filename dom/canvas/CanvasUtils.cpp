@@ -113,7 +113,7 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
         if (isScriptKnown) {
           message.AppendPrintf(" %s:%u.", scriptFile.get(), scriptLine);
         }
-        nsContentUtils::LogMessageToConsole(message.get());
+        nsContentUtils::LogMessageToConsole("%s", message.get());
         return false;
     }
 
@@ -141,7 +141,7 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
     if (isScriptKnown) {
       message.AppendPrintf(" %s:%u.", scriptFile.get(), scriptLine);
     }
-    nsContentUtils::LogMessageToConsole(message.get());
+    nsContentUtils::LogMessageToConsole("%s", message.get());
 
     // Prompt the user (asynchronous).
     nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
