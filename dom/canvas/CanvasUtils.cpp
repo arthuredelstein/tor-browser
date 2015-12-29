@@ -106,49 +106,46 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
     bool isThirdParty = true;
     rv = thirdPartyUtil->IsThirdPartyURI(firstPartyURI, docURI, &isThirdParty);
     NS_ENSURE_SUCCESS(rv, false);
-    if (isThirdParty) {
-        nsAutoCString message;
-        message.AppendPrintf("Blocked third party %s in page %s from extracting canvas data.",
+
+    if (!isThirdParty) {
+        // Load Permission Manager service.
+        nsCOMPtr<nsIPermissionManager> permissionManager =
+            do_GetService(NS_PERMISSIONMANAGER_CONTRACTID);
+        NS_ENSURE_SUCCESS(rv, false);
+
+        // Check if the site has permission to extract canvas data.
+        // Either permit or block extraction if a stored permission setting exists.
+        uint32_t permission;
+        rv = permissionManager->TestPermission(firstPartyURI,
+                                               PERMISSION_CANVAS_EXTRACT_DATA, &permission);
+        NS_ENSURE_SUCCESS(rv, false);
+        if (permission == nsIPermissionManager::ALLOW_ACTION) {
+            return true;
+        } else if (permission == nsIPermissionManager::DENY_ACTION) {
+            return false;
+        }
+
+        // At this point, permission is unknown (nsIPermissionManager::UNKNOWN_ACTION).
+        // Prompt the user (asynchronous).
+        nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+        obs->NotifyObservers(win, TOPIC_CANVAS_PERMISSIONS_PROMPT,
+                             NS_ConvertUTF8toUTF16(firstPartySpec).get());
+    }
+
+    // Either we have a third party extraction attempt or we are provisionally
+    // blocking image extraction. Log our blocking.
+    nsCOMPtr<nsIConsoleService> console(do_GetService(NS_CONSOLESERVICE_CONTRACTID));
+    if (console) {
+        nsAutoString message;
+        message.AppendPrintf("Blocked %s in page %s from extracting canvas data.",
                              docURISpec.get(), firstPartySpec.get());
         if (isScriptKnown) {
-          message.AppendPrintf(" %s:%u.", scriptFile.get(), scriptLine);
+            message.AppendPrintf(" %s:%u.", scriptFile.get(), scriptLine);
         }
-        nsContentUtils::LogMessageToConsole(message.get());
-        return false;
+        console->LogStringMessage(message.get());
     }
 
-    // Load Permission Manager service.
-    nsCOMPtr<nsIPermissionManager> permissionManager =
-        do_GetService(NS_PERMISSIONMANAGER_CONTRACTID);
-    NS_ENSURE_SUCCESS(rv, false);
-
-    // Check if the site has permission to extract canvas data.
-    // Either permit or block extraction if a stored permission setting exists.
-    uint32_t permission;
-    rv = permissionManager->TestPermission(firstPartyURI,
-                                           PERMISSION_CANVAS_EXTRACT_DATA, &permission);
-    NS_ENSURE_SUCCESS(rv, false);
-    if (permission == nsIPermissionManager::ALLOW_ACTION) {
-      return true;
-    } else if (permission == nsIPermissionManager::DENY_ACTION) {
-      return false;
-    }
-
-    // At this point, permission is unknown (nsIPermissionManager::UNKNOWN_ACTION).
-    nsAutoCString message;
-    message.AppendPrintf("Blocked %s in page %s from extracting canvas data.",
-                         docURISpec.get(), firstPartySpec.get());
-    if (isScriptKnown) {
-      message.AppendPrintf(" %s:%u.", scriptFile.get(), scriptLine);
-    }
-    nsContentUtils::LogMessageToConsole(message.get());
-
-    // Prompt the user (asynchronous).
-    nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
-    obs->NotifyObservers(win, TOPIC_CANVAS_PERMISSIONS_PROMPT,
-                         NS_ConvertUTF8toUTF16(firstPartySpec).get());
-
-    // We don't extract the image for now -- user may override at prompt.
+    // Block image extractions.
     return false;
 }
 
