@@ -97,7 +97,7 @@ function checkStateRead(aSubject, aTopic, aData) {
 
 
   // add withSubdomains to a.pinning2.example.com
-  gSSService.setKeyPins("a.pinning2.example.com", true, 1000, 2,
+  gSSService.setKeyPins("a.pinning2.example.com", "", true, 1000, 2,
                         [NON_ISSUED_KEY_HASH, PINNING_ROOT_KEY_HASH]);
   checkFail(certFromFile('cn-a.pinning2.example.com-badca.der'));
   checkOK(certFromFile('cn-a.pinning2.example.com-pinningroot.der'));
@@ -116,7 +116,7 @@ function checkStateRead(aSubject, aTopic, aData) {
                                         "x.a.pinning2.example.com", 0));
 
   // Now setpins without subdomains
-  gSSService.setKeyPins("a.pinning2.example.com", false, 1000, 2,
+  gSSService.setKeyPins("a.pinning2.example.com", "", false, 1000, 2,
                         [NON_ISSUED_KEY_HASH, PINNING_ROOT_KEY_HASH]);
   checkFail(certFromFile('cn-a.pinning2.example.com-badca.der'));
   checkOK(certFromFile('cn-a.pinning2.example.com-pinningroot.der'));
@@ -141,7 +141,7 @@ function checkStateRead(aSubject, aTopic, aData) {
 
   // failure to insert new pin entry leaves previous pin behavior
   try {
-    gSSService.setKeyPins("a.pinning2.example.com", true, 1000, 1,
+    gSSService.setKeyPins("a.pinning2.example.com", "", true, 1000, 1,
                           ["not a hash"]);
     do_check_true(false); // this shouldn't run
   } catch(e) {
@@ -169,7 +169,7 @@ function checkStateRead(aSubject, aTopic, aData) {
 
   // Incorrect size results in failure
   try {
-    gSSService.setKeyPins("a.pinning2.example.com", true, 1000, 2,
+    gSSService.setKeyPins("a.pinning2.example.com", "", true, 1000, 2,
                           ["not a hash"]);
     do_check_true(false); // this shouldn't run
   } catch(e) {
@@ -181,7 +181,7 @@ function checkStateRead(aSubject, aTopic, aData) {
   do_check_true(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HPKP,
                                         "include-subdomains.pinning.example.com", 0));
 
-  gSSService.setKeyPins("a.pinning2.example.com", false, 0, 1,
+  gSSService.setKeyPins("a.pinning2.example.com", "", false, 0, 1,
                         [NON_ISSUED_KEY_HASH]);
 
   do_timeout(1250, checkExpiredState);
