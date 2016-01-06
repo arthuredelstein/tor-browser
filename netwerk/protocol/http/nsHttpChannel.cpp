@@ -77,7 +77,7 @@
 #include "nsIX509Cert.h"
 #include "ScopedNSSTypes.h"
 #include "nsNullPrincipal.h"
-#include "mozIThirdPartyUtil.h"
+#include "ThirdPartyUtil.h"
 
 namespace mozilla { namespace net {
 
@@ -2704,17 +2704,8 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
     nsCOMPtr<nsICacheStorage> cacheStorage;
     nsCOMPtr<nsIURI> openURI;
 
-    /* Obtain optional third party isolation domain */
-    nsAutoCString cacheDomain;
-    nsCOMPtr<nsIURI> firstPartyIsolationURI;
-    nsCOMPtr<mozIThirdPartyUtil> thirdPartySvc
-         = do_GetService(THIRDPARTYUTIL_CONTRACTID);
-    rv = thirdPartySvc->GetFirstPartyIsolationURI(this, nullptr,
-                                       getter_AddRefs(firstPartyIsolationURI));
-    if (NS_SUCCEEDED(rv) && firstPartyIsolationURI) {
-        thirdPartySvc->GetFirstPartyHostForIsolation(firstPartyIsolationURI,
-                cacheDomain);
-    }
+    nsAutoCString isolationKey;
+    ThirdPartyUtil::GetFirstPartyHost(this, isolationKey);
 
     if (!mFallbackKey.IsEmpty() && mFallbackChannel) {
         // This is a fallback channel, open fallback URI instead
@@ -2775,7 +2766,7 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
     if (mLoadFlags & LOAD_BYPASS_LOCAL_CACHE_IF_BUSY)
         cacheEntryOpenFlags |= nsICacheStorage::OPEN_BYPASS_IF_BUSY;
 
-    extension.Append(nsPrintfCString("%s@%d", cacheDomain.get(), mPostID));
+    extension.Append(nsPrintfCString("%s@%d", isolationKey.get(), mPostID));
 
     if (PossiblyIntercepted()) {
         extension.Append('u');
@@ -2830,7 +2821,7 @@ bypassCacheEntryOpen:
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = cacheStorage->AsyncOpenURI(
-      mURI, cacheDomain, nsICacheStorage::OPEN_TRUNCATE, this);
+      mURI, isolationKey, nsICacheStorage::OPEN_TRUNCATE, this);
     NS_ENSURE_SUCCESS(rv, rv);
 
     waitFlags.Keep(WAIT_FOR_OFFLINE_CACHE_ENTRY);
@@ -4877,16 +4868,9 @@ nsHttpChannel::BeginConnect()
         Telemetry::Accumulate(Telemetry::HTTP_TRANSACTION_USE_ALTSVC_OE, !isHttps);
     } else {
         LOG(("nsHttpChannel %p Using default connection info", this));
-        /* Obtain optional third party isolation domain */
+
         nsAutoCString isolationKey;
-        nsCOMPtr<nsIURI> firstPartyIsolationURI;
-        nsCOMPtr<mozIThirdPartyUtil> thirdPartySvc
-            = do_GetService(THIRDPARTYUTIL_CONTRACTID);
-        rv = thirdPartySvc->GetFirstPartyIsolationURI(this, nullptr,
-                                           getter_AddRefs(firstPartyIsolationURI));
-        if (NS_SUCCEEDED(rv) && firstPartyIsolationURI) {
-            thirdPartySvc->GetFirstPartyHostForIsolation(firstPartyIsolationURI, isolationKey); 
-        }
+        ThirdPartyUtil::GetFirstPartyHost(this, isolationKey);
 
         mConnectionInfo = new nsHttpConnectionInfo(host, port, EmptyCString(), mUsername, proxyInfo, isolationKey, isHttps);
 
