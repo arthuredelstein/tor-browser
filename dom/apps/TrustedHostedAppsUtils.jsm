@@ -72,7 +72,7 @@ this.TrustedHostedAppsUtils = {
     }
 
     if (siteSecurityService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HPKP,
-                                         uri.host, 0)) {
+                                         uri.host, "", 0)) {
       debug("\tvalid certificate pinning for host: " + uri.host + "\n");
       return true;
     }

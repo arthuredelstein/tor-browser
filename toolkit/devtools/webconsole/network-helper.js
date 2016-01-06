@@ -611,15 +611,13 @@ let NetworkHelper = {
 
 
         // SiteSecurityService uses different storage if the channel is
-        // private. Thus we must give isSecureHost correct flags or we
+        // private. Thus we must give isSecureChannel correct flags or we
         // might get incorrect results.
         let flags = (httpActivity.private) ?
                       Ci.nsISocketProvider.NO_PERMANENT_STORAGE : 0;
 
-        let host = httpActivity.hostname;
-
-        info.hsts = sss.isSecureHost(sss.HEADER_HSTS, host, flags);
-        info.hpkp = sss.isSecureHost(sss.HEADER_HPKP, host, flags);
+        info.hsts = sss.isSecureChannel(sss.HEADER_HSTS, httpActivity.channel, flags);
+        info.hpkp = sss.isSecureChannel(sss.HEADER_HPKP, httpAcitvity.channel, flags);
       } else {
         DevToolsUtils.reportException("NetworkHelper.parseSecurityInfo",
           "Could not get HSTS/HPKP status as hostname is not available.");

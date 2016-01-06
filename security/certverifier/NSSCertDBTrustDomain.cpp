@@ -700,7 +700,8 @@ NSSCertDBTrustDomain::IsChainValid(const DERArray& certArray, Time time)
     return MapPRErrorCodeToResult(PR_GetError());
   }
 
-  Result result = CertListContainsExpectedKeys(certList, mHostname, time,
+  Result result = CertListContainsExpectedKeys(certList, mHostname,
+                                               mIsolationKey.get(), time,
                                                mPinningMode);
   if (result != Success) {
     return result;
