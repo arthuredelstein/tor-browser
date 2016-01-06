@@ -197,7 +197,8 @@ PublicKeyPinningService::ChainMatchesPinset(const CERTCertList* certList,
 // information that is valid for the given host at the given time.
 // Dynamic pins are prioritized over static pins.
 static nsresult
-FindPinningInformation(const char* hostname, mozilla::pkix::Time time,
+FindPinningInformation(const char* hostname,
+                       const char* isolationKey, mozilla::pkix::Time time,
                /*out*/ nsTArray<nsCString>& dynamicFingerprints,
                /*out*/ TransportSecurityPreload*& staticFingerprints)
 {
@@ -224,7 +225,7 @@ FindPinningInformation(const char* hostname, mozilla::pkix::Time time,
     bool found;
     bool includeSubdomains;
     nsTArray<nsCString> pinArray;
-    rv = sssService->GetKeyPinsForHostname(evalHost, time, pinArray,
+    rv = sssService->GetKeyPinsForHostname(evalHost, isolationKey, time, pinArray,
                                            &includeSubdomains, &found);
     if (NS_FAILED(rv)) {
       return rv;
@@ -275,6 +276,7 @@ FindPinningInformation(const char* hostname, mozilla::pkix::Time time,
 // pinset for the host or there is no pinning information for the host.
 static nsresult
 CheckPinsForHostname(const CERTCertList* certList, const char* hostname,
+                     const char* isolationKey,
                      bool enforceTestMode, mozilla::pkix::Time time,
              /*out*/ bool& chainHasValidPins)
 {
@@ -288,7 +290,8 @@ CheckPinsForHostname(const CERTCertList* certList, const char* hostname,
 
   nsTArray<nsCString> dynamicFingerprints;
   TransportSecurityPreload* staticFingerprints = nullptr;
-  nsresult rv = FindPinningInformation(hostname, time, dynamicFingerprints,
+  nsresult rv = FindPinningInformation(hostname, isolationKey,
+                                       time, dynamicFingerprints,
                                        staticFingerprints);
   // If we have no pinning information, the certificate chain trivially
   // validates with respect to pinning.
@@ -356,7 +359,9 @@ CheckPinsForHostname(const CERTCertList* certList, const char* hostname,
  * evaluating at the first OK pin).
  */
 static nsresult
-CheckChainAgainstAllNames(const CERTCertList* certList, bool enforceTestMode,
+CheckChainAgainstAllNames(const CERTCertList* certList,
+                          const char* isolationKey,
+                          bool enforceTestMode,
                           mozilla::pkix::Time time,
                   /*out*/ bool& chainHasValidPins)
 {
@@ -406,6 +411,7 @@ CheckChainAgainstAllNames(const CERTCertList* certList, bool enforceTestMode,
       nsAutoCString canonicalizedHostname(
         PublicKeyPinningService::CanonicalizeHostname(hostName));
       nsresult rv = CheckPinsForHostname(certList, canonicalizedHostname.get(),
+                                         isolationKey,
                                          enforceTestMode, time,
                                          chainHasValidPins);
       if (NS_FAILED(rv)) {
@@ -424,6 +430,7 @@ CheckChainAgainstAllNames(const CERTCertList* certList, bool enforceTestMode,
 nsresult
 PublicKeyPinningService::ChainHasValidPins(const CERTCertList* certList,
                                            const char* hostname,
+                                           const char* isolationKey,
                                            mozilla::pkix::Time time,
                                            bool enforceTestMode,
                                    /*out*/ bool& chainHasValidPins)
@@ -433,16 +440,19 @@ PublicKeyPinningService::ChainHasValidPins(const CERTCertList* certList,
     return NS_ERROR_INVALID_ARG;
   }
   if (!hostname || hostname[0] == 0) {
-    return CheckChainAgainstAllNames(certList, enforceTestMode, time,
+    return CheckChainAgainstAllNames(certList, isolationKey,
+                                     enforceTestMode, time,
                                      chainHasValidPins);
   }
   nsAutoCString canonicalizedHostname(CanonicalizeHostname(hostname));
   return CheckPinsForHostname(certList, canonicalizedHostname.get(),
+                              isolationKey,
                               enforceTestMode, time, chainHasValidPins);
 }
 
 nsresult
 PublicKeyPinningService::HostHasPins(const char* hostname,
+                                     const char* isolationKey,
                                      mozilla::pkix::Time time,
                                      bool enforceTestMode,
                                      /*out*/ bool& hostHasPins)
@@ -451,7 +461,7 @@ PublicKeyPinningService::HostHasPins(const char* hostname,
   nsAutoCString canonicalizedHostname(CanonicalizeHostname(hostname));
   nsTArray<nsCString> dynamicFingerprints;
   TransportSecurityPreload* staticFingerprints = nullptr;
-  nsresult rv = FindPinningInformation(canonicalizedHostname.get(), time,
+  nsresult rv = FindPinningInformation(canonicalizedHostname.get(), isolationKey, time,
                                        dynamicFingerprints, staticFingerprints);
   if (NS_FAILED(rv)) {
     return rv;

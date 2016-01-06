@@ -525,6 +525,7 @@ private:
                                      InfallibleTArray<uint8_t>* randomValues) override;
 
     virtual bool RecvIsSecureURI(const uint32_t& aType, const URIParams& aURI,
+                                 const nsCString& aIsolationKey,
                                  const uint32_t& aFlags, bool* aIsSecureURI) override;
 
     virtual bool DeallocPHalParent(PHalParent*) override;

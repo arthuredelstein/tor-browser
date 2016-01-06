@@ -292,9 +292,11 @@ nsSiteSecurityService::GetHost(nsIURI* aURI, nsACString& aResult)
 }
 
 static void
-SetStorageKey(nsAutoCString& storageKey, nsCString& hostname, uint32_t aType)
+SetStorageKey(nsAutoCString& storageKey, nsCString& hostname, const char* isolationKey, uint32_t aType)
 {
   storageKey = hostname;
+  storageKey.AppendLiteral("|");
+  storageKey.Append(isolationKey);
   switch (aType) {
     case nsISiteSecurityService::HEADER_HSTS:
       storageKey.AppendLiteral(":HSTS");
@@ -318,6 +320,7 @@ ExpireTimeFromMaxAge(int64_t maxAge)
 nsresult
 nsSiteSecurityService::SetHSTSState(uint32_t aType,
                                     nsIURI* aSourceURI,
+                                    const char* aIsolationKey,
                                     int64_t maxage,
                                     bool includeSubdomains,
                                     uint32_t flags)
@@ -325,7 +328,7 @@ nsSiteSecurityService::SetHSTSState(uint32_t aType,
   // If max-age is zero, that's an indication to immediately remove the
   // security state, so here's a shortcut.
   if (!maxage) {
-    return RemoveState(aType, aSourceURI, flags);
+    return RemoveState(aType, aSourceURI, aIsolationKey, flags);
   }
 
   int64_t expiretime = ExpireTimeFromMaxAge(maxage);
@@ -341,7 +344,7 @@ nsSiteSecurityService::SetHSTSState(uint32_t aType,
                                          ? mozilla::DataStorage_Private
                                          : mozilla::DataStorage_Persistent;
   nsAutoCString storageKey;
-  SetStorageKey(storageKey, hostname, aType);
+  SetStorageKey(storageKey, hostname, aIsolationKey, aType);
   rv = mSiteStateStorage->Put(storageKey, stateString, storageType);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -350,6 +353,7 @@ nsSiteSecurityService::SetHSTSState(uint32_t aType,
 
 NS_IMETHODIMP
 nsSiteSecurityService::RemoveState(uint32_t aType, nsIURI* aURI,
+                                   const char* aIsolationKey,
                                    uint32_t aFlags)
 {
   // Only HSTS is supported at the moment.
@@ -372,13 +376,14 @@ nsSiteSecurityService::RemoveState(uint32_t aType, nsIURI* aURI,
     nsAutoCString stateString;
     siteState.ToString(stateString);
     nsAutoCString storageKey;
-    SetStorageKey(storageKey, hostname, aType);
+    SetStorageKey(storageKey, hostname, aIsolationKey, aType);
     rv = mSiteStateStorage->Put(storageKey, stateString, storageType);
     NS_ENSURE_SUCCESS(rv, rv);
   } else {
     SSSLOG(("SSS: removing entry for %s", hostname.get()));
+    nsAutoCString isolationKey(aIsolationKey);
     nsAutoCString storageKey;
-    SetStorageKey(storageKey, hostname, aType);
+    SetStorageKey(storageKey, hostname, aIsolationKey, aType);
     mSiteStateStorage->Remove(storageKey, storageType);
   }
 
@@ -395,6 +400,7 @@ HostIsIPAddress(const char *hostname)
 NS_IMETHODIMP
 nsSiteSecurityService::ProcessHeader(uint32_t aType,
                                      nsIURI* aSourceURI,
+                                     const char* aIsolationKey,
                                      const char* aHeader,
                                      nsISSLStatus* aSSLStatus,
                                      uint32_t aFlags,
@@ -406,25 +412,29 @@ nsSiteSecurityService::ProcessHeader(uint32_t aType,
                  NS_ERROR_NOT_IMPLEMENTED);
 
   NS_ENSURE_ARG(aSSLStatus);
-  return ProcessHeaderInternal(aType, aSourceURI, aHeader, aSSLStatus, aFlags,
+  return ProcessHeaderInternal(aType, aSourceURI, aIsolationKey,
+                               aHeader, aSSLStatus, aFlags,
                                aMaxAge, aIncludeSubdomains);
 }
 
 NS_IMETHODIMP
 nsSiteSecurityService::UnsafeProcessHeader(uint32_t aType,
                                            nsIURI* aSourceURI,
+                                           const char* aIsolationKey,
                                            const char* aHeader,
                                            uint32_t aFlags,
                                            uint64_t* aMaxAge,
                                            bool* aIncludeSubdomains)
 {
-  return ProcessHeaderInternal(aType, aSourceURI, aHeader, nullptr, aFlags,
+  return ProcessHeaderInternal(aType, aSourceURI, aIsolationKey,
+                               aHeader, nullptr, aFlags,
                                aMaxAge, aIncludeSubdomains);
 }
 
 nsresult
 nsSiteSecurityService::ProcessHeaderInternal(uint32_t aType,
                                              nsIURI* aSourceURI,
+                                             const char* aIsolationKey,
                                              const char* aHeader,
                                              nsISSLStatus* aSSLStatus,
                                              uint32_t aFlags,
@@ -475,11 +485,13 @@ nsSiteSecurityService::ProcessHeaderInternal(uint32_t aType,
 
   switch (aType) {
     case nsISiteSecurityService::HEADER_HSTS:
-      rv = ProcessSTSHeader(aSourceURI, aHeader, aFlags, aMaxAge,
+      rv = ProcessSTSHeader(aSourceURI, aIsolationKey,
+                            aHeader, aFlags, aMaxAge,
                             aIncludeSubdomains);
       break;
     case nsISiteSecurityService::HEADER_HPKP:
-      rv = ProcessPKPHeader(aSourceURI, aHeader, aSSLStatus, aFlags, aMaxAge,
+      rv = ProcessPKPHeader(aSourceURI, aIsolationKey,
+                            aHeader, aSSLStatus, aFlags, aMaxAge,
                             aIncludeSubdomains);
       break;
     default:
@@ -631,6 +643,7 @@ ParseSSSHeaders(uint32_t aType,
 
 nsresult
 nsSiteSecurityService::ProcessPKPHeader(nsIURI* aSourceURI,
+                                        const char* aIsolationKey,
                                         const char* aHeader,
                                         nsISSLStatus* aSSLStatus,
                                         uint32_t aFlags,
@@ -646,7 +659,8 @@ nsSiteSecurityService::ProcessPKPHeader(nsIURI* aSourceURI,
   bool foundUnrecognizedDirective = false;
   int64_t maxAge = 0;
   nsTArray<nsCString> sha256keys;
-  nsresult rv = ParseSSSHeaders(aType, aHeader, foundIncludeSubdomains,
+  nsresult rv = ParseSSSHeaders(aType, aHeader,
+                                foundIncludeSubdomains,
                                 foundMaxAge, foundUnrecognizedDirective,
                                 maxAge, sha256keys);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -702,7 +716,7 @@ nsSiteSecurityService::ProcessPKPHeader(nsIURI* aSourceURI,
 
   // if maxAge == 0 we must delete all state, for now no hole-punching
   if (maxAge == 0) {
-    return RemoveState(aType, aSourceURI, aFlags);
+    return RemoveState(aType, aSourceURI, aIsolationKey, aFlags);
   }
 
   bool chainMatchesPinset;
@@ -745,7 +759,7 @@ nsSiteSecurityService::ProcessPKPHeader(nsIURI* aSourceURI,
   SSSLOG(("SSS: about to set pins for  %s, expires=%ld now=%ld maxAge=%ld\n",
            host.get(), expireTime, PR_Now() / PR_USEC_PER_MSEC, maxAge));
 
-  rv = SetHPKPState(host.get(), dynamicEntry, aFlags);
+  rv = SetHPKPState(host.get(), aIsolationKey, dynamicEntry, aFlags);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (aMaxAge != nullptr) {
@@ -763,6 +777,7 @@ nsSiteSecurityService::ProcessPKPHeader(nsIURI* aSourceURI,
 
 nsresult
 nsSiteSecurityService::ProcessSTSHeader(nsIURI* aSourceURI,
+                                        const char* aIsolationKey,
                                         const char* aHeader,
                                         uint32_t aFlags,
                                         uint64_t* aMaxAge,
@@ -790,7 +805,8 @@ nsSiteSecurityService::ProcessSTSHeader(nsIURI* aSourceURI,
   }
 
   // record the successfully parsed header data.
-  SetHSTSState(aType, aSourceURI, maxAge, foundIncludeSubdomains, aFlags);
+  SetHSTSState(aType, aSourceURI, aIsolationKey,
+               maxAge, foundIncludeSubdomains, aFlags);
 
   if (aMaxAge != nullptr) {
     *aMaxAge = (uint64_t)maxAge;
@@ -807,6 +823,7 @@ nsSiteSecurityService::ProcessSTSHeader(nsIURI* aSourceURI,
 
 NS_IMETHODIMP
 nsSiteSecurityService::IsSecureURI(uint32_t aType, nsIURI* aURI,
+                                   const char* aIsolationKey,
                                    uint32_t aFlags, bool* aResult)
 {
   NS_ENSURE_ARG(aURI);
@@ -826,7 +843,7 @@ nsSiteSecurityService::IsSecureURI(uint32_t aType, nsIURI* aURI,
     return NS_OK;
   }
 
-  return IsSecureHost(aType, hostname.get(), aFlags, aResult);
+  return IsSecureHost(aType, hostname.get(), aIsolationKey, aFlags, aResult);
 }
 
 int STSPreloadCompare(const void *key, const void *entry)
@@ -856,6 +873,7 @@ nsSiteSecurityService::GetPreloadListEntry(const char *aHost)
 
 NS_IMETHODIMP
 nsSiteSecurityService::IsSecureHost(uint32_t aType, const char* aHost,
+                                    const char* aIsolationKey,
                                     uint32_t aFlags, bool* aResult)
 {
   NS_ENSURE_ARG(aHost);
@@ -885,7 +903,7 @@ nsSiteSecurityService::IsSecureHost(uint32_t aType, const char* aHost,
     }
     bool enforceTestMode = certVerifier->mPinningMode ==
                            CertVerifier::PinningMode::pinningEnforceTestMode;
-    return PublicKeyPinningService::HostHasPins(aHost, mozilla::pkix::Now(),
+    return PublicKeyPinningService::HostHasPins(aHost, aIsolationKey, mozilla::pkix::Now(),
                                                 enforceTestMode, *aResult);
   }
 
@@ -910,7 +928,7 @@ nsSiteSecurityService::IsSecureHost(uint32_t aType, const char* aHost,
                                          ? mozilla::DataStorage_Private
                                          : mozilla::DataStorage_Persistent;
   nsAutoCString storageKey;
-  SetStorageKey(storageKey, host, aType);
+  SetStorageKey(storageKey, host, aIsolationKey, aType);
   nsCString value = mSiteStateStorage->Get(storageKey, storageType);
   SiteHSTSState siteState(value);
   if (siteState.mHSTSState != SecurityPropertyUnset) {
@@ -957,7 +975,7 @@ nsSiteSecurityService::IsSecureHost(uint32_t aType, const char* aHost,
     // looking for data on it and skip to the next higher up ancestor domain).
     nsCString subdomainString(subdomain);
     nsAutoCString storageKey;
-    SetStorageKey(storageKey, subdomainString, aType);
+    SetStorageKey(storageKey, subdomainString, aIsolationKey, aType);
     value = mSiteStateStorage->Get(storageKey, storageType);
     SiteHSTSState siteState(value);
     if (siteState.mHSTSState != SecurityPropertyUnset) {
@@ -998,6 +1016,7 @@ nsSiteSecurityService::ClearAll()
 
 NS_IMETHODIMP
 nsSiteSecurityService::GetKeyPinsForHostname(const char* aHostname,
+                                             const char* aIsolationKey,
                                              mozilla::pkix::Time& aEvalTime,
                                              /*out*/ nsTArray<nsCString>& pinArray,
                                              /*out*/ bool* aIncludeSubdomains,
@@ -1012,7 +1031,7 @@ nsSiteSecurityService::GetKeyPinsForHostname(const char* aHostname,
 
   nsAutoCString host(PublicKeyPinningService::CanonicalizeHostname(aHostname));
   nsAutoCString storageKey;
-  SetStorageKey(storageKey, host, nsISiteSecurityService::HEADER_HPKP);
+  SetStorageKey(storageKey, host, aIsolationKey, nsISiteSecurityService::HEADER_HPKP);
 
   SSSLOG(("storagekey '%s'\n", storageKey.get()));
   mozilla::DataStorageType storageType = mozilla::DataStorage_Persistent;
@@ -1039,7 +1058,9 @@ nsSiteSecurityService::GetKeyPinsForHostname(const char* aHostname,
 }
 
 NS_IMETHODIMP
-nsSiteSecurityService::SetKeyPins(const char* aHost, bool aIncludeSubdomains,
+nsSiteSecurityService::SetKeyPins(const char* aHost,
+                                  const char* aIsolationKey,
+                                  bool aIncludeSubdomains,
                                   uint32_t aMaxAge, uint32_t aPinCount,
                                   const char** aSha256Pins,
                                   /*out*/ bool* aResult)
@@ -1064,17 +1085,19 @@ nsSiteSecurityService::SetKeyPins(const char* aHost, bool aIncludeSubdomains,
                              aIncludeSubdomains, sha256keys);
   // we always store data in permanent storage (ie no flags)
   nsAutoCString host(PublicKeyPinningService::CanonicalizeHostname(aHost));
-  return SetHPKPState(host.get(), dynamicEntry, 0);
+  return SetHPKPState(host.get(), aIsolationKey, dynamicEntry, 0);
 }
 
 nsresult
-nsSiteSecurityService::SetHPKPState(const char* aHost, SiteHPKPState& entry,
+nsSiteSecurityService::SetHPKPState(const char* aHost,
+                                    const char* aIsolationKey,
+                                    SiteHPKPState& entry,
                                     uint32_t aFlags)
 {
   SSSLOG(("Top of SetPKPState"));
   nsAutoCString host(aHost);
   nsAutoCString storageKey;
-  SetStorageKey(storageKey, host, nsISiteSecurityService::HEADER_HPKP);
+  SetStorageKey(storageKey, host, aIsolationKey, nsISiteSecurityService::HEADER_HPKP);
   bool isPrivate = aFlags & nsISocketProvider::NO_PERMANENT_STORAGE;
   mozilla::DataStorageType storageType = isPrivate
                                          ? mozilla::DataStorage_Private

@@ -75,6 +75,7 @@
 #include "IHistory.h"
 #include "nsViewSourceHandler.h"
 #include "nsWhitespaceTokenizer.h"
+#include "ThirdPartyUtil.h"
 
 // we want to explore making the document own the load group
 // so we can associate the document URI with the load group.
@@ -5046,14 +5047,19 @@ nsDocShell::DisplayLoadError(nsresult aError, nsIURI* aURI,
           mInPrivateBrowsing ? nsISocketProvider::NO_PERMANENT_STORAGE : 0;
         bool isStsHost = false;
         bool isPinnedHost = false;
+        nsCOMPtr<nsIDocument> doc(do_GetInterface(GetAsSupports(this)));
+        nsAutoCString isolationKey;
+        ThirdPartyUtil::GetFirstPartyHost(doc, isolationKey);
         if (XRE_GetProcessType() == GeckoProcessType_Default) {
           nsCOMPtr<nsISiteSecurityService> sss =
             do_GetService(NS_SSSERVICE_CONTRACTID, &rv);
           NS_ENSURE_SUCCESS(rv, rv);
           rv = sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS, aURI,
+                                isolationKey.get(),
                                 flags, &isStsHost);
           NS_ENSURE_SUCCESS(rv, rv);
           rv = sss->IsSecureURI(nsISiteSecurityService::HEADER_HPKP, aURI,
+                                isolationKey.get(),
                                 flags, &isPinnedHost);
           NS_ENSURE_SUCCESS(rv, rv);
         } else {
@@ -5061,9 +5067,11 @@ nsDocShell::DisplayLoadError(nsresult aError, nsIURI* aURI,
             mozilla::dom::ContentChild::GetSingleton();
           mozilla::ipc::URIParams uri;
           SerializeURI(aURI, uri);
-          cc->SendIsSecureURI(nsISiteSecurityService::HEADER_HSTS, uri, flags,
+          cc->SendIsSecureURI(nsISiteSecurityService::HEADER_HSTS,
+                              uri, isolationKey, flags,
                               &isStsHost);
-          cc->SendIsSecureURI(nsISiteSecurityService::HEADER_HPKP, uri, flags,
+          cc->SendIsSecureURI(nsISiteSecurityService::HEADER_HPKP,
+                              uri, isolationKey, flags,
                               &isPinnedHost);
         }
 

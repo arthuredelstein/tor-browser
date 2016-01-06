@@ -101,7 +101,8 @@ private:
 void InitCertVerifierLog();
 SECStatus IsCertBuiltInRoot(CERTCertificate* cert, bool& result);
 mozilla::pkix::Result CertListContainsExpectedKeys(
-  const CERTCertList* certList, const char* hostname, mozilla::pkix::Time time,
+  const CERTCertList* certList, const char* hostname,
+  const char* isolationKey, mozilla::pkix::Time time,
   CertVerifier::PinningMode pinningMode);
 
 } } // namespace mozilla::psm
