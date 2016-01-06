@@ -29,6 +29,7 @@ public:
    */
   static nsresult ChainHasValidPins(const CERTCertList* certList,
                                     const char* hostname,
+                                    const char* isolationKey,
                                     mozilla::pkix::Time time,
                                     bool enforceTestMode,
                             /*out*/ bool& chainHasValidPins);
@@ -47,6 +48,7 @@ public:
    * otherwise.
    */
   static nsresult HostHasPins(const char* hostname,
+                              const char* isolationKey,
                               mozilla::pkix::Time time,
                               bool enforceTestMode,
                       /*out*/ bool& hostHasPins);

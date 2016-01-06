@@ -23,7 +23,7 @@ namespace mozilla
 [ref] native nsCStringTArrayRef(nsTArray<nsCString>);
 [ref] native mozillaPkixTime(mozilla::pkix::Time);
 
-[scriptable, uuid(e219eace-0e04-42ba-b203-58a8b327867c)]
+[scriptable, uuid(2bc35cac-2cd9-446d-a839-78734549fe1b)]
 interface nsISiteSecurityService : nsISupports
 {
     const uint32_t HEADER_HSTS = 0;
@@ -44,6 +44,7 @@ interface nsISiteSecurityService : nsISupports
      *
      * @param aType the type of security header in question.
      * @param aSourceURI the URI of the resource with the HTTP header.
+     * @param aIsolationKey the key for isolating HSTS and HPKP to first party
      * @param aSSLStatus the SSLStatus of the current channel
      * @param aHeader the HTTP response header specifying security data.
      * @param aFlags  options for this request as defined in nsISocketProvider:
@@ -57,6 +58,7 @@ interface nsISiteSecurityService : nsISupports
      */
     void processHeader(in uint32_t aType,
                        in nsIURI aSourceURI,
+                       in string aIsolationKey,
                        in string aHeader,
                        in nsISSLStatus aSSLStatus,
                        in uint32_t aFlags,
@@ -69,6 +71,7 @@ interface nsISiteSecurityService : nsISupports
      */
     void unsafeProcessHeader(in uint32_t aType,
                              in nsIURI aSourceURI,
+                             in string aIsolationKey,
                              in string aHeader,
                              in uint32_t aFlags,
                              [optional] out unsigned long long aMaxAge,
@@ -81,11 +84,13 @@ interface nsISiteSecurityService : nsISupports
      * host.
      * @param aType   the type of security state in question
      * @param aURI    the URI of the target host
+     * @param aIsolationKey the key for isolating HSTS and HPKP to first party
      * @param aFlags  options for this request as defined in nsISocketProvider:
      *                  NO_PERMANENT_STORAGE
      */
     void removeState(in uint32_t aType,
                      in nsIURI aURI,
+                     in string aIsolationKey,
                      in uint32_t aFlags);
 
     /**
@@ -93,11 +98,13 @@ interface nsISiteSecurityService : nsISupports
      *
      * @param aType the type of security state in question.
      * @param aHost the hostname (punycode) to query for state.
+     * @param aIsolationKey the key for isolating HSTS and HPKP to first party
      * @param aFlags  options for this request as defined in nsISocketProvider:
      *                  NO_PERMANENT_STORAGE
      */
     boolean isSecureHost(in uint32_t aType,
                          in string aHost,
+                         in string aIsolationKey,
                          in uint32_t aFlags);
 
     /**
@@ -111,10 +118,12 @@ interface nsISiteSecurityService : nsISupports
      *
      * @param aType the type of security state in question.
      * @param aURI the URI to query for STS state.
+     * @param aIsolationKey the key for isolating HSTS and HPKP to first party
      * @param aFlags  options for this request as defined in nsISocketProvider:
      *                  NO_PERMANENT_STORAGE
      */
-    boolean isSecureURI(in uint32_t aType, in nsIURI aURI, in uint32_t aFlags);
+    boolean isSecureURI(in uint32_t aType, in nsIURI aURI,
+                        in string aIsolationKey, in uint32_t aFlags);
 
     /**
      * Removes all security state by resetting to factory-original settings.
@@ -128,6 +137,7 @@ interface nsISiteSecurityService : nsISupports
      * pin entries.
      *
      * @param aHostname the hosname (punycode) to be queried about
+     * @param aIsolationKey the key for isolating HSTS and HPKP to first party
      * @param the time at which the pins should be valid. This is in
               mozilla::pkix::Time which uses internally seconds since 0 AD.
      * @param aPinArray the set of sha256-hashed key pins for the given domain
@@ -135,6 +145,7 @@ interface nsISiteSecurityService : nsISupports
      *        given domain
      */
     [noscript] boolean getKeyPinsForHostname(in string aHostname,
+                                             in string aIsolationKey,
                                              in mozillaPkixTime evalTime,
                                              out nsCStringTArrayRef aPinArray,
                                              out boolean aIncludeSubdomains);
@@ -145,12 +156,14 @@ interface nsISiteSecurityService : nsISupports
      * any already set by this mechanism or those built-in to Gecko.
      *
      * @param aHost the hostname (punycode) that pins will apply to
+     * @param aIsolationKey the key for isolating HSTS and HPKP to first party
      * @param aIncludeSubdomains whether these pins also apply to subdomains
      * @param aMaxAge lifetime (in seconds) of this pin set
      * @param aPinCount number of keys being pinnned
      * @param aSha256Pins array of hashed key fingerprints (SHA-256, base64)
      */
-     boolean setKeyPins(in string aHost, in boolean aIncludeSubdomains,
+     boolean setKeyPins(in string aHost, in string aIsolationKey,
+                        in boolean aIncludeSubdomains,
                         in unsigned long aMaxAge, in unsigned long aPinCount,
                         [array, size_is(aPinCount)] in string aSha256Pins);
 

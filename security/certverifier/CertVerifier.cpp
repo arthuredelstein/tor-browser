@@ -83,8 +83,8 @@ IsCertBuiltInRoot(CERTCertificate* cert, bool& result) {
 
 Result
 CertListContainsExpectedKeys(const CERTCertList* certList,
-                             const char* hostname, Time time,
-                             CertVerifier::PinningMode pinningMode)
+                             const char* hostname, const char* isolationKey,
+                             Time time, CertVerifier::PinningMode pinningMode)
 {
   if (pinningMode == CertVerifier::pinningDisabled) {
     PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
@@ -117,6 +117,7 @@ CertListContainsExpectedKeys(const CERTCertList* certList,
   bool chainHasValidPins;
   nsresult rv = PublicKeyPinningService::ChainHasValidPins(certList,
                                                            hostname,
+                                                           isolationKey,
                                                            time,
                                                            enforceTestMode,
                                                            chainHasValidPins);

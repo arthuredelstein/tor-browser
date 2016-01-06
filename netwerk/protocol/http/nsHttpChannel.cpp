@@ -306,10 +306,13 @@ nsHttpChannel::Connect()
         nsISiteSecurityService* sss = gHttpHandler->GetSSService();
         NS_ENSURE_TRUE(sss, NS_ERROR_OUT_OF_MEMORY);
 
+        nsAutoCString isolationKey;
+        ThirdPartyUtil::GetFirstPartyHost(this, isolationKey);
+
         bool isStsHost = false;
         uint32_t flags = mPrivateBrowsing ? nsISocketProvider::NO_PERMANENT_STORAGE : 0;
-        rv = sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS, mURI, flags,
-                              &isStsHost);
+        rv = sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS, mURI,
+                              isolationKey.get(), flags, &isStsHost);
 
         // if the SSS check fails, it's likely because this load is on a
         // malformed URI or something else in the setup is wrong, so any error
@@ -1092,10 +1095,14 @@ nsHttpChannel::ProcessSingleSecurityHeader(uint32_t aType,
     if (NS_SUCCEEDED(rv)) {
         nsISiteSecurityService* sss = gHttpHandler->GetSSService();
         NS_ENSURE_TRUE(sss, NS_ERROR_OUT_OF_MEMORY);
+
+        nsAutoCString isolationKey;
+        ThirdPartyUtil::GetFirstPartyHost(this, isolationKey);
+
         // Process header will now discard the headers itself if the channel
         // wasn't secure (whereas before it had to be checked manually)
-        rv = sss->ProcessHeader(aType, mURI, securityHeader.get(), aSSLStatus,
-                                aFlags, nullptr, nullptr);
+        rv = sss->ProcessHeader(aType, mURI, isolationKey.get(), securityHeader.get(),
+                                aSSLStatus, aFlags, nullptr, nullptr);
         if (NS_FAILED(rv)) {
             nsAutoString consoleErrorCategory;
             nsAutoString consoleErrorTag;
