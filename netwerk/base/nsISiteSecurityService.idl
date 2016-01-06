@@ -57,6 +57,7 @@ interface nsISiteSecurityService : nsISupports
      */
     void processHeader(in uint32_t aType,
                        in nsIURI aSourceURI,
+                       in string aIsolationKey,
                        in string aHeader,
                        in nsISSLStatus aSSLStatus,
                        in uint32_t aFlags,
@@ -69,6 +70,7 @@ interface nsISiteSecurityService : nsISupports
      */
     void unsafeProcessHeader(in uint32_t aType,
                              in nsIURI aSourceURI,
+                             in string aIsolationKey,
                              in string aHeader,
                              in uint32_t aFlags,
                              [optional] out unsigned long long aMaxAge,
@@ -86,6 +88,7 @@ interface nsISiteSecurityService : nsISupports
      */
     void removeState(in uint32_t aType,
                      in nsIURI aURI,
+                     in string aIsolationKey,
                      in uint32_t aFlags);
 
     /**
@@ -98,6 +101,7 @@ interface nsISiteSecurityService : nsISupports
      */
     boolean isSecureHost(in uint32_t aType,
                          in string aHost,
+                         in string aIsolationKey,
                          in uint32_t aFlags);
 
     /**
@@ -114,7 +118,8 @@ interface nsISiteSecurityService : nsISupports
      * @param aFlags  options for this request as defined in nsISocketProvider:
      *                  NO_PERMANENT_STORAGE
      */
-    boolean isSecureURI(in uint32_t aType, in nsIURI aURI, in uint32_t aFlags);
+    boolean isSecureURI(in uint32_t aType, in nsIURI aURI,
+                        in string aIsolationKey, in uint32_t aFlags);
 
     /**
      * Removes all security state by resetting to factory-original settings.
@@ -135,6 +140,7 @@ interface nsISiteSecurityService : nsISupports
      *        given domain
      */
     [noscript] boolean getKeyPinsForHostname(in string aHostname,
+                                             in string isolationKey,
                                              in mozillaPkixTime evalTime,
                                              out nsCStringTArrayRef aPinArray,
                                              out boolean aIncludeSubdomains);
@@ -150,7 +156,8 @@ interface nsISiteSecurityService : nsISupports
      * @param aPinCount number of keys being pinnned
      * @param aSha256Pins array of hashed key fingerprints (SHA-256, base64)
      */
-     boolean setKeyPins(in string aHost, in boolean aIncludeSubdomains,
+     boolean setKeyPins(in string aHost, in string aIsolationKey,
+                        in boolean aIncludeSubdomains,
                         in unsigned long aMaxAge, in unsigned long aPinCount,
                         [array, size_is(aPinCount)] in string aSha256Pins);
 

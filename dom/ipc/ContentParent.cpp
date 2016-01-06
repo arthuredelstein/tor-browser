@@ -3795,6 +3795,7 @@ ContentParent::RecvGetSystemMemory(const uint64_t& aGetterId)
 bool
 ContentParent::RecvIsSecureURI(const uint32_t& type,
                                const URIParams& uri,
+                               const nsCString& isolationKey,
                                const uint32_t& flags,
                                bool* isSecureURI)
 {
@@ -3806,7 +3807,8 @@ ContentParent::RecvIsSecureURI(const uint32_t& type,
     if (!ourURI) {
         return false;
     }
-    nsresult rv = sss->IsSecureURI(type, ourURI, flags, isSecureURI);
+    nsresult rv = sss->IsSecureURI(type, ourURI, isolationKey.get(),
+                                   flags, isSecureURI);
     return NS_SUCCEEDED(rv);
 }
 
