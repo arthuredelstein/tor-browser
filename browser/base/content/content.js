@@ -606,7 +606,8 @@ let AboutTBUpdateListener = {
       let f = Cc["@mozilla.org/file/directory_service;1"]
                 .getService(Ci.nsIProperties).get("DefProfRt", Ci.nsIFile);
       f = f.parent.parent;  // Remove "Data/Browser"
-      f.appendRelativePath("Docs/ChangeLog.txt");
+      f.append("Docs");
+      f.append("ChangeLog.txt");
 
       let fs = Cc["@mozilla.org/network/file-input-stream;1"]
                  .createInstance(Ci.nsIFileInputStream);
