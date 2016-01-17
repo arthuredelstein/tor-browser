@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <script type="text/javascript;version=1.7" src="bug15502_utils.js"></script>
+ </head>
+ <body>
+  <iframe id="test-iframe" src=""></iframe>
+  <script type="text/javascript;version=1.7">
+    spawnTask(function* () {
+      let iframe = document.getElementById("test-iframe");
+      // Notify the opening tab that we are ready.
+      sendMessage(window.opener, "ready");
+      // Wait for a message from the tab.
+      let desiredIframeSrc = yield receiveMessage(window.opener);
+      // Set the iframe's location to that requested by the tab.
+      iframe.src = desiredIframeSrc;
+      // Wait for a message from the iframe, containing its URL.
+      let iframeURL = yield receiveMessage(iframe.contentWindow);
+      // Send the result to the opening tab.
+      sendMessage(window.opener, iframeURL);
+    });
+  </script>
+ </body>
+</html>

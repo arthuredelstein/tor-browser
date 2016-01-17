@@ -1,0 +1,120 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugs.torproject.org/17965
+-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Test for Tor Browser Bug 17965</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <script type="text/javascript;version=1.7" src="bug15502_utils.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+<body>
+<p id="display"></p>
+<div id="content"></div>
+
+<script class="testbody" type="application/javascript;version=1.7">
+SimpleTest.waitForExplicitFinish();
+
+// __setPref(key, value)__.
+// Set a pref value asynchronously, returning a promise that resolves
+// when it succeeds.
+let setPref = function* (key, value) {
+  return new Promise(function(resolve, reject) {
+    SpecialPowers.pushPrefEnv({"set": [[key, value]]}, resolve);
+  });
+};
+
+// ## Testing constants
+let domain1 = "http://example.net",
+    domain2 = "http://example.org",
+    path = "/tests/dom/base/test/",
+    partialURL = "//example.com/tests/dom/base/test/test_hsts.sjs",
+    secureURL = "https:" + partialURL,
+    insecureURL = "http:" + partialURL;
+
+// __tabIO(domain, childURL, input)__.
+// Open a parent page at the given `domain`, in a new tab. The
+// parent page should then open an iframe at childURL.
+// Post message from the page.
+// `input` message to the child page. Returns [tab, response].
+let tabIO = function* (domain, childURL, input) {
+  // Open a new tab with a parent page at the given (first-party) domain.
+  tab = window.open(domain + path + "bug17965_tab.html", "_blank");
+  // Wait for the parent page to report that it has completed loading.
+  console.log(yield receiveMessage(tab)); // ready message
+  // Send a message to the parent page, with a URL for the child page.
+  // The first-party page will load the child page in an iframe.
+  // (Note that every child page always has the same origin, example.org,
+  // but its first-party domain is inherited from the parent page.)
+  sendMessage(tab, childURL);
+  // Wait for the child page to report that it has finished loading,
+  // and return [tab, final_iframe_URL].
+  return [tab, yield receiveMessage(tab)];
+};
+
+// __hstsIsolationTest(isolationOn, domainA, domainB)__.
+// Run a test where we set the pref "privacy.thirdparty.isolate" to on or off,
+// and then create an iframe under first-party `domainA`, using the page secureURL
+// and then a matching iframe under first-party `domainB`, and see if the HSTS
+// state has propagated.
+let hstsIsolationTest = function* (isolationOn, domainA, domainB) {
+  // Set the pref to reflect whether we want isolation on or off.
+  // 2 means always on; 0 means always off.
+  yield setPref("privacy.thirdparty.isolate", isolationOn ? 2 : 0);
+  // Open two tabs with parent pages embedding child iframes. The parent (first-party)
+  // domains are set to domainA and domainB (which may be the same or different).
+  // The child page always has origin example.org, but gets its first-party domain
+  // from the parent page. Report results: does the second child page obey the
+  // HSTS directive sent with the first child page?
+  let input = isolationOn + "|" + domainA + "|" + domainB,
+      [tabA, firstResult] = yield tabIO(domainA, secureURL, input),
+      [tabB, secondResult] = yield tabIO(domainB, insecureURL, input),
+      description = domainA + ":" + secureURL + "->" +
+                    domainB + ":" + insecureURL +
+                    ", isolation " + (isolationOn ? "on." : "off.");
+  if (isolationOn && domainA !== domainB) {
+    // The isolation pref is enabled and first-party domains of the two child pages
+    // are different, so STS status sharing should have been prevented.
+    ok(secondResult.startsWith("http:"), description + " Deny sharing HSTS");
+  } else {
+    // The isolation pref is disabled, or the first-party domain is the same for
+    // both child pages, so STS status should have been shared.
+    ok(secondResult.startsWith("https:"), description + " Allow sharing HSTS");
+  }
+  // Clean up tabs now that this test has finished.
+  tabA.close();
+  tabB.close();
+};
+
+// ## The main test
+// Run a coroutine that tests various combinations of domains
+// methods, and isolation states for sharing (or not sharing) the HSTS state.
+spawnTask(function* () {
+  if (SpecialPowers.getBoolPref("security.nocertdb")) {
+    // Mochitests don't simulate https correctly with "security.nocertdb" enabled.
+    // See https://bugs.torproject.org/18087
+    ok(false, "Please disable the pref `security.nocertdb` before running this test.");
+    SimpleTest.finish();
+    return;
+  }
+  let domainA = domain1;
+  for (let isolate of [false, true]) {
+    for (let domainB of [domain1, domain2]) {
+       // For the given isolation state, and a pair of first-party domains
+       // (which may or may not be different), test if the HSTS state can be shared
+       // and if that matches the intended behavior.
+       // Here domainA is always domain1, and domainB is either
+       // domain1 or domain2.
+       yield hstsIsolationTest(isolate, domainA, domainB);
+    }
+  }
+  SimpleTest.finish();
+});
+
+</script>
+
+</body>
+</html>
