@@ -3000,7 +3000,7 @@ nsContentUtils::LoadImage(nsIURI* aURI, nsINode* aLoadingNode,
   NS_PRECONDITION(aLoadingPrincipal, "Must have a principal");
   NS_PRECONDITION(aRequest, "Null out param");
 
-  nsCOMPtr<nsIDocument> aLoadingDocument(aLoadingNode ? aLoadingNode->GetCurrentDoc() : nullptr);
+  nsCOMPtr<nsIDocument> aLoadingDocument(aLoadingNode ? aLoadingNode->OwnerDoc() : nullptr);
 
   imgLoader* imgLoader = GetImgLoaderForDocument(aLoadingDocument);
   if (!imgLoader) {
