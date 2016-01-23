@@ -221,6 +221,17 @@ gfxPlatformFontList::InitFontList()
         LOG_FONTINIT(("(fontinit) system fontlist initialization\n"));
     }
 
+    // Initialize mFamilyNames Whitelist
+    mFamilyNamesWhitelist.Clear();
+    AutoTArray<nsString, 10> list;
+    gfxFontUtils::GetPrefsFontList("font.system.whitelist", list);
+    uint32_t numFonts = list.Length();
+    for (uint32_t i = 0; i < numFonts; i++) {
+        nsAutoString key;
+        ToLowerCase(list[i], key);
+        mFamilyNamesWhitelist.PutEntry(key);
+    }
+
     // rebuilding fontlist so clear out font/word caches
     gfxFontCache *fontCache = gfxFontCache::GetCache();
     if (fontCache) {
@@ -1602,4 +1613,15 @@ gfxPlatformFontList::AddSizeOfIncludingThis(MallocSizeOf aMallocSizeOf,
 {
     aSizes->mFontListSize += aMallocSizeOf(this);
     AddSizeOfExcludingThis(aMallocSizeOf, aSizes);
+}
+
+bool
+gfxPlatformFontList::IsFontFamilyNameAllowed(const nsAString& aFontFamilyName)
+{
+    nsAutoString fontFamilyNameLower;
+    ToLowerCase(aFontFamilyName, fontFamilyNameLower);
+    // If whitelist is empty, any family name is allowed. If whitelist
+    // has entries, then only allow family names in the whitelist.
+    return mFamilyNamesWhitelist.IsEmpty() ||
+           mFamilyNamesWhitelist.Contains(fontFamilyNameLower);
 }

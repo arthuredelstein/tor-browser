@@ -434,11 +434,13 @@ gfxUserFontEntry::LoadNextSrc()
                 // font entry that we used a local() rule.
                 fontSet->SetLocalRulesUsed();
             }
-            if (fe) {
-                LOG(("userfonts (%p) [src %d] loaded local: (%s) for (%s) gen: %8.8x\n",
+            if (fe && gfxPlatformFontList::PlatformFontList()->
+                        IsFontFamilyNameAllowed(fe->mFamilyName)) {
+                LOG(("userfonts (%p) [src %d] loaded local: (%s) for (%s) with original family (%s) gen: %8.8x\n",
                      mFontSet, mSrcIndex,
                      NS_ConvertUTF16toUTF8(currSrc.mLocalName).get(),
                      NS_ConvertUTF16toUTF8(mFamilyName).get(),
+                     NS_ConvertUTF16toUTF8(fe->mFamilyName).get(),
                      uint32_t(mFontSet->mGeneration)));
                 fe->mFeatureSettings.AppendElements(mFeatureSettings);
                 fe->mLanguageOverride = mLanguageOverride;
