@@ -248,6 +248,13 @@ public:
     void GetSampleLangForGroup(nsIAtom* aLanguage, nsACString& aLangStr,
                                bool aCheckEnvironment = true);
 
+    // Returns true only if the font family name is whitelisted or the
+    // whitelist is empty.
+    bool IsFontFamilyNameAllowed(const nsAString& aFontFamilyName);
+
+    // Returns true if the font family whitelist is not empty.
+    bool IsFontFamilyWhitelistActive() { return !mFamilyNamesWhitelist.IsEmpty(); }
+
 protected:
     class MemoryReporter final : public nsIMemoryReporter
     {
@@ -361,7 +368,33 @@ protected:
                             eFontPrefLang aPrefLang,
                             nsTArray<RefPtr<gfxFontFamily>>* aGenericFamilies);
 
-    typedef nsRefPtrHashtable<nsStringHashKey, gfxFontFamily> FontFamilyTable;
+    class FontFamilyTable : public nsRefPtrHashtable<nsStringHashKey, gfxFontFamily> {
+    private:
+        bool mWhitelist;
+        // Don't allow calls without an argument.
+        FontFamilyTable() { mWhitelist = true; }
+    public:
+        explicit FontFamilyTable(bool whitelist) : nsRefPtrHashtable<nsStringHashKey, gfxFontFamily>()
+        { mWhitelist = whitelist; }
+        explicit FontFamilyTable(bool whitelist, int n) : nsRefPtrHashtable<nsStringHashKey, gfxFontFamily>(n)
+        { mWhitelist = whitelist; }
+        // Override Put to ensure that we don't add a familyName that is forbidden
+        // by the whitelist.
+        void Put(KeyType familyName, already_AddRefed<gfxFontFamily> familyData) {
+            if (!mWhitelist ||
+                gfxPlatformFontList::PlatformFontList()->IsFontFamilyNameAllowed(familyName)) {
+                nsRefPtrHashtable<nsStringHashKey, gfxFontFamily>::Put(familyName, mozilla::Move(familyData));
+            }
+        }
+        void Put(KeyType familyName, const UserDataType& familyData) {
+            if (!mWhitelist ||
+                gfxPlatformFontList::PlatformFontList()->IsFontFamilyNameAllowed(familyName)) {
+                nsRefPtrHashtable<nsStringHashKey, gfxFontFamily>::Put(familyName, familyData);
+            }
+        }
+
+    };
+
     typedef nsRefPtrHashtable<nsStringHashKey, gfxFontEntry> FontEntryTable;
 
     // used by memory reporter to accumulate sizes of family names in the table
@@ -373,11 +406,11 @@ protected:
                                       mozilla::MallocSizeOf aMallocSizeOf);
 
     // canonical family name ==> family entry (unique, one name per family entry)
-    FontFamilyTable mFontFamilies;
+    FontFamilyTable mFontFamilies {true};
 
     // other family name ==> family entry (not unique, can have multiple names per
     // family entry, only names *other* than the canonical names are stored here)
-    FontFamilyTable mOtherFamilyNames;
+    FontFamilyTable mOtherFamilyNames {true};
 
     // flag set after InitOtherFamilyNames is called upon first name lookup miss
     bool mOtherFamilyNamesInitialized;
@@ -437,6 +470,8 @@ protected:
     nsCOMPtr<nsILanguageAtomService> mLangService;
     nsTArray<uint32_t> mCJKPrefLangs;
     nsTArray<mozilla::FontFamilyType> mDefaultGenericsLangGroup;
+
+    nsTHashtable<nsStringHashKey> mFamilyNamesWhitelist;
 };
 
 #endif /* GFXPLATFORMFONTLIST_H_ */

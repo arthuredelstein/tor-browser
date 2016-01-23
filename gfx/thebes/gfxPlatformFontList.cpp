@@ -131,6 +131,7 @@ gfxFontListPrefObserver::Observe(nsISupports     *aSubject,
     // but it probably isn't that big a deal.
     gfxPlatformFontList::PlatformFontList()->ClearLangGroupPrefFonts();
     gfxFontCache::GetCache()->AgeAllGenerations();
+    gfxPlatformFontList::PlatformFontList()->UpdateFontList();
     return NS_OK;
 }
 
@@ -219,6 +220,17 @@ gfxPlatformFontList::InitFontList()
 
     if (LOG_FONTINIT_ENABLED()) {
         LOG_FONTINIT(("(fontinit) system fontlist initialization\n"));
+    }
+
+    // Initialize mFamilyNames Whitelist
+    mFamilyNamesWhitelist.Clear();
+    AutoTArray<nsString, 10> list;
+    gfxFontUtils::GetPrefsFontList("font.system.whitelist", list);
+    uint32_t numFonts = list.Length();
+    for (uint32_t i = 0; i < numFonts; i++) {
+        nsAutoString key;
+        ToLowerCase(list[i], key);
+        mFamilyNamesWhitelist.PutEntry(key);
     }
 
     // rebuilding fontlist so clear out font/word caches
@@ -1602,4 +1614,15 @@ gfxPlatformFontList::AddSizeOfIncludingThis(MallocSizeOf aMallocSizeOf,
 {
     aSizes->mFontListSize += aMallocSizeOf(this);
     AddSizeOfExcludingThis(aMallocSizeOf, aSizes);
+}
+
+bool
+gfxPlatformFontList::IsFontFamilyNameAllowed(const nsAString& aFontFamilyName)
+{
+    nsAutoString fontFamilyNameLower;
+    ToLowerCase(aFontFamilyName, fontFamilyNameLower);
+    // If whitelist is empty, any family name is allowed. If whitelist
+    // has entries, then only allow family names in the whitelist.
+    return mFamilyNamesWhitelist.IsEmpty() ||
+           mFamilyNamesWhitelist.Contains(fontFamilyNameLower);
 }
