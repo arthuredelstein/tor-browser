@@ -248,6 +248,13 @@ public:
     void GetSampleLangForGroup(nsIAtom* aLanguage, nsACString& aLangStr,
                                bool aCheckEnvironment = true);
 
+    // Returns true only if the font family name is whitelisted or the
+    // whitelist is empty.
+    bool IsFontFamilyNameAllowed(const nsAString& aFontFamilyName);
+
+    // Returns true if the font family whitelist is not empty.
+    bool IsFontFamilyWhitelistActive() { return !mFamilyNamesWhitelist.IsEmpty(); }
+
 protected:
     class MemoryReporter final : public nsIMemoryReporter
     {
@@ -361,7 +368,26 @@ protected:
                             eFontPrefLang aPrefLang,
                             nsTArray<RefPtr<gfxFontFamily>>* aGenericFamilies);
 
-    typedef nsRefPtrHashtable<nsStringHashKey, gfxFontFamily> FontFamilyTable;
+    class FontFamilyTable : public nsRefPtrHashtable<nsStringHashKey, gfxFontFamily> {
+    public:
+        FontFamilyTable() : nsRefPtrHashtable<nsStringHashKey, gfxFontFamily>() {}
+        explicit FontFamilyTable(int n) : nsRefPtrHashtable<nsStringHashKey, gfxFontFamily>(n) {}
+        typedef gfxFontFamily* gfxFontFamilyPtr;
+        // Override Put to ensure that we don't add a familyName that is forbidden
+        // by the whitelist.
+        void Put(KeyType familyName, already_AddRefed<gfxFontFamily> familyData) {
+            if (gfxPlatformFontList::PlatformFontList()->IsFontFamilyNameAllowed(familyName)) {
+                nsRefPtrHashtable<nsStringHashKey, gfxFontFamily>::Put(familyName, mozilla::Move(familyData));
+            }
+        }
+        void Put(KeyType familyName, const UserDataType& familyData) {
+            if (gfxPlatformFontList::PlatformFontList()->IsFontFamilyNameAllowed(familyName)) {
+                nsRefPtrHashtable<nsStringHashKey, gfxFontFamily>::Put(familyName, familyData);
+            }
+        }
+
+    };
+
     typedef nsRefPtrHashtable<nsStringHashKey, gfxFontEntry> FontEntryTable;
 
     // used by memory reporter to accumulate sizes of family names in the table
@@ -437,6 +463,8 @@ protected:
     nsCOMPtr<nsILanguageAtomService> mLangService;
     nsTArray<uint32_t> mCJKPrefLangs;
     nsTArray<mozilla::FontFamilyType> mDefaultGenericsLangGroup;
+
+    nsTHashtable<nsStringHashKey> mFamilyNamesWhitelist;
 };
 
 #endif /* GFXPLATFORMFONTLIST_H_ */

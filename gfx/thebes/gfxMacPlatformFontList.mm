@@ -790,11 +790,18 @@ gfxMacPlatformFontList::InitSystemFonts()
         mUseSizeSensitiveSystemFont = true;
     }
 
+    bool whitelistActive = IsFontFamilyWhitelistActive();
     // text font family
     NSFont* sys = [NSFont systemFontOfSize: 0.0];
     NSString* textFamilyName = GetRealFamilyName(sys);
     nsAutoString familyName;
     nsCocoaUtils::GetStringForNSString(textFamilyName, familyName);
+    if (whitelistActive) {
+        nsAutoString familyNameLower;
+        ToLowerCase(familyName, familyNameLower);
+        mFamilyNamesWhitelist.PutEntry(familyNameLower);
+        AddFamily((CFStringRef) textFamilyName);
+    }
     mSystemTextFontFamily = FindSystemFontFamily(familyName);
     NS_ASSERTION(mSystemTextFontFamily, "null system display font family");
 
@@ -803,6 +810,12 @@ gfxMacPlatformFontList::InitSystemFonts()
         NSFont* displaySys = [NSFont systemFontOfSize: 128.0];
         NSString* displayFamilyName = GetRealFamilyName(displaySys);
         nsCocoaUtils::GetStringForNSString(displayFamilyName, familyName);
+        if (whitelistActive) {
+            nsAutoString familyNameLower;
+            ToLowerCase(familyName, familyNameLower);
+            mFamilyNamesWhitelist.PutEntry(familyNameLower);
+            AddFamily((CFStringRef) displayFamilyName);
+        }
         mSystemDisplayFontFamily = FindSystemFontFamily(familyName);
         NS_ASSERTION(mSystemDisplayFontFamily, "null system display font family");
 
