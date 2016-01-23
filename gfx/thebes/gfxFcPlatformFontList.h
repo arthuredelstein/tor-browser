@@ -228,15 +228,14 @@ public:
     }
 
     // initialize font lists
-    nsresult InitFontList() override;
+    virtual nsresult InitFontListForPlatform() override;
 
     void GetFontList(nsIAtom *aLangGroup,
                      const nsACString& aGenericFamily,
                      nsTArray<nsString>& aListOfFonts) override;
 
 
-    gfxFontFamily*
-    GetDefaultFont(const gfxFontStyle* aStyle) override;
+    virtual gfxFontFamily* GetDefaultFontForPlatform(const gfxFontStyle* aStyle) override;
 
     gfxFontEntry*
     LookupLocalFont(const nsAString& aFontName, uint16_t aWeight,

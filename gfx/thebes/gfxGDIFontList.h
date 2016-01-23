@@ -301,9 +301,9 @@ public:
     }
 
     // initialize font lists
-    virtual nsresult InitFontList();
+    virtual nsresult InitFontListForPlatform() override;
 
-    virtual gfxFontFamily* GetDefaultFont(const gfxFontStyle* aStyle);
+    virtual gfxFontFamily* GetDefaultFontForPlatform(const gfxFontStyle* aStyle) override;
 
     bool FindAndAddFamilies(const nsAString& aFamily,
                             nsTArray<gfxFontFamily*>* aOutput,

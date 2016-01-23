@@ -120,7 +120,7 @@ class gfxFT2FontList : public gfxPlatformFontList
 public:
     gfxFT2FontList();
 
-    virtual gfxFontFamily* GetDefaultFont(const gfxFontStyle* aStyle);
+    virtual gfxFontFamily* GetDefaultFontForPlatform(const gfxFontStyle* aStyle) override;
 
     virtual gfxFontEntry* LookupLocalFont(const nsAString& aFontName,
                                           uint16_t aWeight,
@@ -148,7 +148,8 @@ protected:
         kStandard
     } StandardFile;
 
-    virtual nsresult InitFontList();
+    // initialize font lists
+    virtual nsresult InitFontListForPlatform() override;
 
     void AppendFaceFromFontListEntry(const FontListEntry& aFLE,
                                      StandardFile aStdFile);

@@ -114,7 +114,7 @@ public:
     virtual ~gfxPlatformFontList();
 
     // initialize font lists
-    virtual nsresult InitFontList();
+    nsresult InitFontList();
 
     virtual void GetFontList(nsIAtom *aLangGroup,
                              const nsACString& aGenericFamily,
@@ -155,7 +155,9 @@ public:
     // pure virtual functions, to be provided by concrete subclasses
 
     // get the system default font family
-    virtual gfxFontFamily* GetDefaultFont(const gfxFontStyle* aStyle) = 0;
+    gfxFontFamily* GetDefaultFont(const gfxFontStyle* aStyle);
+    virtual
+    gfxFontFamily* GetDefaultFontForPlatform(const gfxFontStyle* aStyle) = 0;
 
     // look up a font by name on the host platform
     virtual gfxFontEntry* LookupLocalFont(const nsAString& aFontName,
@@ -247,6 +249,13 @@ public:
     // map lang group ==> lang string
     void GetSampleLangForGroup(nsIAtom* aLanguage, nsACString& aLangStr,
                                bool aCheckEnvironment = true);
+
+    // Returns true if the font family whitelist is not empty.
+    bool IsFontFamilyWhitelistActive();
+
+    static void FontWhitelistPrefChanged(const char *aPref, void *aClosure) {
+        gfxPlatformFontList::PlatformFontList()->UpdateFontList();
+    }
 
 protected:
     class MemoryReporter final : public nsIMemoryReporter
@@ -361,6 +370,10 @@ protected:
                             eFontPrefLang aPrefLang,
                             nsTArray<RefPtr<gfxFontFamily>>* aGenericFamilies);
 
+    virtual nsresult InitFontListForPlatform() = 0;
+
+    void ApplyWhitelist();
+
     typedef nsRefPtrHashtable<nsStringHashKey, gfxFontFamily> FontFamilyTable;
     typedef nsRefPtrHashtable<nsStringHashKey, gfxFontEntry> FontEntryTable;
 
@@ -437,6 +450,8 @@ protected:
     nsCOMPtr<nsILanguageAtomService> mLangService;
     nsTArray<uint32_t> mCJKPrefLangs;
     nsTArray<mozilla::FontFamilyType> mDefaultGenericsLangGroup;
+
+    bool mFontFamilyWhitelistActive;
 };
 
 #endif /* GFXPLATFORMFONTLIST_H_ */

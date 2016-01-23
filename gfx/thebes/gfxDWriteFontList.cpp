@@ -343,7 +343,7 @@ gfxDWriteFontFamily::AddSizeOfIncludingThis(MallocSizeOf aMallocSizeOf,
 }
 
 already_AddRefed<IDWriteFont>
-gfxDWriteFontFamily::GetDefaultFont()
+gfxDWriteFontFamily::GetDefaultFontForPlatform()
 {
   RefPtr<IDWriteFont> font;
   for (UINT32 i = 0; i < mDWFamily->GetFontCount(); i++) {
@@ -848,7 +848,7 @@ enum DWriteInitError {
 };
 
 nsresult
-gfxDWriteFontList::InitFontList()
+gfxDWriteFontList::InitFontListForPlatform()
 {
     LARGE_INTEGER frequency;          // ticks per second
     LARGE_INTEGER t1, t2, t3, t4, t5; // ticks
@@ -868,8 +868,6 @@ gfxDWriteFontList::InitFontList()
     mGDIFontTableAccess =
         Preferences::GetBool("gfx.font_rendering.directwrite.use_gdi_table_loading",
                              false);
-
-    gfxPlatformFontList::InitFontList();
 
     mFontSubstitutes.Clear();
     mNonExistingFonts.Clear();
