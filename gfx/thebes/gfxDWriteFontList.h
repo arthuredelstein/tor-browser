@@ -423,7 +423,7 @@ private:
      * Table of font substitutes, we grab this from the registry to get
      * alternative font names.
      */
-    FontFamilyTable mFontSubstitutes;
+    FontFamilyTable mFontSubstitutes {true};
 
     virtual already_AddRefed<FontInfoData> CreateFontInfoData();
 

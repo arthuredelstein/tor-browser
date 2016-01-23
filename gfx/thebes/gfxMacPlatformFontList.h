@@ -162,7 +162,7 @@ private:
 
     // hidden system fonts used within UI elements, there may be a whole set
     // for different locales (e.g. .Helvetica Neue UI, .SF NS Text)
-    FontFamilyTable mSystemFontFamilies;
+    FontFamilyTable mSystemFontFamilies {false};
 
     // font families that -apple-system maps to
     // Pre-10.11 this was always a single font family, such as Lucida Grande

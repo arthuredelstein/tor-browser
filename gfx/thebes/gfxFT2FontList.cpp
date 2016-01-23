@@ -1013,7 +1013,7 @@ gfxFT2FontList::AddFaceToList(const nsCString& aEntryName, uint32_t aIndex,
     if (fe) {
         NS_ConvertUTF8toUTF16 name(aFace->family_name);
         BuildKeyNameFromFontName(name);
-        gfxFontFamily *family = fontFamilies.GetWeak(name);
+        RefPtr<gfxFontFamily> family = fontFamilies.GetWeak(name);
         if (!family) {
             family = new FT2FontFamily(name);
             fontFamilies.Put(name, family);
@@ -1313,7 +1313,7 @@ gfxFT2FontList::AppendFaceFromFontListEntry(const FontListEntry& aFLE,
             aFLE.isHidden() ? mHiddenFontFamilies : mFontFamilies;
         fe->mStandardFace = (aStdFile == kStandard);
         nsAutoString name(aFLE.familyName());
-        gfxFontFamily *family = fontFamilies.GetWeak(name);
+        RefPtr<gfxFontFamily> family = fontFamilies.GetWeak(name);
         if (!family) {
             family = new FT2FontFamily(name);
             fontFamilies.Put(name, family);

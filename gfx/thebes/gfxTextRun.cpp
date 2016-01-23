@@ -1817,7 +1817,7 @@ gfxFontGroup::GetDefaultFont()
     bool needsBold;
     gfxPlatformFontList *pfl = gfxPlatformFontList::PlatformFontList();
     gfxFontFamily *defaultFamily = pfl->GetDefaultFont(&mStyle);
-    NS_ASSERTION(defaultFamily,
+    NS_ASSERTION(defaultFamily || pfl->IsFontFamilyWhitelistActive(),
                  "invalid default font returned by GetDefaultFont");
 
     if (defaultFamily) {

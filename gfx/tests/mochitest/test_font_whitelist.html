@@ -1,0 +1,67 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=1121643
+-->
+<head>
+  <title>Test for Bug 1121643</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="application/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1121643">Mozilla Bug 1121643</a>
+<span id="display1" style="font-family: monospace; font-size: 64px;">M</span>
+<span id="display2" style="font-family: sans-serif; font-size: 64px;">M</span>
+<span id="display3" style="font-family: serif; font-size: 64px;">M</span>
+<div id="content" style="display: none">
+
+</div>
+<script class="testbody" type="application/javascript;version=1.7">
+
+/** Test for Bug 1121643 **/
+
+// __pushPref(key, value)__.
+// Set a pref value asynchronously, returning a promise that resolves
+// when it succeeds.
+let pushPref = function* (key, value) {
+  return new Promise(function(resolve, reject) {
+    SpecialPowers.pushPrefEnv({"set": [[key, value]]}, resolve);
+  });
+};
+
+// __getWidth(n)__.
+// Gets the width of the nth test item
+let getWidth = function (n) {
+  let element = document.getElementById("display" + n);
+  return element.offsetWidth;
+};
+
+// __setFontWhitelist(val)__.
+// Sets the whitelist pref
+let setFontWhitelist = function* (val) {
+  return yield pushPref("font.system.whitelist", val);
+}
+
+// Run a test to see that we don't expose the supported mimeTypes
+// or installed plugins when "privacy.resistFingerprinting" is active.
+add_task(function* () {
+  yield setFontWhitelist("Arial, DejaVu Sans, Roboto");
+  ok(getWidth(1) === getWidth(2) && getWidth(2) === getWidth(3), "Sans only");
+  yield setFontWhitelist("Courier New, DejaVu Sans Mono, Droid Sans Mono");
+  ok(getWidth(1) === getWidth(2) && getWidth(2) === getWidth(3), "Mono only");
+  yield setFontWhitelist("Georgia, DejaVu Serif, Droid Serif");
+  ok(getWidth(1) === getWidth(2) && getWidth(2) === getWidth(3), "Serif only");
+  yield setFontWhitelist("Arial, Courier New, DejaVu Sans, DejaVu Sans Mono, Roboto, Droid Sans Mono");
+  ok(getWidth(1) !== getWidth(2) && (getWidth(1) === getWidth(3) || getWidth(2) === getWidth(3)), "Sans and mono fonts");
+  yield setFontWhitelist("Arial, Courier New, Georgia, DejaVu Sans, DejaVu Sans Mono, DejaVu Serif, Roboto, Droid Sans Mono, Droid Serif");
+  ok(getWidth(1) !== getWidth(2) && getWidth(2) !== getWidth(3) && getWidth(1) !== getWidth(3),
+     "Sans, mono, and serif fonts");
+  yield setFontWhitelist("");
+  ok(getWidth(1) !== getWidth(2) && getWidth(2) !== getWidth(3) && getWidth(1) !== getWidth(3),
+     "font whitelist empty (deactivated)");
+});
+
+</script>
+</body>
+</html>

@@ -676,7 +676,7 @@ gfxMacPlatformFontList::AddFamily(CFStringRef aFamily)
     nsAutoString key;
     ToLowerCase(familyName, key);
 
-    gfxFontFamily* familyEntry = new gfxMacFontFamily(familyName);
+    RefPtr<gfxFontFamily> familyEntry = new gfxMacFontFamily(familyName);
     table.Put(key, familyEntry);
 
     // check the bad underline blacklist
@@ -744,7 +744,7 @@ gfxMacPlatformFontList::InitSingleFaceList()
 
             // add only if doesn't exist already
             if (!mFontFamilies.GetWeak(key)) {
-                gfxFontFamily *familyEntry =
+                RefPtr<gfxFontFamily> familyEntry =
                     new gfxSingleFaceMacFontFamily(familyName);
                 // LookupLocalFont sets this, need to clear
                 fontEntry->mIsLocalUserFont = false;

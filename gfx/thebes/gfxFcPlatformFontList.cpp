@@ -970,7 +970,7 @@ gfxFcPlatformFontList::AddFontSetFamilies(FcFontSet* aFontSet, bool aAppFonts)
     }
 
     FcChar8* lastFamilyName = (FcChar8*)"";
-    gfxFontconfigFontFamily* fontFamily = nullptr;
+    RefPtr<gfxFontconfigFontFamily> fontFamily;
     nsAutoString familyName;
     for (int f = 0; f < aFontSet->nfont; f++) {
         FcPattern* font = aFontSet->fonts[f];

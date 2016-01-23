@@ -100,6 +100,8 @@ static const char* kObservedPrefs[] = {
     nullptr
 };
 
+static const char kFontSystemWhitelistPref[] = "font.system.whitelist";
+
 // xxx - this can probably be eliminated by reworking pref font handling code
 static const char *gPrefLangNames[] = {
     #define FONT_PREF_LANG(enum_id_, str_, atom_id_) str_
@@ -177,7 +179,7 @@ gfxPlatformFontList::MemoryReporter::CollectReports(
 }
 
 gfxPlatformFontList::gfxPlatformFontList(bool aNeedFullnamePostscriptNames)
-    : mFontFamilies(64), mOtherFamilyNames(16),
+    : mFontFamilies {true, 64}, mOtherFamilyNames {true, 16},
       mBadUnderlineFamilyNames(8), mSharedCmaps(8),
       mStartIndex(0), mIncrement(1), mNumFamilies(0), mFontlistInitCount(0)
 {
@@ -197,6 +199,8 @@ gfxPlatformFontList::gfxPlatformFontList(bool aNeedFullnamePostscriptNames)
     NS_ADDREF(gFontListPrefObserver);
     Preferences::AddStrongObservers(gFontListPrefObserver, kObservedPrefs);
 
+    Preferences::RegisterCallback(FontWhitelistPrefChanged, kFontSystemWhitelistPref);
+
     RegisterStrongMemoryReporter(new MemoryReporter());
 }
 
@@ -206,6 +210,7 @@ gfxPlatformFontList::~gfxPlatformFontList()
     ClearLangGroupPrefFonts();
     NS_ASSERTION(gFontListPrefObserver, "There is no font list pref observer");
     Preferences::RemoveObservers(gFontListPrefObserver, kObservedPrefs);
+    Preferences::UnregisterCallback(FontWhitelistPrefChanged, kFontSystemWhitelistPref);
     NS_RELEASE(gFontListPrefObserver);
 }
 
@@ -219,6 +224,17 @@ gfxPlatformFontList::InitFontList()
 
     if (LOG_FONTINIT_ENABLED()) {
         LOG_FONTINIT(("(fontinit) system fontlist initialization\n"));
+    }
+
+    // Initialize mFamilyNames Whitelist
+    mFamilyNamesWhitelist.Clear();
+    AutoTArray<nsString, 10> list;
+    gfxFontUtils::GetPrefsFontList(kFontSystemWhitelistPref, list);
+    uint32_t numFonts = list.Length();
+    for (uint32_t i = 0; i < numFonts; i++) {
+        nsAutoString key;
+        ToLowerCase(list[i], key);
+        mFamilyNamesWhitelist.PutEntry(key);
     }
 
     // rebuilding fontlist so clear out font/word caches
@@ -427,7 +443,15 @@ void
 gfxPlatformFontList::UpdateFontList()
 {
     InitFontList();
-    RebuildLocalFonts();
+    // Check that the whitelist hasn't blocked ALL available fonts:
+    if (mFontFamilies.Count() == 0 && !mFamilyNamesWhitelist.IsEmpty()) {
+        // We have loaded no fonts! Wipe the bad whitelist and
+        // load without whitelisting.
+        Preferences::SetCString(kFontSystemWhitelistPref, "");
+    } else {
+        // We have at least one font loaded. Continue.
+        RebuildLocalFonts();
+    }
 }
 
 void
@@ -1602,4 +1626,15 @@ gfxPlatformFontList::AddSizeOfIncludingThis(MallocSizeOf aMallocSizeOf,
 {
     aSizes->mFontListSize += aMallocSizeOf(this);
     AddSizeOfExcludingThis(aMallocSizeOf, aSizes);
+}
+
+bool
+gfxPlatformFontList::IsFontFamilyNameAllowed(const nsAString& aFontFamilyName)
+{
+    nsAutoString fontFamilyNameLower;
+    ToLowerCase(aFontFamilyName, fontFamilyNameLower);
+    // If whitelist is empty, any family name is allowed. If whitelist
+    // has entries, then only allow family names in the whitelist.
+    return mFamilyNamesWhitelist.IsEmpty() ||
+           mFamilyNamesWhitelist.Contains(fontFamilyNameLower);
 }
