@@ -79,8 +79,6 @@ public:
 
     static int32_t AppleWeightToCSSWeight(int32_t aAppleWeight);
 
-    gfxFontFamily* GetDefaultFont(const gfxFontStyle* aStyle) override;
-
     bool GetStandardFamilyName(const nsAString& aFontName, nsAString& aFamilyName) override;
 
     gfxFontEntry* LookupLocalFont(const nsAString& aFontName,
@@ -107,6 +105,10 @@ public:
                           gfxFontStyle &aFontStyle,
                           float aDevPixPerCSSPixel);
 
+protected:
+    virtual gfxFontFamily*
+    GetDefaultFontForPlatform(const gfxFontStyle* aStyle) override;
+
 private:
     friend class gfxPlatformMac;
 
@@ -114,7 +116,7 @@ private:
     virtual ~gfxMacPlatformFontList();
 
     // initialize font lists
-    nsresult InitFontList() override;
+    virtual nsresult InitFontListForPlatform() override;
 
     // special case font faces treated as font families (set via prefs)
     void InitSingleFaceList();

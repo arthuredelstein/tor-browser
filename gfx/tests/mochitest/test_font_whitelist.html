@@ -1,0 +1,58 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=1121643
+-->
+<head>
+  <title>Test for Bug 1121643</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="application/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1121643">Mozilla Bug 1121643</a>
+<span id="display0" style="font-family: monospace; font-size: 64px;">M</span>
+<span id="display1" style="font-family: sans-serif; font-size: 64px;">M</span>
+<span id="display2" style="font-family: serif; font-size: 64px;">M</span>
+<div id="content" style="display: none">
+
+</div>
+<script class="testbody" type="application/javascript;version=1.7">
+
+/** Test for Bug 1121643 **/
+
+// __getWidth(n)__.
+// Gets the width of the nth test item
+let getWidth = n => document.getElementById("display" + n).offsetWidth;
+
+// __setFontWhitelist(val)__.
+// Sets the whitelist pref
+let setFontWhitelist = function* (val) {
+   yield SpecialPowers.pushPrefEnv({"set": [["font.system.whitelist", val]]});
+   return [0, 1, 2].map(getWidth);
+}
+
+// Run test to confirm that only whitelisting fonts are present in a
+// rendered page.
+add_task(function* () {
+  let widths = yield setFontWhitelist("Arial, DejaVu Sans, Roboto");
+  ok(widths[0] === widths[1] && widths[2] === widths[2], "Sans only: " + widths);
+  widths = yield setFontWhitelist("Courier New, DejaVu Sans Mono, Droid Sans Mono");
+  ok(widths[0] === widths[1] && widths[1] === widths[2], "Mono only:" + widths);
+  widths = yield setFontWhitelist("Times, DejaVu Serif, Droid Serif");
+  ok(widths[0] === widths[1] && widths[1] === widths[2], "Serif only: " + widths);
+  widths = yield setFontWhitelist("Arial, Courier New, DejaVu Sans, DejaVu Sans Mono, Roboto, Droid Sans Mono");
+  ok(widths[0] !== widths[1] && (widths[0] === widths[2] || widths[1] === widths[2]),
+    "Sans and mono fonts: " + widths);
+  widths = yield setFontWhitelist(
+    "Arial, Courier New, Times, DejaVu Sans, DejaVu Sans Mono, DejaVu Serif, Roboto, Droid Sans Mono, Droid Serif");
+  ok(widths[0] !== widths[1] && widths[1] !== widths[2] && widths[0] !== widths[2],
+    "Sans, mono, and serif fonts: " + widths);
+  widths = yield setFontWhitelist("");
+  ok(widths[0] !== widths[1] && widths[1] !== widths[2] && widths[0] !== widths[2],
+     "font whitelist empty (deactivated): " + widths);
+});
+
+</script>
+</body>
+</html>

@@ -732,7 +732,7 @@ gfxDWriteFontList::gfxDWriteFontList()
 //   Arial to avoid this.
 
 gfxFontFamily *
-gfxDWriteFontList::GetDefaultFont(const gfxFontStyle *aStyle)
+gfxDWriteFontList::GetDefaultFontForPlatform(const gfxFontStyle *aStyle)
 {
     nsAutoString resolvedName;
 
@@ -848,7 +848,7 @@ enum DWriteInitError {
 };
 
 nsresult
-gfxDWriteFontList::InitFontList()
+gfxDWriteFontList::InitFontListForPlatform()
 {
     LARGE_INTEGER frequency;          // ticks per second
     LARGE_INTEGER t1, t2, t3, t4, t5; // ticks
@@ -868,8 +868,6 @@ gfxDWriteFontList::InitFontList()
     mGDIFontTableAccess =
         Preferences::GetBool("gfx.font_rendering.directwrite.use_gdi_table_loading",
                              false);
-
-    gfxPlatformFontList::InitFontList();
 
     mFontSubstitutes.Clear();
     mNonExistingFonts.Clear();
@@ -1402,7 +1400,8 @@ gfxDWriteFontList::GlobalFontFallback(const uint32_t aCh,
                                       uint32_t& aCmapCount,
                                       gfxFontFamily** aMatchedFamily)
 {
-    bool useCmaps = gfxPlatform::GetPlatform()->UseCmapsDuringSystemFallback();
+    bool useCmaps = IsFontFamilyWhitelistActive() ||
+                    gfxPlatform::GetPlatform()->UseCmapsDuringSystemFallback();
 
     if (useCmaps) {
         return gfxPlatformFontList::GlobalFontFallback(aCh,

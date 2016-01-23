@@ -356,9 +356,7 @@ public:
     }
 
     // initialize font lists
-    virtual nsresult InitFontList();
-
-    virtual gfxFontFamily* GetDefaultFont(const gfxFontStyle* aStyle);
+    virtual nsresult InitFontListForPlatform() override;
 
     virtual gfxFontEntry* LookupLocalFont(const nsAString& aFontName,
                                           uint16_t aWeight,
@@ -389,6 +387,10 @@ public:
                                         FontListSizes* aSizes) const;
     virtual void AddSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
                                         FontListSizes* aSizes) const;
+
+protected:
+    virtual gfxFontFamily*
+    GetDefaultFontForPlatform(const gfxFontStyle* aStyle) override;
 
 private:
     friend class gfxDWriteFontFamily;
