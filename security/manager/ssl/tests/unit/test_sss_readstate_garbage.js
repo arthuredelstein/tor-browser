@@ -15,13 +15,13 @@ function checkStateRead(aSubject, aTopic, aData) {
   do_check_eq(aData, SSS_STATE_FILE_NAME);
 
   do_check_true(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                        "example1.example.com", 0));
+                                        "example1.example.com", "", 0));
   do_check_true(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                        "example2.example.com", 0));
+                                        "example2.example.com", "", 0));
   do_check_false(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                         "example.com", 0));
+                                         "example.com", "", 0));
   do_check_false(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                         "example3.example.com", 0));
+                                         "example3.example.com", "", 0));
   do_test_finished();
 }
 

@@ -113,7 +113,7 @@ function run_test() {
     let includeSubdomains = (i % 2 == 0 ? "; includeSubdomains" : "");
     let sslStatus = new FakeSSLStatus();
     SSService.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS,
-                            uris[uriIndex], maxAge + includeSubdomains,
+                            uris[uriIndex], "", maxAge + includeSubdomains,
                             sslStatus, 0);
   }
 

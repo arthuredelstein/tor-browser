@@ -11,7 +11,7 @@ add_task(function* test_star_redirect() {
     let sss = Cc["@mozilla.org/ssservice;1"]
                 .getService(Ci.nsISiteSecurityService);
     sss.removeState(Ci.nsISiteSecurityService.HEADER_HSTS,
-                    NetUtil.newURI("http://example.com/"), 0);
+                    NetUtil.newURI("http://example.com/"), "", 0);
     PlacesUtils.bookmarks.removeFolderChildren(PlacesUtils.unfiledBookmarksFolderId);
     gBrowser.removeCurrentTab();
   });

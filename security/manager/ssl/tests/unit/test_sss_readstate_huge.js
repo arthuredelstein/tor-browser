@@ -16,19 +16,19 @@ function checkStateRead(aSubject, aTopic, aData) {
   do_check_eq(aData, SSS_STATE_FILE_NAME);
 
   do_check_true(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                        "example0.example.com", 0));
+                                        "example0.example.com", "", 0));
   do_check_true(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                        "example423.example.com", 0));
+                                        "example423.example.com", "", 0));
   do_check_true(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                        "example1023.example.com", 0));
+                                        "example1023.example.com", "", 0));
   do_check_false(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                         "example1024.example.com", 0));
+                                         "example1024.example.com", "", 0));
   do_check_false(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                         "example1025.example.com", 0));
+                                         "example1025.example.com", "", 0));
   do_check_false(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                         "example9000.example.com", 0));
+                                         "example9000.example.com", "", 0));
   do_check_false(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                         "example99999.example.com", 0));
+                                         "example99999.example.com", "", 0));
   do_test_finished();
 }
 

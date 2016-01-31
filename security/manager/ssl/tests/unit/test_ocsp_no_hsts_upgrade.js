@@ -43,10 +43,10 @@ function run_test() {
                     .getService(Ci.nsISiteSecurityService);
   let uri = Services.io.newURI("http://localhost", null, null);
   let sslStatus = new FakeSSLStatus();
-  SSService.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri,
+  SSService.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri, ""
                           "max-age=10000", sslStatus, 0);
   do_check_true(SSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                       "localhost", 0));
+                                       "localhost", "", 0));
 
   run_next_test();
 }

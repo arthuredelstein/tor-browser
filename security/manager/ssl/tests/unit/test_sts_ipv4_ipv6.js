@@ -1,6 +1,6 @@
 function check_ip(s, v, ip) {
   let sslStatus = new FakeSSLStatus();
-  do_check_false(s.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS, ip, 0));
+  do_check_false(s.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS, ip, "", 0));
 
   let str = "https://";
   if (v == 6) {
@@ -16,7 +16,7 @@ function check_ip(s, v, ip) {
 
   let parsedMaxAge = {};
   let parsedIncludeSubdomains = {};
-  s.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri,
+  s.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri, "",
                   "max-age=1000;includeSubdomains", sslStatus , 0,
                   parsedMaxAge, parsedIncludeSubdomains);
 

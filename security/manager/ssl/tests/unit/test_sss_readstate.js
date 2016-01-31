@@ -15,40 +15,40 @@ function checkStateRead(aSubject, aTopic, aData) {
   do_check_eq(aData, SSS_STATE_FILE_NAME);
 
   do_check_false(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                         "expired.example.com", 0));
+                                         "expired.example.com", "", 0));
   do_check_true(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                        "notexpired.example.com", 0));
+                                        "notexpired.example.com", "", 0));
   do_check_true(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                        "bugzilla.mozilla.org", 0));
+                                        "bugzilla.mozilla.org", "", 0));
   do_check_false(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                         "sub.bugzilla.mozilla.org", 0));
+                                         "sub.bugzilla.mozilla.org", "", 0));
   do_check_true(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                        "incsubdomain.example.com", 0));
+                                        "incsubdomain.example.com", "", 0));
   do_check_true(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                        "sub.incsubdomain.example.com", 0));
+                                        "sub.incsubdomain.example.com", "", 0));
   do_check_false(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                         "login.persona.org", 0));
+                                         "login.persona.org", "", 0));
   do_check_false(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                         "sub.login.persona.org", 0));
+                                         "sub.login.persona.org", "", 0));
 
   // Clearing the data should make everything go back to default.
   gSSService.clearAll();
   do_check_false(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                         "expired.example.com", 0));
+                                         "expired.example.com", "", 0));
   do_check_false(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                         "notexpired.example.com", 0));
+                                         "notexpired.example.com", "", 0));
   do_check_true(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                        "bugzilla.mozilla.org", 0));
+                                        "bugzilla.mozilla.org", "", 0));
   do_check_true(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                        "sub.bugzilla.mozilla.org", 0));
+                                        "sub.bugzilla.mozilla.org", "", 0));
   do_check_false(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                         "incsubdomain.example.com", 0));
+                                         "incsubdomain.example.com", "", 0));
   do_check_false(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                         "sub.incsubdomain.example.com", 0));
+                                         "sub.incsubdomain.example.com", "", 0));
   do_check_true(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                        "login.persona.org", 0));
+                                        "login.persona.org", "", 0));
   do_check_true(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                                        "sub.login.persona.org", 0));
+                                        "sub.login.persona.org", "", 0));
   do_test_finished();
 }
 

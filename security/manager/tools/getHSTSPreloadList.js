@@ -132,7 +132,7 @@ function processStsHeader(host, header, status, securityInfo) {
       var sslStatus = securityInfo.QueryInterface(Ci.nsISSLStatusProvider)
                                   .SSLStatus;
       gSSService.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS,
-                               uri, "", header, sslStatus, 0, maxAge,
+                               uri, header, sslStatus, 0, maxAge,
                                includeSubdomains);
     }
     catch (e) {
