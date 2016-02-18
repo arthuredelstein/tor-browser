@@ -106,7 +106,8 @@ let privacyPref = "privacy.thirdparty.isolate",
     // We will check cache for example.net content from
     // iframe, link, script, img, object, embed, xhr, audio, video, track
     suffixes = ["iframe.html", "link.css", "script.js", "img.png", "object.png",
-                "embed.png", "xhr.html", "worker.xhr.html", "audio.ogg", "video.ogv", "track.vtt" ];
+                "embed.png", "xhr.html", "worker.xhr.html", "audio.ogg",
+                "video.ogv", "track.vtt", "favicon.ico" ];
 
 // __checkCachePopulation(pref, numberOfDomains)__.
 // Check if the number of entries found in the cache for each
