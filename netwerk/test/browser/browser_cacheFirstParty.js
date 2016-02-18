@@ -4,12 +4,13 @@
 // ("privacy.thirdparty.isolate" pref is set to 2) then when a loaded file is cached,
 // it is indexed by the URL-bar domain.
 
-// In this test, a number of files are loaded (via IFRAME, LINK, SCRIPT, IMG, OBJECT,
-// EMBED, AUDIO, VIDEO, TRACK and XMLHttpRequest) by parent pages with different URL bar
-// domains. When isolation is active, we test to confirm that a separate copy of each file
-// is cached for each different parent domain. We also test to make sure that when
-// isolation is inactive, a single copy of the child page is cached and reused for all
-// parent domains.
+// In this test, a number of files are loaded (via IFRAME, LINK [both CSS
+// and Favicon], SCRIPT, IMG, OBJECT, EMBED, AUDIO, VIDEO, TRACK and
+// XMLHttpRequest) by parent pages with different URL bar domains. When
+// isolation is active, we test to confirm that a separate copy of each file is
+// cached for each different parent domain. We also test to make sure that when
+// isolation is inactive, a single copy of the child page is cached
+// and reused for all parent domains.
 
 // In this file, functions are defined in call stack order (later functions call earlier
 // functions). Comments are formatted for docco.
@@ -104,13 +105,15 @@ let privacyPref = "privacy.thirdparty.isolate",
     // share cached embedded objects.
     duplicatedDomains = [].concat(domains, domains),
     // We will check cache for example.net content from
-    // iframe, link, script, img, object, embed, xhr, audio, video, track
+    // iframe, link (css), script, img, object, embed, xhr, audio, video,
+    // track, favicon
     suffixes = ["iframe.html", "link.css", "script.js", "img.png", "object.png",
-                "embed.png", "xhr.html", "worker.xhr.html", "audio.ogg", "video.ogv", "track.vtt" ];
+                "embed.png", "xhr.html", "worker.xhr.html", "audio.ogg",
+                "video.ogv", "track.vtt", "favicon.ico" ];
 
 // __checkCachePopulation(pref, numberOfDomains)__.
 // Check if the number of entries found in the cache for each
-// embedded file type matches the number we expect, given the 
+// embedded file type matches the number we expect, given the
 // number of domains and the isolation state.
 let checkCachePopulation = function* (pref, numberOfDomains) {
   let expectedEntryCount = (pref === 2) ? numberOfDomains : 1;
