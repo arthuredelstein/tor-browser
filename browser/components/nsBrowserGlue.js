@@ -79,11 +79,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "PdfJs",
 XPCOMUtils.defineLazyModuleGetter(this, "ProcessHangMonitor",
                                   "resource:///modules/ProcessHangMonitor.jsm");
 
-#ifdef NIGHTLY_BUILD
-XPCOMUtils.defineLazyModuleGetter(this, "ShumwayUtils",
-                                  "resource://shumway/ShumwayUtils.jsm");
-#endif
-
 XPCOMUtils.defineLazyModuleGetter(this, "webrtcUI",
                                   "resource:///modules/webrtcUI.jsm");
 
