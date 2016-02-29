@@ -265,6 +265,33 @@ typedef enum {
   eAppliedService
 } UpdateStatus;
 
+#ifdef DEBUG
+static const char *
+UpdateStatusToString(UpdateStatus aStatus)
+{
+  const char *rv = "unknown";
+  switch (aStatus) {
+    case eNoUpdateAction:
+      rv = "NoUpdateAction";
+      break;
+    case ePendingUpdate:
+      rv = "PendingUpdate";
+      break;
+    case ePendingService:
+      rv = "PendingService";
+      break;
+    case eAppliedUpdate:
+      rv = "AppliedUpdate";
+      break;
+    case eAppliedService:
+      rv = "AppliedService";
+      break;
+  }
+
+  return rv;
+}
+#endif
+
 /**
  * Returns a value indicating what needs to be done in order to handle an update.
  *
@@ -344,6 +371,7 @@ IsOlderVersion(nsIFile *versionFile, const char *appVersion)
   return false;
 }
 
+#ifndef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
 #if defined(TOR_BROWSER_UPDATE) && defined(XP_MACOSX)
 static nsresult
 GetUpdateDirFromAppDir(nsIFile *aAppDir, nsIFile* *aResult)
@@ -367,6 +395,7 @@ GetUpdateDirFromAppDir(nsIFile *aAppDir, nsIFile* *aResult)
   updatedDir.forget(aResult);
   return NS_OK;
 }
+#endif
 #endif
 
 static bool
@@ -590,7 +619,7 @@ SwitchToUpdatedApp(nsIFile *greDir, nsIFile *updateDir,
   nsAutoCString applyToDir;
   nsCOMPtr<nsIFile> updatedDir;
 #ifdef XP_MACOSX
-#ifdef TOR_BROWSER_UPDATE
+#if defined(TOR_BROWSER_UPDATE) && !defined(TOR_BROWSER_DATA_OUTSIDE_APP_DIR)
   rv = GetUpdateDirFromAppDir(appDir, getter_AddRefs(updatedDir));
   if (NS_FAILED(rv)) {
 #else
@@ -872,7 +901,7 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
     applyToDir.Assign(installDirPath);
   } else {
 #ifdef XP_MACOSX
-#ifdef TOR_BROWSER_UPDATE
+#if defined(TOR_BROWSER_UPDATE) && !defined(TOR_BROWSER_DATA_OUTSIDE_APP_DIR)
     rv = GetUpdateDirFromAppDir(appDir, getter_AddRefs(updatedDir));
     if (NS_FAILED(rv)) {
 #else
@@ -1130,7 +1159,8 @@ ProcessUpdates(nsIFile *greDir, nsIFile *appDir, nsIFile *updRootDir,
   nsCOMPtr<nsIFile> statusFile;
   UpdateStatus status = GetUpdateStatus(updatesDir, statusFile);
 #ifdef DEBUG
-  printf("ProcessUpdates status: %d\n", status);
+  printf("ProcessUpdates status: %s (%d)\n",
+         UpdateStatusToString(status), status);
   updatesDir->GetNativePath(path);
   printf("ProcessUpdates updatesDir: %s\n", path.get());
 #endif

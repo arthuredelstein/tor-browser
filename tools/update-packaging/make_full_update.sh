@@ -10,12 +10,6 @@
 
 . $(dirname "$0")/common.sh
 
-# TODO: it would be better to pass this as a command line option.
-# Make sure we delete the pre 5.1.0 HTTPS Everywhere as well in case it
-# exists. The extension ID got changed with the version bump to 5.1.0.
-ext_path='TorBrowser/Data/Browser/profile.default/extensions'
-directories_to_remove="$ext_path/https-everywhere@eff.org $ext_path/https-everywhere-eff@eff.org"
-
 # -----------------------------------------------------------------------------
 
 print_usage() {
@@ -77,6 +71,18 @@ fi
 list_files files
 list_symlinks symlinks symlink_targets
 
+# TODO When TOR_BROWSER_DATA_OUTSIDE_APP_DIR is used on all platforms,
+# we should remove the following lines:
+# Make sure we delete the pre 5.1.0 HTTPS Everywhere as well in case it
+# exists. The extension ID got changed with the version bump to 5.1.0.
+ext_path='TorBrowser/Data/Browser/profile.default/extensions'
+if [ -d "$ext_dir" ]; then
+  directories_to_remove="$ext_path/https-everywhere@eff.org $ext_path/https-everywhere-eff@eff.org"
+else
+  directories_to_remove=""
+fi
+# END TOR_BROWSER_DATA_OUTSIDE_APP_DIR removal
+
 popd
 
 # Add the type of update to the beginning of the update manifests.
@@ -88,6 +94,8 @@ notice "       type complete"
 echo "type \"complete\"" >> "$updatemanifestv2"
 echo "type \"complete\"" >> "$updatemanifestv3"
 
+# TODO When TOR_BROWSER_DATA_OUTSIDE_APP_DIR is used on all platforms,
+# we should remove the following lines:
 # If removal of any old, existing directories is desired, emit the appropriate
 # rmrfdir commands.
 notice ""
@@ -100,6 +108,7 @@ for dir_to_remove in $directories_to_remove; do
   echo "rmrfdir \"$dir_to_remove\"" >> "$updatemanifestv2"
   echo "rmrfdir \"$dir_to_remove\"" >> "$updatemanifestv3"
 done
+# END TOR_BROWSER_DATA_OUTSIDE_APP_DIR removal
 
 notice ""
 notice "Adding file add instructions to update manifests"

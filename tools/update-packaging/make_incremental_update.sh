@@ -63,6 +63,8 @@ check_for_forced_update() {
       return 0;
     fi
 
+# TODO When TOR_BROWSER_DATA_OUTSIDE_APP_DIR is used on all platforms,
+# we should remove the following lines:
     # If the file in the skip list ends with /*, do a prefix match.
     # This allows TorBrowser/Data/Browser/profile.default/extensions/https-everywhere-eff@eff.org/*
     # to be used to force all HTTPS Everywhere files to be updated.
@@ -74,6 +76,7 @@ check_for_forced_update() {
         return 0;
       fi
     fi
+# END TOR_BROWSER_DATA_OUTSIDE_APP_DIR removal
   done
   ## 'false'... because this is bash. Oh yay!
   return 1;
@@ -84,6 +87,8 @@ if [ $# = 0 ]; then
   exit 1
 fi
 
+# Firefox uses requested_forced_updates='Contents/MacOS/firefox' due to
+# 770996 but in Tor Browser we do not need that fix.
 requested_forced_updates=""
 directories_to_remove=""
 
@@ -120,40 +125,45 @@ updatemanifestv2="$workdir/updatev2.manifest"
 updatemanifestv3="$workdir/updatev3.manifest"
 archivefiles="updatev2.manifest updatev3.manifest"
 
+# TODO When TOR_BROWSER_DATA_OUTSIDE_APP_DIR is used on all platforms,
+# we should remove the following lines:
 # If the NoScript or HTTPS Everywhere extensions have changed between
 # releases, add them to the "force updates" list.
 ext_path='TorBrowser/Data/Browser/profile.default/extensions'
-https_everywhere='https-everywhere-eff@eff.org'
-noscript='{73a6fe31-595d-460b-a920-fcc0f8843232}.xpi'
+if [ -d "$newdir/$ext_path" ]; then
+  https_everywhere='https-everywhere-eff@eff.org'
+  noscript='{73a6fe31-595d-460b-a920-fcc0f8843232}.xpi'
 
-# NoScript is a packed extension, so we simply compare the old and the new
-# .xpi files.
-noscript_path="$ext_path/$noscript"
-diff -a "$olddir/$noscript_path" "$newdir/$noscript_path" > /dev/null
-rc=$?
-if [ $rc -gt 1 ]; then
-  notice "Unexpected exit $rc from $noscript_path diff command"
-  exit 2
-elif [ $rc -eq 1 ]; then
-  requested_forced_updates="$requested_forced_updates $noscript_path"
-fi
+  # NoScript is a packed extension, so we simply compare the old and the new
+  # .xpi files.
+  noscript_path="$ext_path/$noscript"
+  diff -a "$olddir/$noscript_path" "$newdir/$noscript_path" > /dev/null
+  rc=$?
+  if [ $rc -gt 1 ]; then
+    notice "Unexpected exit $rc from $noscript_path diff command"
+    exit 2
+  elif [ $rc -eq 1 ]; then
+    requested_forced_updates="$requested_forced_updates $noscript_path"
+  fi
 
-# HTTPS Everywhere is an unpacked extension, so we need to determine if any of
-# the unpacked files have changed. Since that is messy, we simply compare the
-# old extension's install.rdf file to the new one.
-https_everywhere_install_rdf="$ext_path/$https_everywhere/install.rdf"
-diff "$olddir/$https_everywhere_install_rdf"     \
-      "$newdir/$https_everywhere_install_rdf" > /dev/null
-rc=$?
-if [ $rc -gt 1 -a -e "$olddir/$https_everywhere_install_rdf" ]; then
-  notice "Unexpected exit $rc from $https_everywhere_install_rdf diff command"
-  exit 2
-elif [ $rc -ge 1 ]; then
-  requested_forced_updates="$requested_forced_updates $ext_path/$https_everywhere/*"
-  # Make sure we delete the pre 5.1.0 HTTPS Everywhere as well in case it
-  # exists. The extension ID got changed with the version bump to 5.1.0.
-  directories_to_remove="$directories_to_remove $ext_path/https-everywhere@eff.org $ext_path/$https_everywhere"
+  # HTTPS Everywhere is an unpacked extension, so we need to determine if any of
+  # the unpacked files have changed. Since that is messy, we simply compare the
+  # old extension's install.rdf file to the new one.
+  https_everywhere_install_rdf="$ext_path/$https_everywhere/install.rdf"
+  diff "$olddir/$https_everywhere_install_rdf"     \
+        "$newdir/$https_everywhere_install_rdf" > /dev/null
+  rc=$?
+  if [ $rc -gt 1 -a -e "$olddir/$https_everywhere_install_rdf" ]; then
+    notice "Unexpected exit $rc from $https_everywhere_install_rdf diff command"
+    exit 2
+  elif [ $rc -ge 1 ]; then
+    requested_forced_updates="$requested_forced_updates $ext_path/$https_everywhere/*"
+    # Make sure we delete the pre 5.1.0 HTTPS Everywhere as well in case it
+    # exists. The extension ID got changed with the version bump to 5.1.0.
+    directories_to_remove="$directories_to_remove $ext_path/https-everywhere@eff.org $ext_path/$https_everywhere"
+  fi
 fi
+# END TOR_BROWSER_DATA_OUTSIDE_APP_DIR removal
 
 mkdir -p "$workdir"
 
@@ -196,6 +206,8 @@ notice "       type partial"
 echo "type \"partial\"" >> "$updatemanifestv2"
 echo "type \"partial\"" >> "$updatemanifestv3"
 
+# TODO When TOR_BROWSER_DATA_OUTSIDE_APP_DIR is used on all platforms,
+# we should remove the following lines:
 # If removal of any old, existing directories is desired, emit the appropriate
 # rmrfdir commands.
 notice ""
@@ -208,6 +220,7 @@ for dir_to_remove in $directories_to_remove; do
   echo "rmrfdir \"$dir_to_remove\"" >> "$updatemanifestv2"
   echo "rmrfdir \"$dir_to_remove\"" >> "$updatemanifestv3"
 done
+# END TOR_BROWSER_DATA_OUTSIDE_APP_DIR removal
 
 notice ""
 notice "Adding file patch and add instructions to update manifests"
