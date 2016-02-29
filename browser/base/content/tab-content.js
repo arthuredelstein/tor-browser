@@ -405,15 +405,30 @@ let AboutTBUpdateListener = {
 
   // Read and return the text from the beginning of the changelog file that is
   // located at TorBrowser/Docs/ChangeLog.txt.
+  // On Mac OS, when building with --enable-tor-browser-data-outside-app-dir
+  // to support Gatekeeper signing, the file is located in
+  // TorBrowser.app/Contents/Resources/TorBrowser/Docs/.
+  //
   // When electrolysis is enabled we will need to adopt an architecture that is
   // more similar to the one that is used for about:home (see AboutHomeListener
   // in this file and browser/modules/AboutHome.jsm).
   getChangeLogText: function() {
     try {
+#ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
+      // "XREExeF".parent is the directory that contains firefox, i.e.,
+      // Browser/ or, on Mac OS, TorBrowser.app/Contents/MacOS/.
+      let f = Services.dirsvc.get("XREExeF", Ci.nsIFile).parent;
+#ifdef XP_MACOSX
+      f = f.parent;
+      f.append("Resources");
+#endif
+      f.append("TorBrowser");
+#else
       // "DefProfRt" is .../TorBrowser/Data/Browser
       let f = Cc["@mozilla.org/file/directory_service;1"]
                 .getService(Ci.nsIProperties).get("DefProfRt", Ci.nsIFile);
       f = f.parent.parent;  // Remove "Data/Browser"
+#endif
       f.append("Docs");
       f.append("ChangeLog.txt");
 
