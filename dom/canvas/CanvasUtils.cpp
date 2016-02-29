@@ -146,8 +146,8 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
 
     // Prompt the user (asynchronous).
     nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
-    obs->NotifyObservers(win, TOPIC_CANVAS_PERMISSIONS_PROMPT,
-                         NS_ConvertUTF8toUTF16(firstPartySpec).get());
+    //obs->NotifyObservers(win, TOPIC_CANVAS_PERMISSIONS_PROMPT,
+    //                     NS_ConvertUTF8toUTF16(firstPartySpec).get());
 
     // We don't extract the image for now -- user may override at prompt.
     return false;
