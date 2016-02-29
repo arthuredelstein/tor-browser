@@ -8,6 +8,10 @@
 # Author: Darin Fisher
 #
 
+# TODO When TOR_BROWSER_DATA_OUTSIDE_APP_DIR is used on all platforms,
+# we should remove all lines in this file that contain:
+#      TorBrowser/Data
+
 # -----------------------------------------------------------------------------
 QUIET=0
 

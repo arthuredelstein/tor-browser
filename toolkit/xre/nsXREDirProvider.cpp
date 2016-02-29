@@ -1067,6 +1067,19 @@ nsXREDirProvider::GetUpdateRootDir(nsIFile* *aResult)
 
 #ifdef XP_MACOSX
 #ifdef TOR_BROWSER_UPDATE
+#ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
+  // For Tor Browser, we cannot store update history, etc. under the user's
+  // home directory. Instead, we place it under
+  // Tor Browser.app/../TorBrowser-Data/UpdateInfo/
+  nsCOMPtr<nsIFile> appRootDir;
+  rv = GetAppRootDir(getter_AddRefs(appRootDir));
+  NS_ENSURE_SUCCESS(rv, rv);
+  nsCOMPtr<nsIFile> localDir;
+  rv = appRootDir->GetParent(getter_AddRefs(localDir));
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = localDir->AppendRelativeNativePath(NS_LITERAL_CSTRING("TorBrowser-Data"
+                                     XPCOM_FILE_PATH_SEPARATOR "UpdateInfo"));
+#else
   // For Tor Browser, we cannot store update history, etc. under the user's home directory.
   // Instead, we place it under Tor Browser.app/TorBrowser/UpdateInfo/
   nsCOMPtr<nsIFile> localDir;
@@ -1075,6 +1088,7 @@ nsXREDirProvider::GetUpdateRootDir(nsIFile* *aResult)
   rv = localDir->AppendNative(NS_LITERAL_CSTRING("TorBrowser"));
   NS_ENSURE_SUCCESS(rv, rv);
   rv = localDir->AppendNative(NS_LITERAL_CSTRING("UpdateInfo"));
+#endif
   NS_ENSURE_SUCCESS(rv, rv);
 #else
   nsCOMPtr<nsIFile> appRootDirFile;

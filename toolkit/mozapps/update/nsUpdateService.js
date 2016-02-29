@@ -707,7 +707,7 @@ function getUpdatesDirInApplyToDir() {
   if (AppConstants.platform == "macosx") {
     dir = dir.parent.parent; // the bundle directory
     dir.append(DIR_UPDATED_APP);
-#ifdef TOR_BROWSER_UPDATE
+#if defined(TOR_BROWSER_UPDATE) && !defined(TOR_BROWSER_DATA_OUTSIDE_APP_DIR)
     dir.append("TorBrowser");
     dir.append("UpdateInfo");
 #else
