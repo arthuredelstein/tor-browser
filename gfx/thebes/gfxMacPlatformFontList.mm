@@ -702,8 +702,8 @@ gfxMacPlatformFontList::InitFontList()
 
     for (NSString* familyName in (NSArray*)familyNames) {
         nsAutoString textFamilyName;
-        nsCocoaUtils::GetStringForNSString(textFamilyName, familyName);
-        if (gfxFontUtils::IsFontFamilyNameAllowed(familyName)) {
+        nsCocoaUtils::GetStringForNSString(familyName, textFamilyName);
+        if (gfxFontUtils::IsFontFamilyNameAllowed(textFamilyName)) {
             AddFamily((CFStringRef)familyName);
         }
     }
