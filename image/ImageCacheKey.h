@@ -53,7 +53,8 @@ public:
 private:
   static uint32_t ComputeHash(ImageURL* aURI,
                               const Maybe<uint64_t>& aBlobSerial,
-                              void* aControlledDocument);
+                              void* aControlledDocument,
+                              const nsACString& isolationKey);
   static void* GetControlledDocumentToken(nsIDOMDocument* aDocument);
 
   RefPtr<ImageURL> mURI;
@@ -61,6 +62,7 @@ private:
   void* mControlledDocument;
   uint32_t mHash;
   bool mIsChrome;
+  nsCString mIsolationKey;
 };
 
 } // namespace image
