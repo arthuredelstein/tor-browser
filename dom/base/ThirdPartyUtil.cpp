@@ -35,6 +35,28 @@ static mozilla::LazyLogModule gThirdPartyLog("thirdPartyUtil");
 #undef LOG
 #define LOG(args)     MOZ_LOG(gThirdPartyLog, mozilla::LogLevel::Debug, args)
 
+// static
+mozIThirdPartyUtil* ThirdPartyUtil::gThirdPartyUtilService = nullptr;
+
+//static
+nsresult
+ThirdPartyUtil::GetFirstPartyHost(nsIChannel* aChannel, nsIDocument* aDocument, nsACString& aResult)
+{
+  if (!gThirdPartyUtilService) {
+    nsresult rv = CallGetService(THIRDPARTYUTIL_CONTRACTID, &gThirdPartyUtilService);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+  nsCOMPtr<nsIURI> isolationURI;
+  nsresult rv = gThirdPartyUtilService->GetFirstPartyIsolationURI(aChannel, aDocument, getter_AddRefs(isolationURI));
+  NS_ENSURE_SUCCESS(rv, rv);
+  if (!isolationURI) {
+    // Isolation is not active.
+    aResult.Truncate();
+    return NS_OK;
+  }
+  return gThirdPartyUtilService->GetFirstPartyHostForIsolation(isolationURI, aResult);
+}
+
 nsresult
 ThirdPartyUtil::Init()
 {
