@@ -80,8 +80,8 @@ EXTRA_JS_MODULES += [
 
 if not CONFIG['TOR_BROWSER_VERSION']:
     EXTRA_JS_MODULES += [
-        'secondscreen/SimpleServiceDiscovery.jsm',
         'secondscreen/RokuApp.jsm',
+        'secondscreen/SimpleServiceDiscovery.jsm',
     ]
 
 EXTRA_PP_JS_MODULES += [
