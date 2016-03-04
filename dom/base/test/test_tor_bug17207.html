@@ -28,7 +28,7 @@ let setPref = function* (key, value) {
 
 // Run a test to see that we don't expose the supported mimeTypes
 // or installed plugins when "privacy.resistFingerprinting" is active.
-spawnTask(function* () {
+spawn_task(function* () {
   yield setPref("privacy.resistFingerprinting", true);
   is(navigator.mimeTypes["application/pdf"], undefined, "Don't reveal mime types");
   is(navigator.mimeTypes.length, 0, "navigator.mimeTypes.length should be 0");
