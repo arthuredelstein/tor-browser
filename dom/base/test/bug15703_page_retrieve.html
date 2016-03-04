@@ -20,7 +20,7 @@ let reportResult = function(mediaSourceURL, message) {
   appendLine("display", mediaSourceURL + " -> " + message);
 };
 
-spawnTask(function* () {
+spawn_task(function* () {
   // Tell the parent tab we are ready to start.
   sendMessage(window.parent, "ready");
   // Receive a mediaSourceURL. In a moment, we will

@@ -70,7 +70,7 @@ let mediaSourceTest = function* (isolationOn, domainA, domainB, createPage, retr
 // ## The main test
 // Run a Task.jsm coroutine that tests various combinations of domains
 // methods, and isolation states for reading and writing mediasource URLs.
-spawnTask(function* () {
+spawn_task(function* () {
   yield setPref("media.mediasource.whitelist", false);
   for (let isolate of [false, true]) {
     for (let domainB of [domain1, domain2]) {

@@ -14,7 +14,7 @@ https://bugs.torproject.org/15703
 
 <script type="text/javascript;version=1.7">
 
-spawnTask(function* () {
+spawn_task(function* () {
   sendMessage(window.parent, "ready");
   let message = yield receiveMessage(window.parent),
       mediaSource = new MediaSource(),
