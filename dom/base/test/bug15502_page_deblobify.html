@@ -14,7 +14,7 @@ https://bugs.torproject.org/15502
 
 <script type="text/javascript;version=1.7">
 
-spawnTask(function* () {
+spawn_task(function* () {
   sendMessage(window.parent, "ready");
   let blobURL = yield receiveMessage(window.parent),
       string;

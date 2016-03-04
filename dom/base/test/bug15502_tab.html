@@ -19,7 +19,7 @@ https://bugs.torproject.org/15502
 let iframe = document.getElementById("child");
 
 let connect = function (sourceObject, destinationObject) {
-  spawnTask(function* () {
+  spawn_task(function* () {
     for (;;) {
       let message = yield receiveMessage(sourceObject);
       sendMessage(destinationObject, message);
@@ -27,7 +27,7 @@ let connect = function (sourceObject, destinationObject) {
   });
 };
 
-spawnTask(function* () {
+spawn_task(function* () {
   sendMessage(window.opener, "ready");
   let firstParentMessage = yield receiveMessage(window.opener);
   iframe.src = firstParentMessage;

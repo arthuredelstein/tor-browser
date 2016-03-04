@@ -15,7 +15,7 @@ https://bugs.torproject.org/15502
 <pre id="test">
 <script type="text/javascript;version=1.7">
 
-spawnTask(function* () {
+spawn_task(function* () {
   sendMessage(window.parent, "ready");
   let blobURL = yield receiveMessage(window.parent),
       result = yield workerIO("bug15502_worker_deblobify.js", blobURL);
