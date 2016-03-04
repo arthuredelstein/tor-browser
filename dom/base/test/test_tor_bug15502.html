@@ -70,7 +70,7 @@ let blobTest = function* (isolationOn, domainA, domainB, blobPage, deblobPage) {
 // ## The main test
 // Run a coroutine that tests various combinations of domains
 // methods, and isolation states for reading and writing blob URLs.
-spawnTask(function* () {
+spawn_task(function* () {
   for (let isolate of [false, true]) {
     for (let domainB of [domain1, domain2]) {
       for (let blob of [page_blob, worker_blob]) {
