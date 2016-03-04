@@ -16,7 +16,6 @@ https://bugs.torproject.org/15564
 <div id="content"></div>
 
 <script class="testbody" type="application/javascript;version=1.7">
-SimpleTest.waitForExplicitFinish();
 
 // __setPref(key, value)__.
 // Set a pref value asynchronously, returning a promise that resolves
@@ -99,7 +98,7 @@ let sharedWorkerTest = function* (isolationOn, domainA, domainB, child_page) {
 // ## The main test
 // Run a coroutine that tests various combinations of domains
 // methods, and isolation states for sharing (or not sharing) SharedWorkers.
-spawnTask(function* () {
+add_task(function* () {
   let domainA = domain1;
   for (let isolate of [false, true]) {
     for (let domainB of [domain1, domain2]) {
@@ -111,7 +110,6 @@ spawnTask(function* () {
        yield sharedWorkerTest(isolate, domainA, domainB, child_page);
     }
   }
-  SimpleTest.finish();
 });
 
 </script>
