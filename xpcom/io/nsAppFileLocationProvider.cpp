@@ -282,8 +282,13 @@ nsAppFileLocationProvider::CloneMozBinDirectory(nsIFile** aLocalFile)
 //----------------------------------------------------------------------------------------
 // GetProductDirectory - Gets the directory which contains the application data folder
 //
+#ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
+// UNIX and WIN   : <App Folder>/../TorBrowser-Data/Browser
+// Mac            : <App Folder>/../../../TorBrowser-Data/Browser
+#else
 // UNIX and WIN   : <App Folder>/TorBrowser/Data/Browser
 // Mac            : <App Folder>/../../TorBrowser/Data/Browser
+#endif
 //----------------------------------------------------------------------------------------
 NS_METHOD
 nsAppFileLocationProvider::GetProductDirectory(nsIFile** aLocalFile,
@@ -300,7 +305,11 @@ nsAppFileLocationProvider::GetProductDirectory(nsIFile** aLocalFile,
   rv = CloneMozBinDirectory(getter_AddRefs(localDir));
   NS_ENSURE_SUCCESS(rv, rv);
 
+#ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
+  int levelsToRemove = 2; // In FF21+, bin dir points to browser subdirectory.
+#else
   int levelsToRemove = 1; // In FF21+, bin dir points to browser subdirectory.
+#endif
 #if defined(XP_MACOSX)
   levelsToRemove += 2;
 #endif
@@ -326,9 +335,14 @@ nsAppFileLocationProvider::GetProductDirectory(nsIFile** aLocalFile,
     return NS_ERROR_FAILURE;
   }
 
+#ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
+  rv = localDir->AppendRelativeNativePath(NS_LITERAL_CSTRING("TorBrowser-Data"
+                                        XPCOM_FILE_PATH_SEPARATOR "Browser"));
+#else
   rv = localDir->AppendRelativeNativePath(NS_LITERAL_CSTRING("TorBrowser"
                                         XPCOM_FILE_PATH_SEPARATOR "Data"
                                         XPCOM_FILE_PATH_SEPARATOR "Browser"));
+#endif
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (aLocal) {

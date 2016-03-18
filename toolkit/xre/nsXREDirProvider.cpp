@@ -1255,11 +1255,21 @@ nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile, bool aLocal)
   NS_ENSURE_ARG_POINTER(aFile);
   nsCOMPtr<nsIFile> localDir;
 
+#ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
+  nsCOMPtr<nsIFile> appRootDir;
+  nsresult rv = GetAppRootDir(getter_AddRefs(appRootDir));
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = appRootDir->GetParent(getter_AddRefs(localDir));
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = localDir->AppendRelativeNativePath(NS_LITERAL_CSTRING("TorBrowser-Data"
+                                     XPCOM_FILE_PATH_SEPARATOR "Browser"));
+#else
   nsresult rv = GetAppRootDir(getter_AddRefs(localDir));
   NS_ENSURE_SUCCESS(rv, rv);
   rv = localDir->AppendRelativeNativePath(NS_LITERAL_CSTRING("TorBrowser"
                                      XPCOM_FILE_PATH_SEPARATOR "Data"
                                      XPCOM_FILE_PATH_SEPARATOR "Browser"));
+#endif
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (aLocal) {
