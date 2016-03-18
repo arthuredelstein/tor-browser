@@ -44,6 +44,8 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/Telemetry.h"
 
+#include "TorFileUtils.h"
+
 #include <stdlib.h>
 
 #ifdef XP_WIN
@@ -1392,36 +1394,18 @@ nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile, bool aLocal)
   NS_ENSURE_ARG_POINTER(aFile);
   nsCOMPtr<nsIFile> localDir;
 
-  nsresult rv = GetAppDir()->Clone(getter_AddRefs(localDir));
+  nsresult rv = GetTorBrowserUserDataDir(getter_AddRefs(localDir));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  int levelsToRemove = 1; // In FF21+, appDir points to browser subdirectory.
-#if defined(XP_MACOSX)
-  levelsToRemove += 2;
-#endif
-  while (localDir && (levelsToRemove > 0)) {
-    // When crawling up the hierarchy, components named "." do not count.
-    nsAutoCString removedName;
-    rv = localDir->GetNativeLeafName(removedName);
-    NS_ENSURE_SUCCESS(rv, rv);
-    bool didRemove = !removedName.Equals(".");
-
-    // Remove a directory component.
-    nsCOMPtr<nsIFile> parentDir;
-    rv = localDir->GetParent(getter_AddRefs(parentDir));
-    NS_ENSURE_SUCCESS(rv, rv);
-    localDir = parentDir;
-    if (didRemove)
-      --levelsToRemove;
-  }
-
-  if (!localDir)
-    return NS_ERROR_FAILURE;
-
-  rv = localDir->AppendRelativeNativePath(NS_LITERAL_CSTRING("TorBrowser"
-                                     XPCOM_FILE_PATH_SEPARATOR "Data"
+#if !defined(ANDROID)
+#ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
+  rv = localDir->AppendNative(NS_LITERAL_CSTRING("Browser"));
+#else
+  rv = localDir->AppendRelativeNativePath(NS_LITERAL_CSTRING("Data"
                                      XPCOM_FILE_PATH_SEPARATOR "Browser"));
+#endif
   NS_ENSURE_SUCCESS(rv, rv);
+#endif
 
   if (aLocal) {
     rv = localDir->AppendNative(NS_LITERAL_CSTRING("Caches"));
@@ -1512,6 +1496,17 @@ nsXREDirProvider::GetUserDataDirectory(nsIFile** aFile, bool aLocal)
 
   localDir.forget(aFile);
   return NS_OK;
+}
+
+nsresult
+nsXREDirProvider::GetTorBrowserUserDataDir(nsIFile* *aFile)
+{
+  NS_ENSURE_ARG_POINTER(aFile);
+  nsCOMPtr<nsIFile> exeFile;
+  bool per = false;
+  nsresult rv = GetFile(XRE_EXECUTABLE_FILE, &per, getter_AddRefs(exeFile));
+  NS_ENSURE_SUCCESS(rv, rv);
+  return TorBrowser_GetUserDataDir(exeFile, aFile);
 }
 
 nsresult
