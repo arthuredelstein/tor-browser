@@ -79,6 +79,7 @@ EXPORTS += [
     'nsUnicharInputStream.h',
     'nsWildCard.h',
     'SpecialSystemDirectory.h',
+    'TorFileUtils.h',
 ]
 
 EXPORTS.mozilla += [
@@ -123,6 +124,7 @@ UNIFIED_SOURCES += [
 
 SOURCES += [
     'nsDirectoryService.cpp',
+    'TorFileUtils.cpp',
 ]
 if CONFIG['CC_TYPE'] == 'msvc':
     # Needed for gDirectoryAtoms.
