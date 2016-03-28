@@ -263,8 +263,11 @@ public:
    * The registered FrameCaptureListeners are stored as WeakPtrs, thus it's the
    * caller's responsibility to keep them alive. Once a registered
    * FrameCaptureListener is destroyed it will be automatically deregistered.
+   * If aReturnPlaceholderData is true, white data is captured instead of the
+   * actual canvas contents.
    */
-  void RegisterFrameCaptureListener(FrameCaptureListener* aListener);
+  void RegisterFrameCaptureListener(FrameCaptureListener* aListener,
+                                    bool aReturnPlaceholderData);
 
   /*
    * Returns true when there is at least one registered FrameCaptureListener
