@@ -2332,8 +2332,6 @@ var gSearchView = {
   _loading: null,
   _listBox: null,
   _emptyNotice: null,
-  _pluginEnableButton: null,
-  _pluginHeader: null,
   _allResultsLink: null,
   _lastQuery: null,
   _lastRemoteTotal: 0,
@@ -2660,6 +2658,8 @@ var gListView = {
   node: null,
   _listBox: null,
   _emptyNotice: null,
+  _pluginEnableButton: null,
+  _pluginHeader: null,
   _type: null,
 
   initialize: function() {
