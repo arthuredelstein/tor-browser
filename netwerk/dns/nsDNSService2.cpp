@@ -774,16 +774,16 @@ nsDNSService::AsyncResolveExtended(const nsACString  &aHostname,
         localDomain = mLocalDomains.GetEntry(aHostname);
     }
 
+    if (mNotifyResolution) {
+        NS_DispatchToMainThread(new NotifyDNSResolution(aHostname));
+    }
+
     PRNetAddr tempAddr;
     if (mDisableDNS) {
         // Allow IP lookups through, but nothing else.
         if (PR_StringToNetAddr(aHostname.BeginReading(), &tempAddr) != PR_SUCCESS) {
             return NS_ERROR_UNKNOWN_PROXY_HOST; // XXX: NS_ERROR_NOT_IMPLEMENTED?
         }
-    }
-
-    if (mNotifyResolution) {
-        NS_DispatchToMainThread(new NotifyDNSResolution(aHostname));
     }
 
     if (!res)
