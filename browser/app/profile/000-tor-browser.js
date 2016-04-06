@@ -88,6 +88,8 @@ pref("browser.search.countryCode", "US"); // The next three prefs disable GeoIP 
 pref("browser.search.region", "US");
 pref("browser.search.geoip.url", "");
 pref("browser.fixup.alternate.enabled", false); // Bug #16783: Prevent .onion fixups
+// Make sure there is no Tracking Protection active in Tor Browser, see: #17898.
+pref("privacy.trackingprotection.pbmode.enabled", false);
 
 // Fingerprinting
 pref("webgl.min_capability_mode", true);
