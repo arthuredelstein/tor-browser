@@ -62,7 +62,7 @@ window.setTimeout(
     isnot(newReadValue, originalValue, "Set a value in permissions db (perhaps in memory).");;
     // If file existed or now exists, get the current time stamp.
     if (permissionsFile.exists()) {
-    	newModifiedTime = permissionsFile.lastModifiedTime;
+      newModifiedTime = permissionsFile.lastModifiedTime;
     }
     // If file was created or modified since we began this test,
     // then permissions db is not memory only. Complain!
