@@ -5276,6 +5276,10 @@ CanvasRenderingContext2D::GetImageDataArray(JSContext* aCx,
   }
 
   if (usePlaceholder) {
+    if (readback) {
+      readback->Unmap();
+    }
+
     memset(data, 0xFF, len.value());
     *aRetval = darray;
     return NS_OK;
