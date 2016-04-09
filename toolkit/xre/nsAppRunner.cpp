@@ -2502,13 +2502,16 @@ static nsresult GetAppRootDir(nsIFile *aAppDir, nsIFile **aAppRootDir)
 static ProfileStatus CheckTorBrowserDataWriteAccess(nsIFile *aAppDir)
 {
   // Check whether we can write to the directory that will contain
-  // TorBrowser-Data, i.e., the directory that is above the application
-  // root directory.
-  nsCOMPtr<nsIFile> appRootDir;
-  nsresult rv = GetAppRootDir(aAppDir, getter_AddRefs(appRootDir));
+  // TorBrowser-Data.
+  nsCOMPtr<nsIFile> tbDataDir;
+  nsXREDirProvider* dirProvider = nsXREDirProvider::GetSingleton();
+  if (!dirProvider)
+    return PROFILE_STATUS_OTHER_ERROR;
+  nsresult rv =
+              dirProvider->GetTorBrowserUserDataDir(getter_AddRefs(tbDataDir));
   NS_ENSURE_SUCCESS(rv, PROFILE_STATUS_OTHER_ERROR);
   nsCOMPtr<nsIFile> tbDataDirParent;
-  rv = appRootDir->GetParent(getter_AddRefs(tbDataDirParent));
+  rv = tbDataDir->GetParent(getter_AddRefs(tbDataDirParent));
   NS_ENSURE_SUCCESS(rv, PROFILE_STATUS_OTHER_ERROR);
   return CheckProfileWriteAccess(tbDataDirParent);
 }
@@ -2639,12 +2642,12 @@ migrateInAppTorBrowserProfile(nsIToolkitProfile *aProfile, nsIFile *aAppDir)
                                         NS_LITERAL_CSTRING("TorBrowser"));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  // Create an nsIFile for the TorBrowser-Data directory (next to the app).
+  // Get an nsIFile for the TorBrowser-Data directory.
   nsCOMPtr<nsIFile> newTBDataDir;
-  rv = appRootDir->GetParent(getter_AddRefs(newTBDataDir));
-  NS_ENSURE_SUCCESS(rv, rv);
-  rv = newTBDataDir->AppendRelativeNativePath(
-                                      NS_LITERAL_CSTRING("TorBrowser-Data"));
+  nsXREDirProvider* dirProvider = nsXREDirProvider::GetSingleton();
+  if (!dirProvider)
+    return NS_ERROR_UNEXPECTED;
+  rv = dirProvider->GetTorBrowserUserDataDir(getter_AddRefs(newTBDataDir));
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Try to migrate the browser profile. If this fails, we return an error
@@ -2677,9 +2680,14 @@ migrateInAppTorBrowserProfile(nsIToolkitProfile *aProfile, nsIFile *aAppDir)
   }
 
   // Try to migrate the UpdateInfo directory.
-  nsAutoCString updateInfoPath(NS_LITERAL_CSTRING("UpdateInfo"));
-  nsresult rv2 = migrateOneTorBrowserDataDir(oldTorBrowserDir, updateInfoPath,
-                                             newTBDataDir, updateInfoPath);
+  nsCOMPtr<nsIFile> newUpdateInfoDir;
+  nsresult rv2 = dirProvider->GetUpdateRootDir(
+                                            getter_AddRefs(newUpdateInfoDir));
+  if (NS_SUCCEEDED(rv2)) {
+    nsAutoCString updateInfoPath(NS_LITERAL_CSTRING("UpdateInfo"));
+    rv2 = migrateOneTorBrowserDataDir(oldTorBrowserDir, updateInfoPath,
+                                      newUpdateInfoDir, NS_LITERAL_CSTRING(""));
+  }
 
   // If all pieces of the migration succeeded, remove the old TorBrowser
   // directory.

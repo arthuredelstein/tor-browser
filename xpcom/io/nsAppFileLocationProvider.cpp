@@ -29,6 +29,7 @@
 #include <sys/param.h>
 #endif
 
+#include "TorFileUtils.h"
 
 // WARNING: These hard coded names need to go away. They need to
 // come from localizable resources
@@ -284,7 +285,8 @@ nsAppFileLocationProvider::CloneMozBinDirectory(nsIFile** aLocalFile)
 //
 #ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
 // UNIX and WIN   : <App Folder>/../TorBrowser-Data/Browser
-// Mac            : <App Folder>/../../../TorBrowser-Data/Browser
+// Mac            : <App Folder>/../../../TorBrowser-Data/Browser OR
+//                  ~/Library/Application Support/TorBrowser-Data/Browser
 #else
 // UNIX and WIN   : <App Folder>/TorBrowser/Data/Browser
 // Mac            : <App Folder>/../../TorBrowser/Data/Browser
@@ -298,49 +300,23 @@ nsAppFileLocationProvider::GetProductDirectory(nsIFile** aLocalFile,
     return NS_ERROR_INVALID_ARG;
   }
 
-  nsresult rv;
+  nsresult rv = NS_ERROR_UNEXPECTED;
   bool exists;
-  nsCOMPtr<nsIFile> localDir;
+  nsCOMPtr<nsIFile> localDir, exeFile;
 
-  rv = CloneMozBinDirectory(getter_AddRefs(localDir));
+  nsCOMPtr<nsIProperties> directoryService(
+                         do_GetService(NS_DIRECTORY_SERVICE_CONTRACTID, &rv));
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = directoryService->Get(XRE_EXECUTABLE_FILE, NS_GET_IID(nsIFile),
+                             getter_AddRefs(exeFile));
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = TorBrowser_GetUserDataDir(exeFile, getter_AddRefs(localDir));
   NS_ENSURE_SUCCESS(rv, rv);
 
 #ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
-  int levelsToRemove = 2; // In FF21+, bin dir points to browser subdirectory.
+  rv = localDir->AppendNative(NS_LITERAL_CSTRING("Browser"));
 #else
-  int levelsToRemove = 1; // In FF21+, bin dir points to browser subdirectory.
-#endif
-#if defined(XP_MACOSX)
-  levelsToRemove += 2;
-#endif
-  while (localDir && (levelsToRemove > 0)) {
-    // When crawling up the hierarchy, components named "." do not count.
-    nsAutoCString removedName;
-    rv = localDir->GetNativeLeafName(removedName);
-    NS_ENSURE_SUCCESS(rv, rv);
-    bool didRemove = !removedName.Equals(".");
-
-    // Remove a directory component.
-    nsCOMPtr<nsIFile> parentDir;
-    rv = localDir->GetParent(getter_AddRefs(parentDir));
-    NS_ENSURE_SUCCESS(rv, rv);
-    localDir = parentDir;
-
-    if (didRemove) {
-      --levelsToRemove;
-    }
-  }
-
-  if (!localDir) {
-    return NS_ERROR_FAILURE;
-  }
-
-#ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
-  rv = localDir->AppendRelativeNativePath(NS_LITERAL_CSTRING("TorBrowser-Data"
-                                        XPCOM_FILE_PATH_SEPARATOR "Browser"));
-#else
-  rv = localDir->AppendRelativeNativePath(NS_LITERAL_CSTRING("TorBrowser"
-                                        XPCOM_FILE_PATH_SEPARATOR "Data"
+  rv = localDir->AppendRelativeNativePath(NS_LITERAL_CSTRING("Data"
                                         XPCOM_FILE_PATH_SEPARATOR "Browser"));
 #endif
   NS_ENSURE_SUCCESS(rv, rv);
