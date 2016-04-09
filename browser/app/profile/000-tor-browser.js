@@ -126,6 +126,7 @@ pref("dom.enable_user_timing", false); // Bug 16336: To hell with this API
 pref("privacy.resistFingerprinting", true);
 pref("dom.event.highrestimestamp.enabled", true); // Bug #17046: "Highres" (but truncated) timestamps prevent uptime leaks
 pref("privacy.suppressModifierKeyEvents", true); // Bug #17009: Suppress ALT and SHIFT events"
+pref("ui.use_standins_for_native_colors", true); // https://bugzilla.mozilla.org/232227
 
 // Third party stuff
 pref("network.cookie.cookieBehavior", 1);
