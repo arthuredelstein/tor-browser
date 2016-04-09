@@ -319,7 +319,7 @@ LoginManager.prototype = {
       throw new Error("This login already exists.");
 
     if (!this._storage)
-      throw "No storage to add login";
+      throw new Error("No storage to add login");
 
     log("Adding login");
     return this._storage.addLogin(login);
@@ -518,7 +518,7 @@ LoginManager.prototype = {
       throw new Error("Invalid hostname");
 
     if (!this._storage)
-      throw "No storage to set login saving enabled";
+      throw new Error("No storage to set login saving enabled");
 
     log("Login saving for", hostname, "now enabled?", enabled);
     return this._storage.setLoginSavingEnabled(hostname, enabled);
