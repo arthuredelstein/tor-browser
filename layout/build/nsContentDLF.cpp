@@ -157,13 +157,12 @@ nsContentDLF::CreateInstance(const char* aCommand,
     nsAutoCString type;
     viewSourceChannel->GetOriginalContentType(type);
     bool knownType =
-      NS_SVGEnabledForChannel(aChannel) &&
-      ((!type.EqualsLiteral(VIEWSOURCE_CONTENT_TYPE) &&
+      (!type.EqualsLiteral(VIEWSOURCE_CONTENT_TYPE) &&
         IsTypeInList(type, gHTMLTypes)) ||
-       nsContentUtils::IsPlainTextType(type) ||
-       IsTypeInList(type, gXMLTypes) ||
-       IsTypeInList(type, gSVGTypes) ||
-       IsTypeInList(type, gXMLTypes));
+      nsContentUtils::IsPlainTextType(type) ||
+      IsTypeInList(type, gXMLTypes) ||
+      (NS_SVGEnabledForChannel(aChannel) && IsTypeInList(type, gSVGTypes)) ||
+      IsTypeInList(type, gXMLTypes);
 
     if (knownType) {
       viewSourceChannel->SetContentType(type);
