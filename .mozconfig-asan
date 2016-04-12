@@ -32,10 +32,3 @@ ac_add_options --disable-crashreporter
 ac_add_options --disable-webrtc
 #ac_add_options --disable-ctypes
 ac_add_options --disable-eme
-# We disable generating the startup cache to avoid crashing during the packaging
-# step due to Ubuntu Lucid being special:
-# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61408.
-# Going this road and not backing out the feature responsible for this seems
-# like the safer way even if it costs a bit start-up speed. But, hey, ASan
-# builds are already slower.
-ac_add_options --disable-startupcache
