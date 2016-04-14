@@ -682,9 +682,13 @@ function isUsableAddon(aAddon) {
       aAddon.signedState != AddonManager.SIGNEDSTATE_SYSTEM) {
     return false;
   }
-  // temporary and system add-ons do not require signing
+  // Temporary and system add-ons do not require signing. Neither do Torbutton
+  // nor TorLauncher nor EFF's HTTPS-Everywhere.
   if ((aAddon._installLocation.name != KEY_APP_SYSTEM_DEFAULTS &&
        aAddon._installLocation.name != KEY_APP_TEMPORARY) &&
+       aAddon.id != "torbutton@torproject.org" &&
+       aAddon.id != "tor-launcher@torproject.org" &&
+       aAddon.id != "https-everywhere-eff@eff.org" &&
        mustSign(aAddon.type)) {
     if (aAddon.signedState <= AddonManager.SIGNEDSTATE_MISSING)
       return false;
@@ -3285,7 +3289,12 @@ this.XPIProvider = {
           continue;
         }
 
+        // Make sure Torbutton, TorLauncher and EFF's HTTPS-Everywhere are still
+        // working after an update.
         if (mustSign(addon.type) &&
+            addon.id != "torbutton@torproject.org" &&
+            addon.id != "tor-launcher@torproject.org" &&
+            addon.id != "https-everywhere-eff@eff.org" &&
             addon.signedState <= AddonManager.SIGNEDSTATE_MISSING) {
           logger.warn("Refusing to install staged add-on " + id + " with signed state " + addon.signedState);
           seenFiles.push(stageDirEntry.leafName);
