@@ -207,13 +207,23 @@ function loadView(aViewId) {
   }
 }
 
+// This function is the central check point to decide whether to show a warning
+// about unsigned extensions or not. We want those warnings but only for
+// extensions we don't distribute.
 function isCorrectlySigned(aAddon) {
   // temporary add-ons do not require signing
   if (aAddon.scope == AddonManager.SCOPE_TEMPORARY)
       return true;
-  if (aAddon.signedState <= AddonManager.SIGNEDSTATE_MISSING)
+  if ((aAddon.signedState <= AddonManager.SIGNEDSTATE_MISSING) &&
+      !(aAddon.id == "torbutton@torproject.org" ||
+        aAddon.id == "tor-launcher@torproject.org" ||
+        aAddon.id == "https-everywhere-eff@eff.org"))
     return false;
-  if (aAddon.foreignInstall && aAddon.signedState < AddonManager.SIGNEDSTATE_SIGNED)
+  if (aAddon.foreignInstall &&
+      aAddon.signedState < AddonManager.SIGNEDSTATE_SIGNED &&
+      !(aAddon.id == "torbutton@torproject.org" ||
+        aAddon.id == "tor-launcher@torproject.org" ||
+        aAddon.id == "https-everywhere-eff@eff.org"))
     return false;
   return true;
 }
