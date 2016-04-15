@@ -80,6 +80,7 @@ browser/components/translation/**
 browser/components/uitour/**
 browser/experiments/**
 browser/extensions/pdfjs/**
+browser/fuel/**
 browser/locales/**
 browser/modules/**
 

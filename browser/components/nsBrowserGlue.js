@@ -1077,7 +1077,6 @@ BrowserGlue.prototype = {
     // passively.
     Services.ppmm.loadProcessScript("resource://pdf.js/pdfjschildbootstrap.js", true);
 
-<<<<<<< HEAD
 #ifdef NIGHTLY_BUILD
     // Registering Shumway bootstrap script the child processes.
     Services.ppmm.loadProcessScript("chrome://shumway/content/bootstrap-content.js", true);
@@ -1093,17 +1092,6 @@ BrowserGlue.prototype = {
       let temp = {};
       Cu.import("resource:///modules/WindowsJumpLists.jsm", temp);
       temp.WinTaskbarJumpList.startup();
-=======
-    if (AppConstants.platform == "win") {
-      // For Windows 7, initialize the jump list module.
-      const WINTASKBAR_CONTRACTID = "@mozilla.org/windows-taskbar;1";
-      if (WINTASKBAR_CONTRACTID in Cc &&
-          Cc[WINTASKBAR_CONTRACTID].getService(Ci.nsIWinTaskbar).available) {
-        let temp = {};
-        Cu.import("resource:///modules/WindowsJumpLists.jsm", temp);
-        temp.WinTaskbarJumpList.startup();
-      }
->>>>>>> d3e1f74... Bug 1250046 - Remove Shumway core files. r=till
     }
 #endif
 
