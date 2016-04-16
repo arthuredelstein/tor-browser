@@ -54,7 +54,8 @@ ImageCacheKey::ImageCacheKey(nsIURI* aURI, nsINode* aNode)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  /* rv = */ ThirdPartyUtil::GetFirstPartyHost(aNode, mIsolationKey);
+  nsresult rv = ThirdPartyUtil::GetFirstPartyHost(aNode, mIsolationKey);
+  mIsIsolated = NS_SUCCEEDED(rv);
 
   if (URISchemeIs(mURI, "blob")) {
     mBlobSerial = BlobSerial(mURI, mIsolationKey);
@@ -70,7 +71,8 @@ ImageCacheKey::ImageCacheKey(ImageURL* aURI, nsINode* aNode)
 {
   MOZ_ASSERT(aURI);
 
-  /* rv = */ ThirdPartyUtil::GetFirstPartyHost(aNode, mIsolationKey);
+  nsresult rv = ThirdPartyUtil::GetFirstPartyHost(aNode, mIsolationKey);
+  mIsIsolated = NS_SUCCEEDED(rv);
 
   if (URISchemeIs(mURI, "blob")) {
     mBlobSerial = BlobSerial(mURI, mIsolationKey);
