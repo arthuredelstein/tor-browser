@@ -268,6 +268,9 @@ pref("security.tls.unrestricted_rc4_fallback", false);
 // Enforce certificate pinning, see: https://bugs.torproject.org/16206
 pref("security.cert_pinning.enforcement_level", 2);
 
+// Enforce SHA1 deprecation, see: bug 18042.
+pref("security.pki.sha1_enforcement_level", 2);
+
 // Workaround for https://bugs.torproject.org/13579. Progress on
 // `about:downloads` is only shown if the following preference is set to `true`
 // in case the download panel got removed from the toolbar.
