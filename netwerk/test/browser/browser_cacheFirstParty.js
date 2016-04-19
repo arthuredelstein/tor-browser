@@ -106,10 +106,12 @@ let privacyPref = "privacy.thirdparty.isolate",
     duplicatedDomains = [].concat(domains, domains),
     // We will check cache for example.net content from
     // iframe, link (css), script, img, object, embed, xhr, audio, video,
-    // track, favicon
+    // track, favicon, fetch, request
     suffixes = ["iframe.html", "link.css", "script.js", "img.png", "object.png",
                 "embed.png", "xhr.html", "worker.xhr.html", "audio.ogg",
-                "video.ogv", "track.vtt", "favicon.ico" ];
+                "video.ogv", "track.vtt", "favicon.ico",
+                "fetch.html", "worker.fetch.html",
+                "request.html", "worker.request.html"];
 
 // __checkCachePopulation(pref, numberOfDomains)__.
 // Check if the number of entries found in the cache for each
@@ -120,6 +122,8 @@ let checkCachePopulation = function* (pref, numberOfDomains) {
   // Collect cache data.
   let data = yield cacheDataForContext(LoadContextInfo.default, 2000);
   data = data.concat(yield cacheDataForContext(LoadContextInfo.private, 2000));
+  // `fetch` is cached in storage where both private and anonymous flags are set to true.
+  data = data.concat(yield cacheDataForContext(LoadContextInfo.custom(true, true, {appid : null}), 2000));
 /*
   // Uncomment to log all of the cache entries (useful for debugging).
   for (let cacheEntry of data) {
