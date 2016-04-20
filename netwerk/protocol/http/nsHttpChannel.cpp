@@ -2933,7 +2933,7 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
     nsCOMPtr<nsIURI> firstPartyIsolationURI;
     nsCOMPtr<mozIThirdPartyUtil> thirdPartySvc
          = do_GetService(THIRDPARTYUTIL_CONTRACTID);
-    rv = thirdPartySvc->GetFirstPartyIsolationURI(this, nullptr,
+    rv = thirdPartySvc->GetFirstPartyIsolationURI(this, mLoadInfo->LoadingNode(),
                                        getter_AddRefs(firstPartyIsolationURI));
     if (NS_SUCCEEDED(rv) && firstPartyIsolationURI) {
         thirdPartySvc->GetFirstPartyHostForIsolation(firstPartyIsolationURI,
