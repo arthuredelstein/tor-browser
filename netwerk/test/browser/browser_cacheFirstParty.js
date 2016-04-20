@@ -25,6 +25,8 @@ Cu.import("resource://gre/modules/Task.jsm");
 let tempScope = {}; // Avoid 'leaked window property' error.
 Cu.import("resource://gre/modules/LoadContextInfo.jsm", tempScope);
 let LoadContextInfo = tempScope.LoadContextInfo;
+let thirdPartyUtil = Cc["@mozilla.org/thirdpartyutil;1"]
+                       .getService(Ci.mozIThirdPartyUtil);
 
 // __listen(target, eventType, timeoutMs, useCapture)__.
 // Calls addEventListener on target, with the given eventType.
@@ -144,10 +146,43 @@ let checkCachePopulation = function* (pref, numberOfDomains) {
   }
 };
 
+// __observeChannels(onChannel)__.
+// onChannel is called for every http channel request. Returns a zero-arg stop() function.
+let observeChannels = function (onChannel) {
+  let channelObserver = {
+    observe: function(subject, topic, data) {
+      if (topic === "http-on-modify-request") {
+        onChannel(subject.QueryInterface(Components.interfaces.nsIHttpChannel));
+      }
+    }
+  };
+  Services.obs.addObserver(channelObserver, "http-on-modify-request", /* ownsWeak */ false);
+  return function () { Services.obs.removeObserver(channelObserver, "http-on-modify-request"); };
+};
+
+// __channelFirstPartyHost(aChannel)__.
+// Returns the first-party host for the given channel.
+let channelFirstPartyHost = function (aChannel) {
+  let channel = aChannel.QueryInterface(Ci.nsIChannel),
+      firstPartyURI = thirdPartyUtil.getFirstPartyURIFromChannel(channel, true)
+                                    .QueryInterface(Ci.nsIURI);
+  return thirdPartyUtil.getFirstPartyHostForIsolation(firstPartyURI);
+}
+
 // The main testing function.
 // Launch a Task.jsm coroutine so we can open tabs and wait for each of them to open,
 // one by one.
 add_task(function* () {
+  // Here we check to see if each channel has the correct first party assigned.
+  // All "thirdPartyChild" resources are loaded from a third-party
+  // "example.net" host, but they should all report either an "example.com"
+  // or an "example.org" first-party domain.
+  let stopObservingChannels = observeChannels(function (channel) {
+    if (channel.originalURI.spec.contains("thirdPartyChild")) {
+      let firstPartyHost = channelFirstPartyHost(channel);
+      ok(firstPartyHost === "example.com" || firstPartyHost === "example.org", "first party is " + firstPartyHost);
+    }
+  });
   // Keep original pref value for restoring after the tests.
   let originalPrefValue = Services.prefs.getIntPref(privacyPref);
   // Test the pref with both values: 2 (isolating by first party) or 0 (not isolating)
@@ -169,6 +204,7 @@ add_task(function* () {
     // Clean up by removing tabs.
     tabs.forEach(tab => gBrowser.removeTab(tab));
   }
+  stopObservingChannels();
   // Restore the pref to its original value.
   Services.prefs.setIntPref(privacyPref, originalPrefValue);
 });
