@@ -543,23 +543,27 @@ ThirdPartyUtil::GetFirstPartyURIInternal(nsIChannel *aChannel,
 
   // Favicons, or other items being loaded in chrome that belong
   // to a particular web site should be assigned that site's first party.
-  if (aNode && aNode->IsElement() && aNode->OwnerDoc() &&
-      nsContentUtils::IsChromeDoc(aNode->OwnerDoc())) {
-    nsTArray<nsINode*> nodeAncestors;
-    nsContentUtils::GetAncestors(aNode, nodeAncestors);
-    for (nsINode* nodeAncestor : nodeAncestors) {
-      if (nodeAncestor->IsElement()) {
-        nsString firstparty;
-        nodeAncestor->AsElement()->GetAttribute(NS_LITERAL_STRING("firstparty"), firstparty);
-        if (!firstparty.IsEmpty()) {
-          nsCOMPtr<nsIURI> tempURI;
-          rv = NS_NewURI(getter_AddRefs(tempURI), firstparty);
-          if (rv != NS_OK) {
-            return rv;
-          } else {
-            NS_ADDREF(*aOutput = tempURI);
-            return NS_OK;
-          }
+  // If the originating node has a "firstparty" attribute
+  // containing a URI string, then it is returned.
+  nsCOMPtr<nsINode> node = aNode;
+  if (!node && aChannel) {
+    if (nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo()) {
+      node = loadInfo->LoadingNode();
+    }
+  }
+  if (node && node->IsElement() && node->OwnerDoc() &&
+      nsContentUtils::IsChromeDoc(node->OwnerDoc())) {
+    if (node->IsElement()) {
+      nsString firstparty;
+      node->AsElement()->GetAttribute(NS_LITERAL_STRING("firstparty"), firstparty);
+      if (!firstparty.IsEmpty()) {
+        nsCOMPtr<nsIURI> tempURI;
+        rv = NS_NewURI(getter_AddRefs(tempURI), firstparty);
+        if (rv != NS_OK) {
+          return rv;
+        } else {
+          NS_ADDREF(*aOutput = tempURI);
+          return NS_OK;
         }
       }
     }
