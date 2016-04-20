@@ -543,10 +543,16 @@ ThirdPartyUtil::GetFirstPartyURIInternal(nsIChannel *aChannel,
 
   // Favicons, or other items being loaded in chrome that belong
   // to a particular web site should be assigned that site's first party.
-  if (aNode && aNode->IsElement() && aNode->OwnerDoc() &&
-      nsContentUtils::IsChromeDoc(aNode->OwnerDoc())) {
+  nsCOMPtr<nsINode> node = aNode;
+  if (!node && aChannel) {
+    if (nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo()) {
+      node = loadInfo->LoadingNode();
+    }
+  }
+  if (node && node->IsElement() && node->OwnerDoc() &&
+      nsContentUtils::IsChromeDoc(node->OwnerDoc())) {
     nsTArray<nsINode*> nodeAncestors;
-    nsContentUtils::GetAncestors(aNode, nodeAncestors);
+    nsContentUtils::GetAncestors(node, nodeAncestors);
     for (nsINode* nodeAncestor : nodeAncestors) {
       if (nodeAncestor->IsElement()) {
         nsString firstparty;
