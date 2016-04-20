@@ -8,6 +8,9 @@
 pref("browser.search.update", false);
 pref("browser.rights.3.shown", true);
 pref("startup.homepage_welcome_url", "");
+pref("startup.homepage_welcome_url.additional", "");
+// Not set Windows 10 users would get a special introduction on first start.
+pref("browser.usedOnWindows10", true);
 
 // Set a generic, default URL that will be opened in a tab after an update.
 // Typically, this will not be used; instead, the <update> element within
