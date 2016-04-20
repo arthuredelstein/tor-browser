@@ -29,9 +29,6 @@ static const mozilla::Module::ContractIDEntry kPresentationDeviceProviderContrac
 };
 
 static const mozilla::Module::CategoryEntry kPresentationDeviceProviderCategories[] = {
-#if defined(MOZ_WIDGET_COCOA) || defined(MOZ_WIDGET_ANDROID)
-  { PRESENTATION_DEVICE_PROVIDER_CATEGORY, "MulticastDNSDeviceProvider", MULTICAST_DNS_PROVIDER_CONTRACT_ID },
-#endif
   { nullptr }
 };
 
