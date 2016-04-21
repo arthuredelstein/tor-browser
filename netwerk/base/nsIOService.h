@@ -133,6 +133,7 @@ private:
                                                      nsIChannel** result);
 
     nsresult SpeculativeConnectInternal(nsIURI *aURI,
+                                        nsIDOMNode *aLoadingNode,
                                         nsIInterfaceRequestor *aCallbacks,
                                         bool aAnonymous);
 

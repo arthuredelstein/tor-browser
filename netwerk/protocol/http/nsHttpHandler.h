@@ -596,6 +596,7 @@ private:
 
 private:
     nsresult SpeculativeConnectInternal(nsIURI *aURI,
+                                        nsIDOMNode* aLoadingNode,
                                         nsIInterfaceRequestor *aCallbacks,
                                         bool anonymous);
 };

@@ -2126,6 +2126,7 @@ nsHttpHandler::Observe(nsISupports *subject,
 
 nsresult
 nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
+                                          nsIDOMNode *aLoadingNode,
                                           nsIInterfaceRequestor *aCallbacks,
                                           bool anonymous)
 {
@@ -2215,16 +2216,18 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
 
 NS_IMETHODIMP
 nsHttpHandler::SpeculativeConnect(nsIURI *aURI,
+                                  nsIDOMNode* aLoadingNode,
                                   nsIInterfaceRequestor *aCallbacks)
 {
-    return SpeculativeConnectInternal(aURI, aCallbacks, false);
+    return SpeculativeConnectInternal(aURI, aLoadingNode, aCallbacks, false);
 }
 
 NS_IMETHODIMP
 nsHttpHandler::SpeculativeAnonymousConnect(nsIURI *aURI,
+                                           nsIDOMNode* aLoadingNode,
                                            nsIInterfaceRequestor *aCallbacks)
 {
-    return SpeculativeConnectInternal(aURI, aCallbacks, true);
+    return SpeculativeConnectInternal(aURI, aLoadingNode, aCallbacks, true);
 }
 
 void

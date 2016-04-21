@@ -6,9 +6,10 @@
 #include "nsISupports.idl"
 
 interface nsIURI;
+interface nsIDOMNode;
 interface nsIInterfaceRequestor;
 
-[scriptable, uuid(d74a17ac-5b8a-4824-a309-b1f04a3c4aed)]
+[scriptable, uuid(445b5017-be37-4eae-b563-efc7a295b8ab)]
 interface nsISpeculativeConnect : nsISupports
 {
     /**
@@ -26,9 +27,11 @@ interface nsISpeculativeConnect : nsISupports
      *
      */
     void speculativeConnect(in nsIURI aURI,
+                            in nsIDOMNode aLoadingNode,
                             in nsIInterfaceRequestor aCallbacks);
 
     void speculativeAnonymousConnect(in nsIURI aURI,
+                                     in nsIDOMNode aLoadingNode,
                                      in nsIInterfaceRequestor aCallbacks);
 };
 

@@ -734,9 +734,9 @@ NeckoParent::RecvSpeculativeConnect(const URIParams& aURI, const bool& aAnonymou
   nsCOMPtr<nsIURI> uri = DeserializeURI(aURI);
   if (uri && speculator) {
     if (aAnonymous) {
-      speculator->SpeculativeAnonymousConnect(uri, nullptr);
+      speculator->SpeculativeAnonymousConnect(uri, nullptr, nullptr);
     } else {
-      speculator->SpeculativeConnect(uri, nullptr);
+      speculator->SpeculativeConnect(uri, nullptr, nullptr);
     }
 
   }

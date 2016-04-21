@@ -179,7 +179,7 @@ public:
         if (!uri) {
             return;
         }
-        specConn->SpeculativeConnect(uri, nullptr);
+        specConn->SpeculativeConnect(uri, nullptr, nullptr);
     }
 };
 

@@ -1823,9 +1823,9 @@ IOServiceProxyCallback::OnProxyAvailable(nsICancelable *request, nsIChannel *cha
     nsLoadFlags loadFlags = 0;
     channel->GetLoadFlags(&loadFlags);
     if (loadFlags & nsIRequest::LOAD_ANONYMOUS) {
-        speculativeHandler->SpeculativeAnonymousConnect(uri, mCallbacks);
+        speculativeHandler->SpeculativeAnonymousConnect(uri, nullptr, mCallbacks);
     } else {
-        speculativeHandler->SpeculativeConnect(uri, mCallbacks);
+        speculativeHandler->SpeculativeConnect(uri, nullptr, mCallbacks);
     }
 
     return NS_OK;
@@ -1833,6 +1833,7 @@ IOServiceProxyCallback::OnProxyAvailable(nsICancelable *request, nsIChannel *cha
 
 nsresult
 nsIOService::SpeculativeConnectInternal(nsIURI *aURI,
+                                        nsIDOMNode *aLoadingNode,
                                         nsIInterfaceRequestor *aCallbacks,
                                         bool aAnonymous)
 {
@@ -1859,7 +1860,7 @@ nsIOService::SpeculativeConnectInternal(nsIURI *aURI,
     // the systemPrincipal as the loadingPrincipal for this channel.
     nsCOMPtr<nsIChannel> channel;
     rv = NewChannelFromURI2(aURI,
-                            nullptr, // aLoadingNode,
+                            aLoadingNode,
                             systemPrincipal,
                             nullptr, //aTriggeringPrincipal,
                             nsILoadInfo::SEC_NORMAL,
@@ -1886,16 +1887,18 @@ nsIOService::SpeculativeConnectInternal(nsIURI *aURI,
 
 NS_IMETHODIMP
 nsIOService::SpeculativeConnect(nsIURI *aURI,
+                                nsIDOMNode *aLoadingNode,
                                 nsIInterfaceRequestor *aCallbacks)
 {
-    return SpeculativeConnectInternal(aURI, aCallbacks, false);
+    return SpeculativeConnectInternal(aURI, aLoadingNode, aCallbacks, false);
 }
 
 NS_IMETHODIMP
 nsIOService::SpeculativeAnonymousConnect(nsIURI *aURI,
+                                         nsIDOMNode *aLoadingNode,
                                          nsIInterfaceRequestor *aCallbacks)
 {
-    return SpeculativeConnectInternal(aURI, aCallbacks, true);
+    return SpeculativeConnectInternal(aURI, aLoadingNode, aCallbacks, true);
 }
 
 void

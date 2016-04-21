@@ -9734,9 +9734,9 @@ nsDocument::MaybePreconnect(nsIURI* aOrigURI, mozilla::CORSMode aCORSMode)
   }
 
   if (aCORSMode == CORS_ANONYMOUS) {
-    speculator->SpeculativeAnonymousConnect(uri, nullptr);
+    speculator->SpeculativeAnonymousConnect(uri, this, nullptr);
   } else {
-    speculator->SpeculativeConnect(uri, nullptr);
+    speculator->SpeculativeConnect(uri, this, nullptr);
   }
 }
 
