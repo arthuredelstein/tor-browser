@@ -202,6 +202,8 @@ pref("devtools.debugger.chrome-debugging-host", "127.0.0.1");
 // is |true|. This helps to avoid confusion e.g. in case the browser is
 // sandboxed. See bug 17502 for details.
 pref("browser.download.forbid_open_with", false);
+// Disable mozTCPSocket for sure (bug 18863)
+pref("dom.mozTCPSocket.enabled", false);
 
 // Security slider
 pref("svg.in-content.enabled", true);
