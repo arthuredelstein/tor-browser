@@ -175,6 +175,9 @@ pref("plugin.state.flash", 1);
 pref("plugins.hide_infobar_for_missing_plugin", true);
 pref("plugins.hideMissingPluginsNotification", true);
 pref("media.peerconnection.enabled", false); // Disable WebRTC interfaces
+// Disables media devices but only if `media.peerconnection.enabled` is set to
+// `false` as well. (see bug 16328 for this defense-in-depth measure)
+pref("media.navigator.enabled", false);
 // GMPs: We make sure they don't show up on the Add-on panel and confuse users.
 // And the external update/donwload server must not get pinged. We apply a
 // clever solution for https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=769716.
