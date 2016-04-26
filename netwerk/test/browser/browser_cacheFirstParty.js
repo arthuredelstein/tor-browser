@@ -113,7 +113,8 @@ let privacyPref = "privacy.thirdparty.isolate",
                 "embed.png", "xhr.html", "worker.xhr.html", "audio.ogg",
                 "video.ogv", "track.vtt", "favicon.ico",
                 "fetch.html", "worker.fetch.html",
-                "request.html", "worker.request.html"];
+                "request.html", "worker.request.html",
+                "import.js"];
 
 // __checkCachePopulation(pref, numberOfDomains)__.
 // Check if the number of entries found in the cache for each
