@@ -382,7 +382,7 @@ AppendToLibPath(const char *pathToAppend)
     // Leak the string because that is required by PR_SetEnv.
     char *s = Smprintf("%s=%s", LD_LIBRARY_PATH_ENVVAR_NAME, pathToAppend).release();
     PR_SetEnv(s);
-  } else if (!strstr(pathValue, pathToAppend)) {
+  } else {
     // Leak the string because that is required by PR_SetEnv.
     char *s = Smprintf("%s=%s" PATH_SEPARATOR "%s",
                        LD_LIBRARY_PATH_ENVVAR_NAME, pathToAppend, pathValue).release();
