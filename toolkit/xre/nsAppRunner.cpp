@@ -2756,6 +2756,29 @@ SelectProfile(nsIProfileLock* *aResult, nsIToolkitProfileService* aProfileSvc,
   }
 
   nsCOMPtr<nsIFile> lf = GetFileFromEnv("XRE_PROFILE_PATH");
+#ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
+  // If we are transitioning away from an embedded profile, ignore the
+  // XRE_PROFILE_PATH value if it matches the old default profile location.
+  // This ensures that a new default profile will be created immediately
+  // after applying an update and that our migration code will then be
+  // executed.
+  if (lf) {
+    nsCOMPtr<nsIFile> oldTorProfileDir;
+    nsresult rv = GetAppRootDir(aAppDir, getter_AddRefs(oldTorProfileDir));
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = oldTorProfileDir->AppendRelativeNativePath(
+                     NS_LITERAL_CSTRING("TorBrowser" XPCOM_FILE_PATH_SEPARATOR
+                     "Data" XPCOM_FILE_PATH_SEPARATOR
+                     "Browser" XPCOM_FILE_PATH_SEPARATOR "profile.default"));
+    NS_ENSURE_SUCCESS(rv, rv);
+    bool isOldProfile = false;
+    rv = lf->Equals(oldTorProfileDir, &isOldProfile);
+    NS_ENSURE_SUCCESS(rv, rv);
+    if (isOldProfile)
+      lf = nullptr; // Ignore this XRE_PROFILE_PATH value.
+  }
+#endif
+
   if (lf) {
     nsCOMPtr<nsIFile> localDir =
       GetFileFromEnv("XRE_PROFILE_LOCAL_PATH");
