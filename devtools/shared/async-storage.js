@@ -57,7 +57,12 @@ module.exports = (function() {
       var store = transaction.objectStore(STORENAME);
       onsuccess(store);
     } else {
-      var openreq = indexedDB.open(DBNAME, DBVERSION);
+      var openreq;
+      try {
+        openreq = indexedDB.open(DBNAME, DBVERSION);
+      } catch (e) {
+        onerror();
+      }
       openreq.onerror = function withStoreOnError() {
         onerror();
       };
