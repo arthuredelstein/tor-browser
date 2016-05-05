@@ -25,7 +25,14 @@ const IDB = {
   open: function () {
     let deferred = promise.defer();
 
-    let request = indexedDB.open(IDB.databaseName, 5);
+    let request;
+    try {
+      request = indexedDB.open(IDB.databaseName, 5);
+    } catch (e) {
+      deferred.reject("Unable to use indexedDB");
+      return deferred.promise;
+    }
+    
     request.onerror = function(event) {
       deferred.reject("Unable to open AppProjects indexedDB: " +
                       this.error.name + " - " + this.error.message );
