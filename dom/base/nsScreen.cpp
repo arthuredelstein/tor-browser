@@ -166,25 +166,21 @@ nsScreen::Orientation() const
 void
 nsScreen::GetMozOrientation(nsString& aOrientation) const
 {
-  if (ShouldResistFingerprinting()) {
+  switch (mScreenOrientation->DeviceType()) {
+  case OrientationType::Portrait_primary:
+    aOrientation.AssignLiteral("portrait-primary");
+    break;
+  case OrientationType::Portrait_secondary:
+    aOrientation.AssignLiteral("portrait-secondary");
+    break;
+  case OrientationType::Landscape_primary:
     aOrientation.AssignLiteral("landscape-primary");
-  } else {
-    switch (mScreenOrientation->DeviceType()) {
-    case OrientationType::Portrait_primary:
-      aOrientation.AssignLiteral("portrait-primary");
-      break;
-    case OrientationType::Portrait_secondary:
-      aOrientation.AssignLiteral("portrait-secondary");
-      break;
-    case OrientationType::Landscape_primary:
-      aOrientation.AssignLiteral("landscape-primary");
-      break;
-    case OrientationType::Landscape_secondary:
-      aOrientation.AssignLiteral("landscape-secondary");
-      break;
-    default:
-      MOZ_CRASH("Unacceptable screen orientation type.");
-    }
+    break;
+  case OrientationType::Landscape_secondary:
+    aOrientation.AssignLiteral("landscape-secondary");
+    break;
+  default:
+    MOZ_CRASH("Unacceptable screen orientation type.");
   }
 }
 
