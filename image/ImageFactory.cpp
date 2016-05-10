@@ -98,8 +98,10 @@ ImageFactory::CreateImage(nsIRequest* aRequest,
     nsCOMPtr<nsIChannel> channel(do_QueryInterface(aRequest));
     isBlocked = !NS_SVGEnabledForChannel(channel);
     if (!isBlocked && channel && !NS_SVGEnabledForChannel(nullptr)) {
-      // Special case for favicons: block this image load if SVGs are
-      // disallowed from content and if this image load originated from the
+      // This SVG was not blocked based on the channel but SVGs are
+      // disallowed from content. Check some special cases.
+
+      // For favicons, block this SVG image load if it originated from the
       // favicon xul:image node within a tab.
       nsCOMPtr<nsILoadInfo> loadInfo;
       nsresult rv = channel->GetLoadInfo(getter_AddRefs(loadInfo));
@@ -111,6 +113,17 @@ ImageFactory::CreateImage(nsIRequest* aRequest,
             nsAutoString anonid;
             elem->GetAttribute(NS_LITERAL_STRING("anonid"), anonid);
             isBlocked = anonid.EqualsLiteral("tab-icon-image");
+
+            if (!isBlocked) {
+              // For the Page Info "Media" tab, block this SVG image load if
+              // it originated from a node within a chrome document that has
+              // an id of "thepreviewimage".
+              if (nsContentUtils::IsChromeDoc(node->OwnerDoc())) {
+                nsAutoString loadingID;
+                elem->GetId(loadingID);
+                isBlocked = loadingID.EqualsLiteral("thepreviewimage");
+              }
+            }
           }
         }
       }
