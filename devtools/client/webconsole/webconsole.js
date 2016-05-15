@@ -3029,6 +3029,11 @@ JSTerm.prototype = {
     this.history = [];
     this.historyIndex = this.historyPlaceHolder = 0;
 
+    if (!Services.prefs.getBoolPref('dom.indexedDB.enabled')) {
+      // indexedDB is unavailable, so we can't load the console history
+      this.historyLoaded = Promise.reject(new Error("history unavailable"));
+      return;
+    }
     this.historyLoaded = asyncStorage.getItem("webConsoleHistory").then(value => {
       if (Array.isArray(value)) {
         // Since it was gotten asynchronously, there could be items already in
@@ -3065,6 +3070,10 @@ JSTerm.prototype = {
    *          Resolves once the changes have been persisted.
    */
   storeHistory: function() {
+    if (!Services.prefs.getBoolPref('dom.indexedDB.enabled')) {
+      // indexedDB is unavailable, so we can't store the console history
+      return;
+    }
     return asyncStorage.setItem("webConsoleHistory", this.history);
   },
 
