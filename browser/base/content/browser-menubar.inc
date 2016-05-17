@@ -500,10 +500,12 @@
                         key="key_openAddons"
                         command="Tools:Addons"/>
 
+#ifdef MOZ_LOOP
               <menuitem id="menu_openLoop"
                         label="&loopMenuItem.label;"
                         accesskey = "&loopMenuItem.accesskey;"
                         oncommand="LoopUI.togglePanel();"/>
+#endif
 
               <!-- only one of sync-setup, sync-syncnowitem or sync-reauthitem will be showing at once -->
               <menuitem id="sync-setup"
