@@ -54,3 +54,4 @@ ac_add_options --disable-tests
 # (Apart from that there is no Adobe CRM module for OS X right now)
 ac_add_options --disable-eme
 # ac_add_options --disable-ctypes
+ac_add_options --disable-loop
