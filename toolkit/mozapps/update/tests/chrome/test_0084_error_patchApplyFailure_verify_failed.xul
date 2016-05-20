@@ -43,7 +43,7 @@ function runTest() {
                     state: STATE_PENDING};
   let patches = getLocalPatchString(patchProps);
   patchProps = {url: slowDownloadURL,
-                size: "1234",
+                hash: "1234cd43a1c77e30191c53a329a3f99d",
                 selected: "false"};
   patches += getLocalPatchString(patchProps);
   let updateProps = {isCompleteUpdate: "false"};

@@ -107,22 +107,22 @@ function handleRequest(aRequest, aResponse) {
     return;
   }
 
-  let size;
+  let hash;
   let patches = "";
   let url = params.badURL ? BAD_SERVICE_URL : SERVICE_URL;
   if (!params.partialPatchOnly) {
-    size = SIZE_SIMPLE_MAR + (params.invalidCompleteSize ? "1" : "");
+    hash = SHA512_HASH_SIMPLE_MAR + (params.invalidCompleteHash ? "e" : "");
     let patchProps = {type: "complete",
                       url: url,
-                      size: size};
+                      hash: hash};
     patches += getRemotePatchString(patchProps);
   }
 
   if (!params.completePatchOnly) {
-    size = SIZE_SIMPLE_MAR + (params.invalidPartialSize ? "1" : "");
+    hash = SHA512_HASH_SIMPLE_MAR + (params.invalidPartialHash ? "e" : "");
     let patchProps = {type: "partial",
                       url: url,
-                      size: size};
+                      hash: hash};
     patches += getRemotePatchString(patchProps);
   }
 
