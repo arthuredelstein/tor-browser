@@ -264,6 +264,7 @@ var ServerLoggingListener = Class({
    * https://craig.is/writing/chrome-logger/techspecs
    */
   parse: function(header, value) {
+    dump("called parse('" + header + "', '" + value + "')\n");
     let data;
 
     try {
