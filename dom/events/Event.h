@@ -204,7 +204,7 @@ public:
     return mEvent->mFlags.mIsSynthesizedForTests;
   }
 
-  double TimeStamp() const;
+  virtual double TimeStamp() const;
 
   EventTarget* GetOriginalTarget() const;
   EventTarget* GetExplicitOriginalTarget() const;

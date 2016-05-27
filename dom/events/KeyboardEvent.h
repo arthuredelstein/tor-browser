@@ -42,7 +42,7 @@ public:
     return KeyboardEventBinding::Wrap(aCx, this, aGivenProto);
   }
 
-  uint64_t TimeStamp() const
+  double TimeStamp() const
   {
     return (mEvent->time / 250)*250;
   }
