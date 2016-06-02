@@ -6754,9 +6754,12 @@ JS::CaptureCurrentStack(JSContext* cx, JS::MutableHandleObject stackp,
 {
     AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
-    MOZ_RELEASE_ASSERT(cx->compartment());
+    //MOZ_RELEASE_ASSERT(cx->compartment());
 
     JSCompartment* compartment = cx->compartment();
+    if (!compartment)
+        return false;
+
     Rooted<SavedFrame*> frame(cx);
     if (!compartment->savedStacks().saveCurrentStack(cx, &frame, mozilla::Move(capture)))
         return false;
