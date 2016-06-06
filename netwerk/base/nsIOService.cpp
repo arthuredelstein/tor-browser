@@ -1823,9 +1823,9 @@ IOServiceProxyCallback::OnProxyAvailable(nsICancelable *request, nsIChannel *cha
     nsLoadFlags loadFlags = 0;
     channel->GetLoadFlags(&loadFlags);
     if (loadFlags & nsIRequest::LOAD_ANONYMOUS) {
-        speculativeHandler->SpeculativeAnonymousConnect(uri, mCallbacks);
+        speculativeHandler->SpeculativeAnonymousConnect(uri, EmptyCString(), mCallbacks);
     } else {
-        speculativeHandler->SpeculativeConnect(uri, mCallbacks);
+        speculativeHandler->SpeculativeConnect(uri, EmptyCString(), mCallbacks);
     }
 
     return NS_OK;
@@ -1833,6 +1833,7 @@ IOServiceProxyCallback::OnProxyAvailable(nsICancelable *request, nsIChannel *cha
 
 nsresult
 nsIOService::SpeculativeConnectInternal(nsIURI *aURI,
+                                        const nsACString& aIsolationKey,
                                         nsIInterfaceRequestor *aCallbacks,
                                         bool aAnonymous)
 {
@@ -1867,6 +1868,17 @@ nsIOService::SpeculativeConnectInternal(nsIURI *aURI,
                             getter_AddRefs(channel));
     NS_ENSURE_SUCCESS(rv, rv);
 
+    // If we have an isolation key, use it as the  URI for this channel.
+    if (!aIsolationKey.IsEmpty()) {
+        nsCOMPtr<nsIHttpChannelInternal> channelInternal(do_QueryInterface(channel));
+        if (channelInternal) {
+            nsCString documentURISpec("https://");
+            documentURISpec.Append(aIsolationKey);
+            nsCOMPtr<nsIURI> documentURI;
+            /* nsresult rv = */ NS_NewURI(getter_AddRefs(documentURI), documentURISpec);
+            channelInternal->SetDocumentURI(documentURI);
+        }
+    }
     if (aAnonymous) {
         nsLoadFlags loadFlags = 0;
         channel->GetLoadFlags(&loadFlags);
@@ -1886,16 +1898,18 @@ nsIOService::SpeculativeConnectInternal(nsIURI *aURI,
 
 NS_IMETHODIMP
 nsIOService::SpeculativeConnect(nsIURI *aURI,
+                                const nsACString& aIsolationKey,
                                 nsIInterfaceRequestor *aCallbacks)
 {
-    return SpeculativeConnectInternal(aURI, aCallbacks, false);
+    return SpeculativeConnectInternal(aURI, aIsolationKey, aCallbacks, false);
 }
 
 NS_IMETHODIMP
 nsIOService::SpeculativeAnonymousConnect(nsIURI *aURI,
+                                         const nsACString& aIsolationKey,
                                          nsIInterfaceRequestor *aCallbacks)
 {
-    return SpeculativeConnectInternal(aURI, aCallbacks, true);
+    return SpeculativeConnectInternal(aURI, aIsolationKey, aCallbacks, true);
 }
 
 void

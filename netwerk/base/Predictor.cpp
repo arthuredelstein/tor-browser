@@ -979,7 +979,7 @@ Predictor::PredictForLink(nsIURI *targetURI, nsIURI *sourceURI,
     }
   }
 
-  mSpeculativeService->SpeculativeConnect(targetURI, nullptr);
+  mSpeculativeService->SpeculativeConnect(targetURI, EmptyCString(), nullptr);
   if (verifier) {
     PREDICTOR_LOG(("    sending verification"));
     verifier->OnPredictPreconnect(targetURI);
@@ -1222,7 +1222,7 @@ Predictor::RunPredictions(nsINetworkPredictorVerifier *verifier)
     nsCOMPtr<nsIURI> uri = preconnects[i];
     ++totalPredictions;
     ++totalPreconnects;
-    mSpeculativeService->SpeculativeConnect(uri, this);
+    mSpeculativeService->SpeculativeConnect(uri, EmptyCString(), this);
     predicted = true;
     if (verifier) {
       PREDICTOR_LOG(("    sending preconnect verification"));

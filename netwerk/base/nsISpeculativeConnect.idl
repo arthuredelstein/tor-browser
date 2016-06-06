@@ -21,14 +21,17 @@ interface nsISpeculativeConnect : nsISupports
      * to actually open the new channel. 
      *
      * @param aURI the URI of the hinted transaction
+     * @param aIsolationKey the isolation key for the connection
      * @param aCallbacks any security callbacks for use with SSL for interfaces
      *        such as nsIBadCertListener. May be null.
      *
      */
     void speculativeConnect(in nsIURI aURI,
+                            in AUTF8String aIsolationKey,
                             in nsIInterfaceRequestor aCallbacks);
 
     void speculativeAnonymousConnect(in nsIURI aURI,
+                                     in AUTF8String aIsolationKey,
                                      in nsIInterfaceRequestor aCallbacks);
 };
 

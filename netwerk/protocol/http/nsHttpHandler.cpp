@@ -2126,6 +2126,7 @@ nsHttpHandler::Observe(nsISupports *subject,
 
 nsresult
 nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
+                                          const nsACString& aIsolationKey,
                                           nsIInterfaceRequestor *aCallbacks,
                                           bool anonymous)
 {
@@ -2205,9 +2206,8 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
     nsAutoCString username;
     aURI->GetUsername(username);
 
-    // TODO: Fix isolation for speculative connect.
     nsHttpConnectionInfo *ci =
-        new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr, EmptyCString(), usingSSL);
+        new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr, aIsolationKey, usingSSL);
     ci->SetAnonymous(anonymous);
 
     return SpeculativeConnect(ci, aCallbacks);
@@ -2215,16 +2215,18 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
 
 NS_IMETHODIMP
 nsHttpHandler::SpeculativeConnect(nsIURI *aURI,
+                                  const nsACString& aIsolationKey,
                                   nsIInterfaceRequestor *aCallbacks)
 {
-    return SpeculativeConnectInternal(aURI, aCallbacks, false);
+    return SpeculativeConnectInternal(aURI, aIsolationKey, aCallbacks, false);
 }
 
 NS_IMETHODIMP
 nsHttpHandler::SpeculativeAnonymousConnect(nsIURI *aURI,
+                                           const nsACString& aIsolationKey,
                                            nsIInterfaceRequestor *aCallbacks)
 {
-    return SpeculativeConnectInternal(aURI, aCallbacks, true);
+    return SpeculativeConnectInternal(aURI, aIsolationKey, aCallbacks, true);
 }
 
 void
