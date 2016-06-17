@@ -240,6 +240,10 @@ pref("network.http.pipelining.max-optimistic-requests", 3);
 pref("security.ssl.disable_session_identifiers", true);
 pref("network.manage-offline-status", false);
 
+// Disable Xrender as it causes serious performance regressions on some machines
+// and is disabled in Firefox >= 47 anyway.
+pref("gfx.xrender.enabled",false);
+
 // As a "defense in depth" measure, configure an empty push server URL (the
 // DOM Push features are disabled by default via other prefs).
 pref("dom.push.serverURL", "");
