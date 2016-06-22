@@ -5863,6 +5863,17 @@ JS_SetDefaultLocale(JSRuntime* rt, const char* locale)
     return rt->setDefaultLocale(locale);
 }
 
+JS_PUBLIC_API(const char*)
+JS_GetDefaultLocale(JSRuntime* rt)
+{
+    AssertHeapIsIdle(rt);
+    if (const char* locale = rt->getDefaultLocale()) {
+        return JS_strdup(rt, locale);
+    } else {
+        return nullptr;
+    }
+}
+
 JS_PUBLIC_API(void)
 JS_ResetDefaultLocale(JSRuntime* rt)
 {

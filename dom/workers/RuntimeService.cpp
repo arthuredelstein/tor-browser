@@ -1014,6 +1014,7 @@ class WorkerThreadPrimaryRunnable final : public Runnable
   WorkerPrivate* mWorkerPrivate;
   RefPtr<WorkerThread> mThread;
   JSRuntime* mParentRuntime;
+  const char* mDefaultLocale;
 
   class FinishedRunnable final : public Runnable
   {
@@ -1038,8 +1039,9 @@ class WorkerThreadPrimaryRunnable final : public Runnable
 public:
   WorkerThreadPrimaryRunnable(WorkerPrivate* aWorkerPrivate,
                               WorkerThread* aThread,
-                              JSRuntime* aParentRuntime)
-  : mWorkerPrivate(aWorkerPrivate), mThread(aThread), mParentRuntime(aParentRuntime)
+                              JSRuntime* aParentRuntime,
+                              const char* aDefaultLocale)
+  : mWorkerPrivate(aWorkerPrivate), mThread(aThread), mParentRuntime(aParentRuntime), mDefaultLocale(aDefaultLocale)
   {
     MOZ_ASSERT(aWorkerPrivate);
     MOZ_ASSERT(aThread);
@@ -1049,7 +1051,9 @@ public:
 
 private:
   ~WorkerThreadPrimaryRunnable()
-  { }
+  {
+    JS_free(nullptr, (void*) mDefaultLocale);
+  }
 
   nsresult
   SynchronouslyCreatePBackground();
@@ -1656,9 +1660,15 @@ RuntimeService::ScheduleWorker(WorkerPrivate* aWorkerPrivate)
   }
 
   JSRuntime* rt = CycleCollectedJSRuntime::Get()->Runtime();
+  JSRuntime* parentRuntime = JS_GetParentRuntime(rt);
+  const char* defaultLocale = parentRuntime ? JS_GetDefaultLocale(parentRuntime) : nullptr;
+  if (!parentRuntime) {
+    NS_WARNING("Could not obtain parent runtime's locale!");
+  }
+
   nsCOMPtr<nsIRunnable> runnable =
-    new WorkerThreadPrimaryRunnable(aWorkerPrivate, thread,
-                                    JS_GetParentRuntime(rt));
+    new WorkerThreadPrimaryRunnable(aWorkerPrivate, thread, parentRuntime,
+                                    defaultLocale);
   if (NS_FAILED(thread->DispatchPrimaryRunnable(friendKey, runnable.forget()))) {
     UnregisterWorker(aWorkerPrivate);
     return false;
@@ -2572,6 +2582,10 @@ WorkerThreadPrimaryRunnable::Run()
     }
 
     JSRuntime* rt = runtime.Runtime();
+
+    if (!JS_SetDefaultLocale(rt, mDefaultLocale)) {
+      NS_WARNING("Could not set worker locale!");
+    }
 
     JSContext* cx = CreateJSContextForWorker(mWorkerPrivate, rt);
     if (!cx) {

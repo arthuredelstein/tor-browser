@@ -5039,6 +5039,12 @@ extern JS_PUBLIC_API(bool)
 JS_SetDefaultLocale(JSRuntime* rt, const char* locale);
 
 /**
+ * Look up the default locale for the ECMAScript Internationalization API.
+ */
+extern JS_PUBLIC_API(const char*)
+JS_GetDefaultLocale(JSRuntime* rt);
+
+/**
  * Reset the default locale to OS defaults.
  */
 extern JS_PUBLIC_API(void)
