@@ -185,7 +185,7 @@ protected:
     nsTHashtable<nsStringHashKey> mSkipSpaceLookupCheckFamilies;
 
 private:
-    FontFamilyTable mHiddenFontFamilies {false};
+    FontFamilyTable mHiddenFontFamilies;
 };
 
 #endif /* GFX_FT2FONTLIST_H */

@@ -372,49 +372,71 @@ protected:
                             eFontPrefLang aPrefLang,
                             nsTArray<RefPtr<gfxFontFamily>>* aGenericFamilies);
 
-    class FontFamilyTable : public nsRefPtrHashtable<nsStringHashKey, gfxFontFamily> {
+    typedef nsRefPtrHashtable<nsStringHashKey, gfxFontFamily> FontFamilyTable;
+    class WhitelistedFontFamilyTable {
     private:
-        bool mWhitelist;
-        // Don't allow calls without an argument.
-        FontFamilyTable() { mWhitelist = true; }
+        mozilla::UniquePtr<FontFamilyTable> mTable;
     public:
-        explicit FontFamilyTable(bool whitelist) : nsRefPtrHashtable<nsStringHashKey, gfxFontFamily>()
-        { mWhitelist = whitelist; }
-        explicit FontFamilyTable(bool whitelist, int n) : nsRefPtrHashtable<nsStringHashKey, gfxFontFamily>(n)
-        { mWhitelist = whitelist; }
-        // Override Put to ensure that we don't add a familyName that is forbidden
-        // by the whitelist.
-        void Put(KeyType familyName, already_AddRefed<gfxFontFamily> familyData) {
-            if (!mWhitelist ||
-                gfxPlatformFontList::PlatformFontList()->IsFontFamilyNameAllowed(familyName)) {
-                nsRefPtrHashtable<nsStringHashKey, gfxFontFamily>::Put(familyName, mozilla::Move(familyData));
+        WhitelistedFontFamilyTable() {
+            mTable = mozilla::MakeUnique<FontFamilyTable>();
+        }
+        WhitelistedFontFamilyTable(uint32_t aInitLength) {
+            mTable = mozilla::MakeUnique<FontFamilyTable>(aInitLength);
+        }
+        void Put(const nsAString& familyName, gfxFontFamily* familyData) {
+            if (gfxPlatformFontList::PlatformFontList()->IsFontFamilyNameAllowed(familyName)) {
+                mTable->Put(familyName, familyData);
             }
         }
-        void Put(KeyType familyName, const UserDataType& familyData) {
-            if (!mWhitelist ||
-                gfxPlatformFontList::PlatformFontList()->IsFontFamilyNameAllowed(familyName)) {
-                nsRefPtrHashtable<nsStringHashKey, gfxFontFamily>::Put(familyName, familyData);
+        /*
+        void Put(const nsAString& familyName, const gfxFontFamily& familyData) {
+            if (gfxPlatformFontList::PlatformFontList()->IsFontFamilyNameAllowed(familyName)) {
+                mTable->Put(familyName, familyData);
             }
         }
-
+        */
+        bool Get(const nsAString& familyName, gfxFontFamily** familyData) {
+            return mTable->Get(familyName, familyData);
+        }
+        gfxFontFamily* GetWeak(const nsAString& familyName, bool *aFound = nullptr) {
+            return mTable->GetWeak(familyName, aFound);
+        }
+        FontFamilyTable::Iterator Iter() {
+            return mTable->Iter();
+        }
+        FontFamilyTable::Iterator ConstIter() const {
+            return mTable->ConstIter();
+        }
+        long Count() {
+            return mTable->Count();
+        }
+        void Clear() {
+            mTable->Clear();
+        }
+        bool Remove(const nsAString& familyName, gfxFontFamily** familyData = nullptr) {
+            return mTable->Remove(familyName, familyData);
+        }
+        size_t ShallowSizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const {
+            return mTable->ShallowSizeOfExcludingThis(aMallocSizeOf);
+        }
     };
 
     typedef nsRefPtrHashtable<nsStringHashKey, gfxFontEntry> FontEntryTable;
 
     // used by memory reporter to accumulate sizes of family names in the table
     static size_t
-    SizeOfFontFamilyTableExcludingThis(const FontFamilyTable& aTable,
+    SizeOfFontFamilyTableExcludingThis(const WhitelistedFontFamilyTable& aTable,
                                        mozilla::MallocSizeOf aMallocSizeOf);
     static size_t
     SizeOfFontEntryTableExcludingThis(const FontEntryTable& aTable,
                                       mozilla::MallocSizeOf aMallocSizeOf);
 
     // canonical family name ==> family entry (unique, one name per family entry)
-    FontFamilyTable mFontFamilies;
+    WhitelistedFontFamilyTable mFontFamilies;
 
     // other family name ==> family entry (not unique, can have multiple names per
     // family entry, only names *other* than the canonical names are stored here)
-    FontFamilyTable mOtherFamilyNames;
+    WhitelistedFontFamilyTable mOtherFamilyNames;
 
     // flag set after InitOtherFamilyNames is called upon first name lookup miss
     bool mOtherFamilyNamesInitialized;

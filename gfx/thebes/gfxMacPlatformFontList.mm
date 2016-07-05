@@ -667,9 +667,6 @@ gfxMacPlatformFontList::AddFamily(CFStringRef aFamily)
 
     bool hiddenSystemFont = [family hasPrefix:@"."];
 
-    FontFamilyTable& table =
-        hiddenSystemFont ? mSystemFontFamilies : mFontFamilies;
-
     nsAutoString familyName;
     nsCocoaUtils::GetStringForNSString(family, familyName);
 
@@ -677,7 +674,11 @@ gfxMacPlatformFontList::AddFamily(CFStringRef aFamily)
     ToLowerCase(familyName, key);
 
     RefPtr<gfxFontFamily> familyEntry = new gfxMacFontFamily(familyName);
-    table.Put(key, familyEntry);
+    if (hiddenSystemFont) {
+        mSystemFontFamilies.Put(key, familyEntry);
+    } else {
+        mFontFamilies.Put(key, familyEntry);
+    }
 
     // check the bad underline blacklist
     if (mBadUnderlineFamilyNames.Contains(key)) {

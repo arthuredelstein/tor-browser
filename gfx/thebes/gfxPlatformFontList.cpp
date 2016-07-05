@@ -179,7 +179,7 @@ gfxPlatformFontList::MemoryReporter::CollectReports(
 }
 
 gfxPlatformFontList::gfxPlatformFontList(bool aNeedFullnamePostscriptNames)
-    : mFontFamilies {true, 64}, mOtherFamilyNames {true, 16},
+    : mFontFamilies(64), mOtherFamilyNames(16),
       mBadUnderlineFamilyNames(8), mSharedCmaps(8),
       mStartIndex(0), mIncrement(1), mNumFamilies(0), mFontlistInitCount(0)
 {
@@ -1540,7 +1540,7 @@ gfxPlatformFontList::ClearLangGroupPrefFonts()
 // this is also used by subclasses that hold additional font tables
 /*static*/ size_t
 gfxPlatformFontList::SizeOfFontFamilyTableExcludingThis(
-    const FontFamilyTable& aTable,
+    const WhitelistedFontFamilyTable& aTable,
     MallocSizeOf aMallocSizeOf)
 {
     size_t n = aTable.ShallowSizeOfExcludingThis(aMallocSizeOf);

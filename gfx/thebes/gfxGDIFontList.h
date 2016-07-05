@@ -345,7 +345,7 @@ private:
     void ActivateBundledFonts();
 #endif
 
-    FontFamilyTable mFontSubstitutes;
+    WhitelistedFontFamilyTable mFontSubstitutes;
     nsTArray<nsString> mNonExistingFonts;
 };
 
