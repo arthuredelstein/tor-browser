@@ -3169,6 +3169,10 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
     uint32_t appId = info->OriginAttributesPtr()->mAppId;
     bool appOffline = false;
 
+    nsAutoCString originAttributesSuffix;
+    info->OriginAttributesPtr()->CreateSuffix(originAttributesSuffix);
+    extension.Append(originAttributesSuffix);
+
     if (appId != NECKO_NO_APP_ID) {
         gIOService->IsAppOffline(appId, &appOffline);
         LOG(("nsHttpChannel::OpenCacheEntry appId: %u, offline: %d\n", appId, appOffline));
