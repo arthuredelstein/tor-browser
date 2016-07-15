@@ -47,6 +47,7 @@ PrincipalOriginAttributes::InheritFromDocShellToDoc(const DocShellOriginAttribut
   mSignedPkg = aAttrs.mSignedPkg;
 
   mPrivateBrowsingId = aAttrs.mPrivateBrowsingId;
+  mFirstPartyUri = aAttrs.mFirstPartyUri;
 }
 
 void
@@ -60,6 +61,7 @@ PrincipalOriginAttributes::InheritFromNecko(const NeckoOriginAttributes& aAttrs)
   mSignedPkg = aAttrs.mSignedPkg;
 
   mPrivateBrowsingId = aAttrs.mPrivateBrowsingId;
+  mFirstPartyUri = aAttrs.mFirstPartyUri;
 }
 
 void
@@ -77,6 +79,7 @@ DocShellOriginAttributes::InheritFromDocToChildDocShell(const PrincipalOriginAtt
   mSignedPkg = aAttrs.mSignedPkg;
 
   mPrivateBrowsingId = aAttrs.mPrivateBrowsingId;
+  mFirstPartyUri = aAttrs.mFirstPartyUri;
 }
 
 void
@@ -93,6 +96,7 @@ NeckoOriginAttributes::InheritFromDocToNecko(const PrincipalOriginAttributes& aA
   // mSignedPkg accordingly by mSignedPkgInBrowser
 
   mPrivateBrowsingId = aAttrs.mPrivateBrowsingId;
+  mFirstPartyUri = aAttrs.mFirstPartyUri;
 }
 
 void
@@ -109,6 +113,7 @@ NeckoOriginAttributes::InheritFromDocShellToNecko(const DocShellOriginAttributes
   // mSignedPkg accordingly by mSignedPkgInBrowser
 
   mPrivateBrowsingId = aAttrs.mPrivateBrowsingId;
+  mFirstPartyUri = aAttrs.mFirstPartyUri;
 }
 
 void
@@ -159,6 +164,11 @@ OriginAttributes::CreateSuffix(nsACString& aStr) const
     value.Truncate();
     value.AppendInt(mPrivateBrowsingId);
     params->Set(NS_LITERAL_STRING("privateBrowsingId"), value);
+  }
+
+  if (!mFirstPartyUri.IsEmpty()) {
+    MOZ_RELEASE_ASSERT(mFirstPartyUri.FindCharInSet(dom::quota::QuotaManager::kReplaceChars) == kNotFound);
+    params->Set(NS_LITERAL_STRING("firstPartyUri"), mFirstPartyUri);
   }
 
   aStr.Truncate();
@@ -244,6 +254,12 @@ public:
       NS_ENSURE_TRUE(val >= 0 && val <= UINT32_MAX, false);
       mOriginAttributes->mPrivateBrowsingId = static_cast<uint32_t>(val);
 
+      return true;
+    }
+
+    if (aName.EqualsLiteral("firstPartyUri")) {
+      MOZ_RELEASE_ASSERT(mOriginAttributes->mFirstPartyUri.IsEmpty());
+      mOriginAttributes->mFirstPartyUri.Assign(aValue);
       return true;
     }
 
