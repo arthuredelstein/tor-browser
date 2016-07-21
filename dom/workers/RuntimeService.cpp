@@ -899,6 +899,9 @@ public:
       JS_SetFutexCanWait(cx);
     }
 
+    if (!xpc_CreateDefaultLocale(cx))
+      NS_RUNTIMEABORT("xpc_CreateDefaultLocale failed.");
+
     return NS_OK;
   }
 
