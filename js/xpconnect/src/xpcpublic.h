@@ -629,4 +629,6 @@ bool ThreadSafeIsChromeOrXBL(JSContext* cx, JSObject* obj);
 } // namespace dom
 } // namespace mozilla
 
+bool xpc_CreateDefaultLocale(JSContext* cx);
+
 #endif

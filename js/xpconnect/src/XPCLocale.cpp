@@ -248,12 +248,8 @@ private:
 };
 
 bool
-xpc_LocalizeContext(JSContext* cx)
+xpc_CreateDefaultLocale(JSContext* cx)
 {
-  JS_SetLocaleCallbacks(cx, new XPCLocaleCallbacks());
-
-  // Set the default locale.
-
   // Check a pref to see if we should use US English locale regardless
   // of the system locale.
   if (Preferences::GetBool("javascript.use_us_english_locale", false)) {
@@ -278,6 +274,13 @@ xpc_LocalizeContext(JSContext* cx)
   NS_LossyConvertUTF16toASCII locale(localeStr);
 
   return JS_SetDefaultLocale(cx, locale.get());
+}
+
+bool
+xpc_LocalizeContext(JSContext* cx)
+{
+  JS_SetLocaleCallbacks(cx, new XPCLocaleCallbacks());
+  return xpc_CreateDefaultLocale(cx);
 }
 
 void
