@@ -931,6 +931,57 @@ function RedirectLoad({ target: browser, data }) {
   }
 }
 
+// Resizes the chrome window so that its dimensions (width, height)
+// are a multiple of 200. Default size is 1200 x 1000, unless the
+// screen is too small.
+let _resizeWindowToResistFingerprinting = function() {
+  let contentWindow = gBrowser.contentWindow;
+  // We want the content page to have an inner  width and height that
+  // is a multiple of 200.
+  const CONTENT_ROUNDING = 200;
+  // Define target width and height in content pixels.
+  const CONTENT_TARGET_WIDTH = 1200;
+  const CONTENT_TARGET_HEIGHT = 1000;
+  // Measure window space occupied by any toolbar, menubar, sidebar, etc., in content pixels.
+  let contentMarginX = window.outerWidth - contentWindow.innerWidth;
+  let contentMarginY = window.outerHeight - contentWindow.innerHeight;
+  // The ratio of pixel size, content to screen.
+  let pixelSizeRatioContentToScreen = contentWindow.devicePixelRatio;
+  // Make sure there is room for the target size, and if not, make window smaller.
+  let width = Math.min(CONTENT_TARGET_WIDTH,
+                       screen.availWidth * 0.9 /
+                       pixelSizeRatioContentToScreen - contentMarginX);
+  let height = Math.min(CONTENT_TARGET_HEIGHT,
+                        screen.availHeight * 0.9 /
+                        pixelSizeRatioContentToScreen - contentMarginY);
+  // Round down width and height in case it is not properly rounded already.
+  let finalWidth = width - (width % CONTENT_ROUNDING);
+  let finalHeight = height - (height % CONTENT_ROUNDING);
+  // Resize contentWindow dimensions to desired size
+  window.resizeBy(finalWidth - contentWindow.innerWidth,
+                  finalHeight - contentWindow.innerHeight);
+};
+
+// When a new window is created, there is a short interval when the
+// window has been constructed in memory, and its dimensions are not
+// changing, such that we can resize the window according to the
+// content window's dimensions.
+let _waitForWindowSizeStable = function (callback) {
+  // Create a mutation observer
+  let observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.target.id === "main-window" &&
+          mutation.attributeName === "chromehidden") {
+        // Now is a good moment to adjust window dimensions
+        observer.disconnect();
+        callback();
+      }
+    });
+  });
+  // Start observing attributes of the main document.
+  observer.observe(document.documentElement, {attributes: true});
+};
+
 var gBrowserInit = {
   delayedStartupFinished: false,
 
@@ -1072,7 +1123,9 @@ var gBrowserInit = {
 
     ToolbarIconColor.init();
 
-    // Wait until chrome is painted before executing code not critical to making the window visible
+    if (gPrefService.getBoolPref("privacy.resistFingerprinting")) {
+      _waitForWindowSizeStable(_resizeWindowToResistFingerprinting);
+    }
     this._boundDelayedStartup = this._delayedStartup.bind(this);
     window.addEventListener("MozAfterPaint", this._boundDelayedStartup);
 
