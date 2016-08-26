@@ -931,6 +931,53 @@ function RedirectLoad({ target: browser, data }) {
   }
 }
 
+// Computes a size for a new chrome window so that the content window's
+// dimensions will be a multiple of 200x100. Default content window size
+// is 1200 x 1000, unless the screen is too small.
+let _computeRoundedContentDimensions = function () {
+  // We want the content page to have an inner width and height that
+  // is a multiple of 200.
+  const CONTENT_ROUNDING = { x: 200, y: 100 };
+  // Define target width and height in content pixels.
+  const CONTENT_TARGET = { width: 1200, height: 1000 };
+  // Measure window space occupied by any toolbar, menubar, sidebar, etc., in content pixels.
+  // The #main-window XUL element is typically not ready at this point, so we
+  // use tab-view-deck edges to compute margins instead.
+  let tabBrowser = gBrowser.selectedBrowser.getTabBrowser();
+  let tabBrowserRect = tabBrowser.getBoundingClientRect();
+  let tabViewDeck = document.getElementById("tab-view-deck");
+  let tabViewDeckRect = tabViewDeck.getBoundingClientRect();
+  let contentMarginX = Math.max(0, tabViewDeckRect.right - tabBrowserRect.width);
+  let contentMarginY = Math.max(0, tabViewDeckRect.bottom - tabBrowserRect.height);
+  // Compute the available screen space, not including margins.
+  let availWidth = 0.9 * screen.availWidth - contentMarginX;
+  let availHeight = 0.9 * screen.availHeight - contentMarginY;
+  // Fill out available space, rounded down to the nearest allowed dimensions.
+  let finalWidth = Math.min(CONTENT_TARGET.width,
+                            availWidth - (availWidth % CONTENT_ROUNDING.x));
+  let finalHeight = Math.min(CONTENT_TARGET.height,
+                             availHeight - (availHeight % CONTENT_ROUNDING.y));
+  return [finalWidth, finalHeight];
+};
+
+// Resizes the new chrome window such that the content window has the given
+// dimensions, and retains those dimensions until the window is painted.
+let _setContentWindowSize = function ([width, height]) {
+  // Discard any persisted width and height values, and ensure window
+  // is neither maximized nor minimized.
+  let mainWindow = document.documentElement;
+  mainWindow.removeAttribute("width");
+  mainWindow.removeAttribute("height");
+  mainWindow.setAttribute("sizemode", "normal");
+  // Set the tabBrowser to fixed dimensions, with flex turned off so that the
+  // nsXULWindow will wrap tightly around it.
+  let tabBrowser = gBrowser.selectedBrowser.getTabBrowser();
+  tabBrowser.flex = "";
+  tabBrowser.parentElement.flex = "";
+  tabBrowser.width = width;
+  tabBrowser.height = height;
+};
+
 var gBrowserInit = {
   delayedStartupFinished: false,
 
@@ -999,8 +1046,10 @@ var gBrowserInit = {
     // have been initialized.
     Services.obs.notifyObservers(window, "browser-window-before-show", "");
 
-    // Set a sane starting width/height for all resolutions on new profiles.
-    if (!document.documentElement.hasAttribute("width")) {
+    if (gPrefService.getBoolPref("privacy.resistFingerprinting")) {
+      _setContentWindowSize(_computeRoundedContentDimensions());
+    } else if (!document.documentElement.hasAttribute("width")) {
+      // Set a sane starting width/height for all resolutions on new profiles.
       let defaultWidth;
       let defaultHeight;
 
@@ -1085,6 +1134,14 @@ var gBrowserInit = {
   },
 
   _delayedStartup: function() {
+    // Restore flex behavior of #content
+    if (gPrefService.getBoolPref("privacy.resistFingerprinting")) {
+      let tabBrowser = gBrowser.selectedBrowser.getTabBrowser();
+      tabBrowser.flex = "1";
+      tabBrowser.parentElement.flex = "1";
+      tabBrowser.width = "";
+      tabBrowser.heihgt = "";
+    }
     let tmp = {};
     Cu.import("resource://gre/modules/TelemetryTimestamps.jsm", tmp);
     let TelemetryTimestamps = tmp.TelemetryTimestamps;
