@@ -931,6 +931,84 @@ function RedirectLoad({ target: browser, data }) {
   }
 }
 
+// Read an integer pref, and return a default value if it doesn't exist.
+let _getIntPref = function (prefName, defaultValue) {
+  return Services.prefs.getPrefType(prefName) !== 0 ?
+    Services.prefs.getIntPref(prefName) : defaultValue;
+};
+
+// Computes width and height, in chrome pixels, for the gBrowser object
+// of a new chrome window. Those dimensions should result in a content
+// window with width and height rounded to 200x100, and equal to or
+// less than 1000x1000.
+let _computeTabBrowserSizeForRoundedContentWindow = function () {
+  // We want the content page to have an inner width and height that
+  // is a multiple of 200.
+  const CONTENT_ROUNDING = { x: 200, y: 100 };
+  // Define target width and height in content pixels.
+  const CONTENT_TARGET = {
+    width: _getIntPref("privacy.window.maxWidth", 1000),
+    height: _getIntPref("privacy.window.maxHeight", 1000),
+  };
+  // Observe current zoom levels.
+  let chromeZoom = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                         .getInterface(Components.interfaces.nsIDOMWindowUtils)
+                         .screenPixelsPerCSSPixel;
+  let contentPixelsPerChromePixel = chromeZoom / gBrowser.fullZoom;
+  // Measure window space occupied the content window and chrome window.
+  // The #main-window XUL element is typically not ready at this point, so we
+  // use tab-view-deck edges to get the chrome window size instead.
+  let gBrowserRect = gBrowser.getBoundingClientRect();
+  let tabViewDeck = document.getElementById("tab-view-deck");
+  let tabViewDeckRect = tabViewDeck.getBoundingClientRect();
+  // Measure the margin between edges of chrome window and content window,
+  // in chrome pixels.
+  let marginX = Math.max(0, tabViewDeckRect.right - gBrowserRect.width);
+  let marginY = Math.max(0, tabViewDeckRect.bottom - gBrowserRect.height);
+  // Compute the available screen space in chrome pixels, not including margins.
+  let availWidthChromePixels = 0.9 * screen.availWidth - marginX;
+  let availHeightChromePixels = 0.9 * screen.availHeight - marginY;
+  // Convert available screen space to content pixels.
+  let availWidth = contentPixelsPerChromePixel * availWidthChromePixels;
+  let availHeight = contentPixelsPerChromePixel * availHeightChromePixels;
+  // Generate a width and height that fills out available space up to
+  // CONTENT_TARGET, rounding appropriately.
+  let contentWidth = Math.min(CONTENT_TARGET.width, availWidth);
+  let contentWidthRounded = contentWidth - (contentWidth % CONTENT_ROUNDING.x);
+  let contentHeight = Math.min(CONTENT_TARGET.height, availHeight);
+  let contentHeightRounded = contentHeight - (contentHeight % CONTENT_ROUNDING.y);
+  // Convert back to chrome pixels for use with the gBrowser.
+  let contentWidthChromePixels = contentWidthRounded / contentPixelsPerChromePixel;
+  let contentHeightChromePixels = contentHeightRounded / contentPixelsPerChromePixel;
+  return [contentWidthChromePixels, contentHeightChromePixels];
+};
+
+// Resizes the new chrome window's gBrowser to have the specified
+// dimensions and forces the window to retain those dimensions until
+// the window is painted.
+let _setTabBrowserSize = function ([width, height]) {
+  let mainWindow = document.documentElement;
+  // Discard any persisted width and height attribute values.
+  mainWindow.removeAttribute("width");
+  mainWindow.removeAttribute("height");
+  // Ensure window is in the normal (non-maximized or fullscreen) state, even
+  // if a sizemode="maximized" attribute has persisted.
+  mainWindow.setAttribute("sizemode", "normal");
+  // Set the gBrowser to fixed dimensions, with so that the
+  // nsXULWindow will be initialized to the correct size.
+  gBrowser.width = width;
+  gBrowser.height = height;
+  // Cleanup: remove gBrowser 'width' and 'height' attributes after the
+  // nsXULwindow has reached the correct size.
+  window.addEventListener("resize", function resizeListener () {
+    if (window.innerWidth >= width && window.innerHeight >= height) {
+      window.removeEventListener("resize", resizeListener, false);
+      gBrowser.width = "";
+      gBrowser.height = "";
+    }
+  }, false);
+};
+
 var gBrowserInit = {
   delayedStartupFinished: false,
 
@@ -999,8 +1077,11 @@ var gBrowserInit = {
     // have been initialized.
     Services.obs.notifyObservers(window, "browser-window-before-show", "");
 
-    // Set a sane starting width/height for all resolutions on new profiles.
-    if (!document.documentElement.hasAttribute("width")) {
+    if (gPrefService.getBoolPref("privacy.resistFingerprinting")) {
+      // Produce a contentWindow with a rounded innerWidth and innerHeight.
+      _setTabBrowserSize(_computeTabBrowserSizeForRoundedContentWindow());
+    } else if (!document.documentElement.hasAttribute("width")) {
+      // Set a sane starting width/height for all resolutions on new profiles.
       let defaultWidth;
       let defaultHeight;
 
