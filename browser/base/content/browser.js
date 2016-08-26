@@ -931,6 +931,37 @@ function RedirectLoad({ target: browser, data }) {
   }
 }
 
+// Finds a new size for the chrome window so that the content window's
+// dimensions will be a multiple of 200. Default content window size is
+// 1200 x 1000, unless the screen is too small.
+let _getRoundedWindowSize = function() {
+  let tabBrowserRect = gBrowser.selectedBrowser.getTabBrowser().getBoundingClientRect();
+  let contentWindow = gBrowser.contentWindow;
+  // We want the content page to have an inner width and height that
+  // is a multiple of 200.
+  const CONTENT_ROUNDING = 200;
+  // Define target width and height in content pixels.
+  const CONTENT_TARGET_WIDTH = 1200;
+  const CONTENT_TARGET_HEIGHT = 1000;
+  // Measure window space occupied by any toolbar, menubar, sidebar, etc., in content pixels.
+  let contentMarginX = tabBrowserRect.left;
+  let contentMarginY = tabBrowserRect.top;
+  // The ratio of pixel size, content to screen.
+  let pixelSizeRatioContentToScreen = contentWindow.devicePixelRatio;
+  // Make sure there is room for the target size, and if not, make window smaller.
+  let width = Math.min(CONTENT_TARGET_WIDTH,
+                       screen.availWidth * 0.9 /
+                       pixelSizeRatioContentToScreen - tabBrowserRect.left);
+  let height = Math.min(CONTENT_TARGET_HEIGHT,
+                        screen.availHeight * 0.9 /
+                        pixelSizeRatioContentToScreen - tabBrowserRect.top);
+  // Round down width and height in case it is not properly rounded already.
+  let finalWidth = width - (width % CONTENT_ROUNDING);
+  let finalHeight = height - (height % CONTENT_ROUNDING);
+  // Return the needed window size.
+  return [finalWidth + tabBrowserRect.left, finalHeight + tabBrowserRect.top];
+};
+
 var gBrowserInit = {
   delayedStartupFinished: false,
 
@@ -1009,7 +1040,9 @@ var gBrowserInit = {
       //             at once (without being obnoxiously tall)
       // Widescreen: use about half width, to suggest side-by-side page view
       // Otherwise : use 3/4 height and width
-      if (screen.availHeight <= 600) {
+      if (gPrefService.getBoolPref("privacy.resistFingerprinting")) {
+        [defaultWidth, defaultHeight] = _getRoundedWindowSize();
+      } else if (screen.availHeight <= 600) {
         document.documentElement.setAttribute("sizemode", "maximized");
         defaultWidth = 610;
         defaultHeight = 450;
