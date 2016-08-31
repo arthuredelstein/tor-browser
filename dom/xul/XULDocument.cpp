@@ -2133,8 +2133,12 @@ XULDocument::ApplyPersistentAttributesToElements(const nsAString &aID,
 
         for (int32_t i = int32_t(cnt) - 1; i >= 0; --i) {
             nsCOMPtr<nsIContent> element = aElements.SafeObjectAt(i);
-            if (!element) {
-                 continue;
+            nsString persistString;
+            if (!element ||
+                !element->GetAttr(kNameSpaceID_None, "persist",
+                                  persistString) ||
+                !persistString.Contains(attrstr)) {
+                continue;
             }
 
             rv = element->SetAttr(kNameSpaceID_None, attr, value, PR_TRUE);
