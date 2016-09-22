@@ -4396,6 +4396,19 @@ WorkerPrivate::GetLoadInfo(JSContext* aCx, nsPIDOMWindow* aWindow,
                                         getter_AddRefs(loadInfo.mChannel));
     NS_ENSURE_SUCCESS(rv, rv);
 
+    // If this is a SharedWorker and we have an isolation key, use it as the
+    // DocumentURI for this channel. Ensures we get the right first-party domain.
+    if (aLoadGroupBehavior == OverrideLoadGroup && !loadInfo.mIsolationKey.IsEmpty()) {
+      nsCOMPtr<nsIHttpChannelInternal> channelInternal(do_QueryInterface(loadInfo.mChannel));
+      if (channelInternal) {
+        nsCString documentURISpec("https://");
+        documentURISpec.Append(loadInfo.mIsolationKey);
+        nsCOMPtr<nsIURI> documentURI;
+        /* nsresult rv = */ NS_NewURI(getter_AddRefs(documentURI), documentURISpec);
+        channelInternal->SetDocumentURI(documentURI);
+      }
+    }
+
     rv = NS_GetFinalChannelURI(loadInfo.mChannel,
                                getter_AddRefs(loadInfo.mResolvedScriptURI));
     NS_ENSURE_SUCCESS(rv, rv);
