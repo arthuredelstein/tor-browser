@@ -13,6 +13,8 @@
 <!ENTITY trackingProtectionPBM5.label         "Use Tracking Protection in Private Windows">
 <!ENTITY trackingProtectionPBM5.accesskey     "v">
 <!ENTITY trackingProtectionPBMLearnMore.label "Learn more">
+<!ENTITY thirdpartyIsolate.label "Stop sites from sharing data to track you">
+<!ENTITY thirdpartyIsolate.accesskey "D">
 <!ENTITY resistFingerprinting.label "Activate fingerprinting resistance">
 <!ENTITY resistFingerprinting.accesskey "F">
 <!ENTITY changeBlockList.label          "Change Block List">
