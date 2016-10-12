@@ -1020,8 +1020,14 @@ var gBrowserInit = {
     // have been initialized.
     Services.obs.notifyObservers(window, "browser-window-before-show", "");
 
-    // Set a sane starting width/height for all resolutions on new profiles.
-    if (!document.documentElement.hasAttribute("width")) {
+    if (gPrefService.getBoolPref("privacy.resistFingerprinting")) {
+      // With fingerprinting resistance enabled, code elsewhere
+      // is going to generate rounded window dimensions. Make sure
+      // we don't have a maximized window that can interfere with
+      // that, as observed in http://trac.torproject.org/18175
+      document.documentElement.setAttribute("sizemode", "normal");
+    } else if (!document.documentElement.hasAttribute("width")) {
+      // Set a sane starting width/height for all resolutions on new profiles.
       const TARGET_WIDTH = 1280;
       const TARGET_HEIGHT = 1040;
       let width = Math.min(screen.availWidth * .9, TARGET_WIDTH);
