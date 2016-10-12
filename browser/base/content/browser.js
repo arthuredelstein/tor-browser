@@ -999,8 +999,10 @@ var gBrowserInit = {
     // have been initialized.
     Services.obs.notifyObservers(window, "browser-window-before-show", "");
 
-    // Set a sane starting width/height for all resolutions on new profiles.
-    if (!document.documentElement.hasAttribute("width")) {
+    if (gPrefService.getBoolPref("privacy.resistFingerprinting")) {
+      document.documentElement.setAttribute("sizemode", "normal");
+    } else if (!document.documentElement.hasAttribute("width")) {
+      // Set a sane starting width/height for all resolutions on new profiles.
       let defaultWidth;
       let defaultHeight;
 
