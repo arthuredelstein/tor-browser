@@ -1029,7 +1029,68 @@ NS_IMETHODIMP nsXULWindow::EnsureAuthPrompter()
   }
   return mAuthPrompter ? NS_OK : NS_ERROR_FAILURE;
 }
- 
+
+// Rounds window size to 1000x1000, or, if there isn't enough available
+// screen space, to a multiple of 200x100.
+NS_IMETHODIMP nsXULWindow::ResizeToRoundedDimensions()
+{
+  NS_ENSURE_STATE(mPrimaryContentShell);
+  nsCOMPtr<nsIBaseWindow> shellWindow(do_QueryInterface(mPrimaryContentShell));
+  NS_ENSURE_STATE(shellWindow);
+  int32_t windowWidth, windowHeight;
+  int32_t availWidthCSS, availHeightCSS;
+  int32_t contentWidth, contentHeight;
+  double devicePerCSSPixels = 1.0;
+  shellWindow->GetUnscaledDevicePixelsPerCSSPixel(&devicePerCSSPixels);
+  GetSize(&windowWidth, &windowHeight); // device pixels
+  NS_ENSURE_TRUE(GetAvailScreenSize(&availWidthCSS, &availHeightCSS),
+    NS_ERROR_FAILURE);
+  int32_t availWidth = NSToIntRound(devicePerCSSPixels *
+                                    availWidthCSS); // device pixels
+  int32_t availHeight = NSToIntRound(devicePerCSSPixels *
+                                     availHeightCSS); // device pixels
+  shellWindow->GetSize(&contentWidth, &contentHeight); // device pixels
+  /* Useful for debugging:
+  printf("\nscaling factor: %f\n", devicePerCSSPixels);
+  printf("window size: %d x %d\n", windowWidth, windowHeight);
+  printf("avail screen size: %d x %d\n", availWidth, availHeight);
+  printf("primary content shell: %d x %d\n", contentWidth, contentHeight);
+  */
+  int32_t chromeWidth = windowWidth - contentWidth;
+  int32_t chromeHeight = windowHeight - contentHeight;
+  int maxInnerWidth = Preferences::GetInt("privacy.window.maxInnerWidth",
+                                          1000);
+  int maxInnerHeight = Preferences::GetInt("privacy.window.maxInnerHeight",
+                                           1000);
+  int32_t availForContentWidthCSS =
+    std::min(maxInnerWidth, NSToIntRound((0.95 * availWidth - chromeWidth) /
+                                         devicePerCSSPixels));
+  int32_t availForContentHeightCSS =
+    std::min(maxInnerHeight, NSToIntRound((0.95 * availHeight - chromeHeight) /
+                                          devicePerCSSPixels));
+  int32_t targetContentWidth =
+    NSToIntRound(devicePerCSSPixels *
+                 (availForContentWidthCSS - (availForContentWidthCSS % 200)));
+  int32_t targetContentHeight =
+    NSToIntRound(devicePerCSSPixels *
+                 (availForContentHeightCSS - (availForContentHeightCSS % 100)));
+  SizeShellTo(mPrimaryContentShell,
+              targetContentWidth, targetContentHeight);
+  mIgnoreXULSize = true;
+  mIgnoreXULSizeMode = true;
+  /* Useful for debugging:
+  printf("target content size: %d, %d\n",
+         targetContentWidth, targetContentHeight);
+  GetSize(&windowWidth, &windowHeight);
+  GetAvailScreenSize(&availWidth, &availHeight);
+  shellWindow->GetSize(&contentWidth, &contentHeight); // device pixels
+  printf("\nwindow size: %d x %d\n", windowWidth, windowHeight);
+  printf("avail screen size: %d x %d\n", availWidth, availHeight);
+  printf("primary content shell: %d x %d\n", contentWidth, contentHeight);
+  */
+  return NS_OK;
+}
+
 void nsXULWindow::OnChromeLoaded()
 {
   nsresult rv = EnsureContentTreeOwner();
@@ -1044,6 +1105,13 @@ void nsXULWindow::OnChromeLoaded()
 
     if (!mIgnoreXULSize) {
       gotSize = LoadSizeFromXUL(specWidth, specHeight);
+    }
+
+    // If we have a content browser object, and fingerprinting resistance
+    // is active, then set to a rounded size.
+    if (mPrimaryContentShell &&
+        Preferences::GetBool("privacy.resistFingerprinting", false)) {
+      ResizeToRoundedDimensions();
     }
 
     bool positionSet = !mIgnoreXULPosition;
@@ -1192,6 +1260,21 @@ bool nsXULWindow::LoadPositionFromXUL(int32_t aSpecWidth, int32_t aSpecHeight)
   return gotPosition;
 }
 
+bool nsXULWindow::GetAvailScreenSize(int32_t* availWidth, int32_t* availHeight)
+{
+  nsCOMPtr<nsIDOMWindow> domWindow;
+  GetWindowDOMWindow(getter_AddRefs(domWindow));
+  if (nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(domWindow)) {
+    nsCOMPtr<nsIDOMScreen> screen = window->GetScreen();
+    if (screen) {
+      screen->GetAvailWidth(availWidth);
+      screen->GetAvailHeight(availHeight);
+      return true;
+    }
+  }
+  return false;
+}
+
 bool
 nsXULWindow::LoadSizeFromXUL(int32_t& aSpecWidth, int32_t& aSpecHeight)
 {
@@ -1233,23 +1316,14 @@ nsXULWindow::LoadSizeFromXUL(int32_t& aSpecWidth, int32_t& aSpecHeight)
 void
 nsXULWindow::SetSpecifiedSize(int32_t aSpecWidth, int32_t aSpecHeight)
 {
-  // constrain to screen size
-  nsCOMPtr<mozIDOMWindowProxy> domWindow;
-  GetWindowDOMWindow(getter_AddRefs(domWindow));
-  if (domWindow) {
-    auto* window = nsPIDOMWindowOuter::From(domWindow);
-    nsCOMPtr<nsIDOMScreen> screen = window->GetScreen();
-    if (screen) {
-      int32_t screenWidth;
-      int32_t screenHeight;
-      screen->GetAvailWidth(&screenWidth); // CSS pixels
-      screen->GetAvailHeight(&screenHeight);
-      if (aSpecWidth > screenWidth) {
-        aSpecWidth = screenWidth;
-      }
-      if (aSpecHeight > screenHeight) {
-        aSpecHeight = screenHeight;
-      }
+  int32_t screenWidth;
+  int32_t screenHeight;
+  if (GetAvailScreenSize(&screenWidth, &screenHeight)) {
+    if (aSpecWidth > screenWidth) {
+      aSpecWidth = screenWidth;
+    }
+    if (aSpecHeight > screenHeight) {
+      aSpecHeight = screenHeight;
     }
   }
 
