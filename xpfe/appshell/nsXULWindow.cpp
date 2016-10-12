@@ -1037,6 +1037,36 @@ void nsXULWindow::OnChromeLoaded()
       }
     }
 
+    // If we have a content browser object, and fingerprinting resistance
+    // is active, then set to a rounded size.
+    if (mPrimaryContentShell &&
+        Preferences::GetBool("privacy.resistFingerprinting", false)) {
+      int32_t windowWidth, windowHeight;
+      int32_t availWidth, availHeight;
+      int32_t contentWidth, contentHeight;
+      GetSize(&windowWidth, &windowHeight);
+      GetAvailScreenSize(&availWidth, &availHeight);
+      GetPrimaryContentShellSize(&contentWidth, &contentHeight);
+      printf("\nwindow size: %d x %d\n", windowWidth, windowHeight);
+      printf("\navail screen size: %d x %d\n", availWidth, availHeight);
+      printf("\nprimary content shell size: %d x %d\n", contentWidth, contentHeight);
+      int32_t chromeWidth = windowWidth - contentWidth;
+      int32_t chromeHeight = windowHeight - contentHeight;
+      int32_t availForContentWidth = 0.9 * availWidth - chromeWidth;
+      int32_t availForContentHeight = 0.9 * availHeight - chromeHeight;
+      int32_t targetContentWidth =
+        std::min(1000, availForContentWidth - (availForContentWidth % 200));
+      int32_t targetContentHeight =
+        std::min(1000, availForContentHeight - (availForContentHeight % 200));
+      SizeShellTo(mPrimaryContentShell, targetContentWidth, targetContentHeight);
+      GetSize(&windowWidth, &windowHeight);
+      GetAvailScreenSize(&availWidth, &availHeight);
+      GetPrimaryContentShellSize(&contentWidth, &contentHeight);
+      printf("\nwindow size: %d x %d\n", windowWidth, windowHeight);
+      printf("\navail screen size: %d x %d\n", availWidth, availHeight);
+      printf("\nprimary content shell size: %d x %d\n", contentWidth, contentHeight);
+    }
+
     bool positionSet = !mIgnoreXULPosition;
     nsCOMPtr<nsIXULWindow> parentWindow(do_QueryReferent(mParentWindow));
 #if defined(XP_UNIX) && !defined(XP_MACOSX)
@@ -1137,6 +1167,21 @@ bool nsXULWindow::LoadPositionFromXUL()
   return gotPosition;
 }
 
+bool nsXULWindow::GetAvailScreenSize(int32_t* availWidth, int32_t* availHeight)
+{
+  nsCOMPtr<nsIDOMWindow> domWindow;
+  GetWindowDOMWindow(getter_AddRefs(domWindow));
+  if (nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(domWindow)) {
+    nsCOMPtr<nsIDOMScreen> screen = window->GetScreen();
+    if (screen) {
+      screen->GetAvailWidth(availWidth);
+      screen->GetAvailHeight(availHeight);
+      return true;
+    }
+  }
+  return false;
+}
+
 bool nsXULWindow::LoadSizeFromXUL()
 {
   bool     gotSize = false;
@@ -1181,21 +1226,12 @@ bool nsXULWindow::LoadSizeFromXUL()
   }
 
   if (gotSize) {
-    // constrain to screen size
-    nsCOMPtr<nsIDOMWindow> domWindow;
-    GetWindowDOMWindow(getter_AddRefs(domWindow));
-    if (nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(domWindow)) {
-      nsCOMPtr<nsIDOMScreen> screen = window->GetScreen();
-      if (screen) {
-        int32_t screenWidth;
-        int32_t screenHeight;
-        screen->GetAvailWidth(&screenWidth);
-        screen->GetAvailHeight(&screenHeight);
-        if (specWidth > screenWidth)
-          specWidth = screenWidth;
-        if (specHeight > screenHeight)
-          specHeight = screenHeight;
-      }
+    int32_t screenWidth, screenHeight;
+    if (GetAvailScreenSize(&screenWidth, &screenHeight)) {
+      if (specWidth > screenWidth)
+        specWidth = screenWidth;
+      if (specHeight > screenHeight)
+        specHeight = screenHeight;
     }
 
     mIntrinsicallySized = false;
@@ -2121,6 +2157,29 @@ NS_IMETHODIMP nsXULWindow::GetXULBrowserWindow(nsIXULBrowserWindow * *aXULBrowse
 NS_IMETHODIMP nsXULWindow::SetXULBrowserWindow(nsIXULBrowserWindow * aXULBrowserWindow)
 {
   mXULBrowserWindow = aXULBrowserWindow;
+  return NS_OK;
+}
+
+// Borrowed from Firefox 52
+nsresult
+nsXULWindow::GetPrimaryContentShellSize(int32_t* aWidth,
+                                        int32_t* aHeight)
+{
+  NS_ENSURE_STATE(mPrimaryContentShell);
+
+  nsCOMPtr<nsIBaseWindow> shellWindow(do_QueryInterface(mPrimaryContentShell));
+  NS_ENSURE_STATE(shellWindow);
+
+  int32_t devicePixelWidth, devicePixelHeight;
+  double shellScale = 1.0;
+  // We want to return CSS pixels. First, we get device pixels
+  // from the content area...
+  shellWindow->GetSize(&devicePixelWidth, &devicePixelHeight);
+  // And then get the device pixel scaling factor. Dividing device
+  // pixels by this scaling factor gives us CSS pixels.
+  shellWindow->GetUnscaledDevicePixelsPerCSSPixel(&shellScale);
+  *aWidth = NSToIntRound(devicePixelWidth / shellScale);
+  *aHeight = NSToIntRound(devicePixelHeight / shellScale);
   return NS_OK;
 }
 

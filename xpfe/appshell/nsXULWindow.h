@@ -120,6 +120,8 @@ protected:
    void       SetContentScrollbarVisibility(bool aVisible);
    bool       GetContentScrollbarVisibility();
    void       PersistentAttributesDirty(uint32_t aDirtyFlags);
+   nsresult   GetPrimaryContentShellSize(int32_t* aWidth, int32_t* aHeight);
+   bool       GetAvailScreenSize(int32_t* availWidth, int32_t* availHeight);
 
    nsChromeTreeOwner*      mChromeTreeOwner;
    nsContentTreeOwner*     mContentTreeOwner;
