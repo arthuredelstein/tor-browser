@@ -1041,23 +1041,33 @@ void nsXULWindow::OnChromeLoaded()
     // is active, then set to a rounded size.
     if (mPrimaryContentShell &&
         Preferences::GetBool("privacy.resistFingerprinting", false)) {
+      mWindow->SetSizeMode(nsSizeMode_Normal);
+      nsCOMPtr<nsIBaseWindow> shellWindow(do_QueryInterface(mPrimaryContentShell));
+      float devicePixelRatio;
       int32_t windowWidth, windowHeight;
       int32_t availWidth, availHeight;
       int32_t contentWidth, contentHeight;
-      GetSize(&windowWidth, &windowHeight);
+      int32_t contentDevicePixelWidth, contentDevicePixelHeight;
+      double shellScale = 1.0;
+      GetSize(&windowWidth, &windowHeight); // app
       GetAvailScreenSize(&availWidth, &availHeight);
-      GetPrimaryContentShellSize(&contentWidth, &contentHeight);
+      GetPrimaryContentShellSize(&contentWidth, &contentHeight); // css
+      shellWindow->GetSize(&contentDevicePixelWidth, &contentDevicePixelHeight); // app
+      shellWindow->GetUnscaledDevicePixelsPerCSSPixel(&shellScale);
       printf("\nwindow size: %d x %d\n", windowWidth, windowHeight);
-      printf("\navail screen size: %d x %d\n", availWidth, availHeight);
-      printf("\nprimary content shell size: %d x %d\n", contentWidth, contentHeight);
-      int32_t chromeWidth = windowWidth - contentWidth;
-      int32_t chromeHeight = windowHeight - contentHeight;
-      int32_t availForContentWidth = 0.9 * availWidth - chromeWidth;
-      int32_t availForContentHeight = 0.9 * availHeight - chromeHeight;
+      printf("avail screen size: %d x %d\n", availWidth, availHeight);
+      printf("primary content shell size: %d x %d\n", contentWidth, contentHeight);
+      printf("primary content shell in device pixels: %d x %d\n", contentDevicePixelWidth, contentDevicePixelHeight);
+      printf("scaling factor: %f\n", shellScale);
+      int32_t chromeWidth = windowWidth - contentDevicePixelWidth;
+      int32_t chromeHeight = windowHeight - contentDevicePixelHeight;
+      int32_t availForContentWidth = 0.95 * availWidth - chromeWidth;
+      int32_t availForContentHeight = 0.95 * availHeight - chromeHeight;
       int32_t targetContentWidth =
-        std::min(1000, availForContentWidth - (availForContentWidth % 200));
+        shellScale * std::min(1000, availForContentWidth - (availForContentWidth % 200));
       int32_t targetContentHeight =
-        std::min(1000, availForContentHeight - (availForContentHeight % 200));
+        shellScale * std::min(1000, availForContentHeight - (availForContentHeight % 200));
+      printf("target content size: %d, %d", taretContentWidth, targetContentHeight);
       SizeShellTo(mPrimaryContentShell, targetContentWidth, targetContentHeight);
       GetSize(&windowWidth, &windowHeight);
       GetAvailScreenSize(&availWidth, &availHeight);
