@@ -112,8 +112,6 @@ pref("webgl.disable-extensions", true);
 pref("webgl.disable-fail-if-major-performance-caveat", true);
 pref("dom.battery.enabled", false); // fingerprinting due to differing OS implementations
 pref("dom.network.enabled",false); // fingerprinting due to differing OS implementations
-pref("browser.display.max_font_attempts",10);
-pref("browser.display.max_font_count",10);
 pref("gfx.downloadable_fonts.fallback_delay", -1);
 pref("general.appname.override", "Netscape");
 pref("general.appversion.override", "5.0 (Windows)");
