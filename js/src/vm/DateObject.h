@@ -61,7 +61,7 @@ class DateObject : public NativeObject
     // Cache the local time, year, month, and so forth of the object.
     // If UTC time is not finite (e.g., NaN), the local time
     // slots will be set to the UTC time without conversion.
-    void fillLocalTimeSlots();
+    void fillLocalTimeSlots(JSContext* cx);
 
     static MOZ_ALWAYS_INLINE bool getTime_impl(JSContext* cx, const CallArgs& args);
     static MOZ_ALWAYS_INLINE bool getYear_impl(JSContext* cx, const CallArgs& args);

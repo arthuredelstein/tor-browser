@@ -1222,17 +1222,19 @@ DateObject::setUTCTime(ClippedTime t, MutableHandleValue vp)
 }
 
 void
-DateObject::fillLocalTimeSlots()
+DateObject::fillLocalTimeSlots(JSContext *cx)
 {
+    const bool hideTimezone = cx->runtime()->options().resistFingerprinting();
+    double localTZA = hideTimeZone ? 0 : DateTimeInfo::localTZA();
     /* Check if the cache is already populated. */
     if (!getReservedSlot(LOCAL_TIME_SLOT).isUndefined() &&
-        getReservedSlot(TZA_SLOT).toDouble() == DateTimeInfo::localTZA())
+        getReservedSlot(TZA_SLOT).toDouble() == localTZA)
     {
         return;
     }
 
     /* Remember timezone used to generate the local cache. */
-    setReservedSlot(TZA_SLOT, DoubleValue(DateTimeInfo::localTZA()));
+    setReservedSlot(TZA_SLOT, DoubleValue(localTZA));
 
     double utcTime = UTCTime().toNumber();
 
@@ -1242,7 +1244,7 @@ DateObject::fillLocalTimeSlots()
         return;
     }
 
-    double localTime = LocalTime(utcTime);
+    double localTime = hideTimezone ? utcTime : LocalTime(utcTime);
 
     setReservedSlot(LOCAL_TIME_SLOT, DoubleValue(localTime));
 
@@ -1352,9 +1354,9 @@ DateObject::fillLocalTimeSlots()
 }
 
 inline double
-DateObject::cachedLocalTime()
+DateObject::cachedLocalTime(JSContext* cx)
 {
-    fillLocalTimeSlots();
+    fillLocalTimeSlots(cx);
     return getReservedSlot(LOCAL_TIME_SLOT).toDouble();
 }
 
@@ -1385,7 +1387,7 @@ date_getTime(JSContext* cx, unsigned argc, Value* vp)
 DateObject::getYear_impl(JSContext* cx, const CallArgs& args)
 {
     DateObject* dateObj = &args.thisv().toObject().as<DateObject>();
-    dateObj->fillLocalTimeSlots();
+    dateObj->fillLocalTimeSlots(cx);
 
     Value yearVal = dateObj->getReservedSlot(LOCAL_YEAR_SLOT);
     if (yearVal.isInt32()) {
@@ -1410,7 +1412,7 @@ date_getYear(JSContext* cx, unsigned argc, Value* vp)
 DateObject::getFullYear_impl(JSContext* cx, const CallArgs& args)
 {
     DateObject* dateObj = &args.thisv().toObject().as<DateObject>();
-    dateObj->fillLocalTimeSlots();
+    dateObj->fillLocalTimeSlots(cx);
 
     args.rval().set(dateObj->getReservedSlot(LOCAL_YEAR_SLOT));
     return true;
@@ -1445,7 +1447,7 @@ date_getUTCFullYear(JSContext* cx, unsigned argc, Value* vp)
 DateObject::getMonth_impl(JSContext* cx, const CallArgs& args)
 {
     DateObject* dateObj = &args.thisv().toObject().as<DateObject>();
-    dateObj->fillLocalTimeSlots();
+    dateObj->fillLocalTimeSlots(cx);
 
     args.rval().set(dateObj->getReservedSlot(LOCAL_MONTH_SLOT));
     return true;
@@ -1477,7 +1479,7 @@ date_getUTCMonth(JSContext* cx, unsigned argc, Value* vp)
 DateObject::getDate_impl(JSContext* cx, const CallArgs& args)
 {
     DateObject* dateObj = &args.thisv().toObject().as<DateObject>();
-    dateObj->fillLocalTimeSlots();
+    dateObj->fillLocalTimeSlots(cx);
 
     args.rval().set(dateObj->getReservedSlot(LOCAL_DATE_SLOT));
     return true;
@@ -1512,7 +1514,7 @@ date_getUTCDate(JSContext* cx, unsigned argc, Value* vp)
 DateObject::getDay_impl(JSContext* cx, const CallArgs& args)
 {
     DateObject* dateObj = &args.thisv().toObject().as<DateObject>();
-    dateObj->fillLocalTimeSlots();
+    dateObj->fillLocalTimeSlots(cx);
 
     args.rval().set(dateObj->getReservedSlot(LOCAL_DAY_SLOT));
     return true;
@@ -1547,7 +1549,7 @@ date_getUTCDay(JSContext* cx, unsigned argc, Value* vp)
 DateObject::getHours_impl(JSContext* cx, const CallArgs& args)
 {
     DateObject* dateObj = &args.thisv().toObject().as<DateObject>();
-    dateObj->fillLocalTimeSlots();
+    dateObj->fillLocalTimeSlots(cx);
 
     args.rval().set(dateObj->getReservedSlot(LOCAL_HOURS_SLOT));
     return true;
@@ -1582,7 +1584,7 @@ date_getUTCHours(JSContext* cx, unsigned argc, Value* vp)
 DateObject::getMinutes_impl(JSContext* cx, const CallArgs& args)
 {
     DateObject* dateObj = &args.thisv().toObject().as<DateObject>();
-    dateObj->fillLocalTimeSlots();
+    dateObj->fillLocalTimeSlots(cx);
 
     args.rval().set(dateObj->getReservedSlot(LOCAL_MINUTES_SLOT));
     return true;
@@ -1619,7 +1621,7 @@ date_getUTCMinutes(JSContext* cx, unsigned argc, Value* vp)
 DateObject::getUTCSeconds_impl(JSContext* cx, const CallArgs& args)
 {
     DateObject* dateObj = &args.thisv().toObject().as<DateObject>();
-    dateObj->fillLocalTimeSlots();
+    dateObj->fillLocalTimeSlots(cx);
 
     args.rval().set(dateObj->getReservedSlot(LOCAL_SECONDS_SLOT));
     return true;
@@ -1657,7 +1659,7 @@ DateObject::getTimezoneOffset_impl(JSContext* cx, const CallArgs& args)
 {
     DateObject* dateObj = &args.thisv().toObject().as<DateObject>();
     double utctime = dateObj->UTCTime().toNumber();
-    double localtime = dateObj->cachedLocalTime();
+    double localtime = dateObj->cachedLocalTime(cx);
 
     /*
      * Return the time zone offset in minutes for the current locale that is
@@ -2679,7 +2681,7 @@ ToLocaleFormatHelper(JSContext* cx, HandleObject obj, const char* format, Mutabl
             /* ...but not if starts with 4-digit year, like 2022/3/11. */
             !(isdigit(buf[0]) && isdigit(buf[1]) &&
               isdigit(buf[2]) && isdigit(buf[3]))) {
-            double localtime = obj->as<DateObject>().cachedLocalTime();
+            double localtime = obj->as<DateObject>().cachedLocalTime(cx);
             int year = IsNaN(localtime) ? 0 : (int) YearFromTime(localtime);
             JS_snprintf(buf + (result_len - 2), (sizeof buf) - (result_len - 2),
                         "%d", year);

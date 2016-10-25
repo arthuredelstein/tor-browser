@@ -148,6 +148,7 @@ static_assert(MAX_WORKERS_PER_DOMAIN >= 1,
 #define PREF_WORKERS_OPTIONS_PREFIX PREF_WORKERS_PREFIX "options."
 #define PREF_MEM_OPTIONS_PREFIX "mem."
 #define PREF_GCZEAL "gcZeal"
+#define PREF_RESIST_FINGERPRINTING "privacy.resistFingerprinting"
 
 namespace {
 
@@ -249,7 +250,12 @@ GetWorkerPref(const nsACString& aPref,
       result = PrefHelper::Get(prefName.get());
     }
     else {
-      result = aDefault;
+      prefName.Assign(aPref);
+      if (PrefHelper::Exists(prefName.get())) {
+        result = PrefHelper::Get(prefName.get());
+      } else {
+        result = aDefault;
+      }
     }
   }
 
@@ -325,6 +331,7 @@ LoadRuntimeOptions(const char* aPrefName, void* /* aClosure */)
                 .setBaseline(GetWorkerPref<bool>(NS_LITERAL_CSTRING("baselinejit")))
                 .setIon(GetWorkerPref<bool>(NS_LITERAL_CSTRING("ion")))
                 .setNativeRegExp(GetWorkerPref<bool>(NS_LITERAL_CSTRING("native_regexp")))
+                .setResistFingerprinting(GetWorkerPref<bool>(NS_LITERAL_CSTRING("privacy.resistFingerprinting")))
                 .setAsyncStack(GetWorkerPref<bool>(NS_LITERAL_CSTRING("asyncstack")))
                 .setWerror(GetWorkerPref<bool>(NS_LITERAL_CSTRING("werror")))
                 .setExtraWarnings(GetWorkerPref<bool>(NS_LITERAL_CSTRING("strict")));

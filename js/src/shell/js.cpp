@@ -167,6 +167,7 @@ static bool enableBaseline = false;
 static bool enableIon = false;
 static bool enableAsmJS = false;
 static bool enableNativeRegExp = false;
+static bool enableResistFingerprinting = false;
 static bool enableUnboxedArrays = false;
 #ifdef JS_GC_ZEAL
 static char gZealStr[128];
@@ -6219,12 +6220,14 @@ SetRuntimeOptions(JSRuntime* rt, const OptionParser& op)
     enableIon = !op.getBoolOption("no-ion");
     enableAsmJS = !op.getBoolOption("no-asmjs");
     enableNativeRegExp = !op.getBoolOption("no-native-regexp");
+    enableResistFingerprinting = op.getBoolOption("resist-fingerprinting");
     enableUnboxedArrays = op.getBoolOption("unboxed-arrays");
 
     JS::RuntimeOptionsRef(rt).setBaseline(enableBaseline)
                              .setIon(enableIon)
                              .setAsmJS(enableAsmJS)
                              .setNativeRegExp(enableNativeRegExp)
+                             .setResistFingerprinting(enableResistFingerprinting)
                              .setUnboxedArrays(enableUnboxedArrays);
 
     if (op.getBoolOption("no-unboxed-objects"))
@@ -6471,6 +6474,7 @@ SetWorkerRuntimeOptions(JSRuntime* rt)
                              .setIon(enableIon)
                              .setAsmJS(enableAsmJS)
                              .setNativeRegExp(enableNativeRegExp)
+                             .setResistFingerprinting(enableResistFingerprinting)
                              .setUnboxedArrays(enableUnboxedArrays);
     rt->setOffthreadIonCompilationEnabled(offthreadCompilation);
     rt->profilingScripts = enableCodeCoverage || enableDisassemblyDumps;
@@ -6628,6 +6632,7 @@ main(int argc, char** argv, char** envp)
         || !op.addBoolOption('\0', "no-ion", "Disable IonMonkey")
         || !op.addBoolOption('\0', "no-asmjs", "Disable asm.js compilation")
         || !op.addBoolOption('\0', "no-native-regexp", "Disable native regexp compilation")
+        || !op.addBoolOption('\0', "resist-fingerprinting", "Resist fingerprinting")
         || !op.addBoolOption('\0', "no-unboxed-objects", "Disable creating unboxed plain objects")
         || !op.addBoolOption('\0', "unboxed-arrays", "Allow creating unboxed arrays")
         || !op.addStringOption('\0', "ion-shared-stubs", "on/off",

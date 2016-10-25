@@ -1533,6 +1533,7 @@ void XPCJSRuntime::SystemIsBeingShutDown()
 }
 
 #define JS_OPTIONS_DOT_STR "javascript.options."
+#define PREF_RESIST_FINGERPRINTING "privacy.resistFingerprinting"
 
 static void
 ReloadPrefsCallback(const char* pref, void* data)
@@ -1552,6 +1553,9 @@ ReloadPrefsCallback(const char* pref, void* data)
     bool throwOnAsmJSValidationFailure = Preferences::GetBool(JS_OPTIONS_DOT_STR
                                                               "throw_on_asmjs_validation_failure");
     bool useNativeRegExp = Preferences::GetBool(JS_OPTIONS_DOT_STR "native_regexp") && !safeMode;
+
+    // Note no 'javascript.' prefix.
+    bool resistFingerprinting = Preferences::GetBool(PREF_RESIST_FINGERPRINTING);
 
     bool parallelParsing = Preferences::GetBool(JS_OPTIONS_DOT_STR "parallel_parsing");
     bool offthreadIonCompilation = Preferences::GetBool(JS_OPTIONS_DOT_STR
@@ -1576,6 +1580,7 @@ ReloadPrefsCallback(const char* pref, void* data)
                              .setAsmJS(useAsmJS)
                              .setThrowOnAsmJSValidationFailure(throwOnAsmJSValidationFailure)
                              .setNativeRegExp(useNativeRegExp)
+                             .setResistFingerprinting(resistFingerprinting)
                              .setAsyncStack(useAsyncStack)
                              .setWerror(werror)
                              .setExtraWarnings(extraWarnings);
@@ -1653,6 +1658,7 @@ XPCJSRuntime::~XPCJSRuntime()
 #endif
 
     Preferences::UnregisterCallback(ReloadPrefsCallback, JS_OPTIONS_DOT_STR, this);
+    Preferences::UnregisterCallback(ReloadPrefsCallback, PREF_RESIST_FINGERPRINTING, this);
 }
 
 // If |*anonymizeID| is non-zero and this is a user compartment, the name will
@@ -3527,6 +3533,7 @@ XPCJSRuntime::XPCJSRuntime(nsXPConnect* aXPConnect)
     // Watch for the JS boolean options.
     ReloadPrefsCallback(nullptr, this);
     Preferences::RegisterCallback(ReloadPrefsCallback, JS_OPTIONS_DOT_STR, this);
+    Preferences::RegisterCallback(ReloadPrefsCallback, PREF_RESIST_FINGERPRINTING, this);
 }
 
 // static

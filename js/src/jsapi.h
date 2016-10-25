@@ -1090,6 +1090,7 @@ class JS_PUBLIC_API(RuntimeOptions) {
         asmJS_(true),
         throwOnAsmJSValidationFailure_(false),
         nativeRegExp_(true),
+        resistFingerprinting_(true),
         unboxedArrays_(false),
         asyncStack_(true),
         werror_(false),
@@ -1144,6 +1145,12 @@ class JS_PUBLIC_API(RuntimeOptions) {
         return *this;
     }
 
+    bool resistFingerprinting() const { return resistFingerprinting_; }
+    RuntimeOptions& setResistFingerprinting(bool flag) {
+        resistFingerprinting_ = flag;
+        return *this;
+    }
+
     bool unboxedArrays() const { return unboxedArrays_; }
     RuntimeOptions& setUnboxedArrays(bool flag) {
         unboxedArrays_ = flag;
@@ -1192,6 +1199,7 @@ class JS_PUBLIC_API(RuntimeOptions) {
     bool asmJS_ : 1;
     bool throwOnAsmJSValidationFailure_ : 1;
     bool nativeRegExp_ : 1;
+    bool resistFingerprinting_ : 1;
     bool unboxedArrays_ : 1;
     bool asyncStack_ : 1;
     bool werror_ : 1;
