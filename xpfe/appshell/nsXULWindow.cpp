@@ -1028,46 +1028,44 @@ NS_IMETHODIMP nsXULWindow::ResizeToRoundedDimensions()
   int32_t availHeight = NSToIntRound(devicePerCSSPixels *
                                      availHeightCSS); // device pixels
   shellWindow->GetSize(&contentWidth, &contentHeight); // device pixels
-  // Useful for debugging:
-  //printf("\nscaling factor: %f\n", devicePerCSSPixels);
-  //printf("window size: %d x %d\n", windowWidth, windowHeight);
-  //printf("avail screen size: %d x %d\n", availWidth, availHeight);
-  //printf("primary content shell: %d x %d\n", contentWidth, contentHeight);
+  /* Useful for debugging:
+  printf("\nscaling factor: %f\n", devicePerCSSPixels);
+  printf("window size: %d x %d\n", windowWidth, windowHeight);
+  printf("avail screen size: %d x %d\n", availWidth, availHeight);
+  printf("primary content shell: %d x %d\n", contentWidth, contentHeight);
+  */
   int32_t chromeWidth = windowWidth - contentWidth;
   int32_t chromeHeight = windowHeight - contentHeight;
   int maxInnerWidth = Preferences::GetInt("privacy.window.maxInnerWidth",
-                                          INT_MAX);
+                                          1000);
   int maxInnerHeight = Preferences::GetInt("privacy.window.maxInnerHeight",
-                                           INT_MAX);
+                                           1000);
   int32_t availForContentWidthCSS =
-    std::min(maxInnerWidth,
-             NSToIntRound((0.95 * availWidth - chromeWidth) /
-                          devicePerCSSPixels));
+    std::min(maxInnerWidth, NSToIntRound((0.95 * availWidth - chromeWidth) /
+                                         devicePerCSSPixels));
   int32_t availForContentHeightCSS =
-    std::min(maxInnerHeight,
-             NSToIntRound((0.95 * availHeight - chromeHeight) /
-                          devicePerCSSPixels));
+    std::min(maxInnerHeight, NSToIntRound((0.95 * availHeight - chromeHeight) /
+                                          devicePerCSSPixels));
   int32_t targetContentWidth =
     NSToIntRound(devicePerCSSPixels *
-                 std::min(1000, availForContentWidthCSS -
-                          (availForContentWidthCSS % 200)));
+                 (availForContentWidthCSS - (availForContentWidthCSS % 200)));
   int32_t targetContentHeight =
     NSToIntRound(devicePerCSSPixels *
-                 std::min(1000, availForContentHeightCSS -
-                          (availForContentHeightCSS % 100)));
+                 (availForContentHeightCSS - (availForContentHeightCSS % 100)));
   SizeShellTo(mPrimaryContentShell,
               targetContentWidth, targetContentHeight);
   mIgnoreXULSize = true;
   mIgnoreXULSizeMode = true;
-  // Useful for debugging:
-  //printf("target content size: %d, %d\n",
-  //       targetContentWidth, targetContentHeight);
-  //GetSize(&windowWidth, &windowHeight);
-  //GetAvailScreenSize(&availWidth, &availHeight);
-  //shellWindow->GetSize(&contentWidth, &contentHeight); // device pixels
-  //printf("\nwindow size: %d x %d\n", windowWidth, windowHeight);
-  //printf("avail screen size: %d x %d\n", availWidth, availHeight);
-  //printf("primary content shell: %d x %d\n", contentWidth, contentHeight);
+  /* Useful for debugging:
+  printf("target content size: %d, %d\n",
+         targetContentWidth, targetContentHeight);
+  GetSize(&windowWidth, &windowHeight);
+  GetAvailScreenSize(&availWidth, &availHeight);
+  shellWindow->GetSize(&contentWidth, &contentHeight); // device pixels
+  printf("\nwindow size: %d x %d\n", windowWidth, windowHeight);
+  printf("avail screen size: %d x %d\n", availWidth, availHeight);
+  printf("primary content shell: %d x %d\n", contentWidth, contentHeight);
+  */
   return NS_OK;
 }
 
