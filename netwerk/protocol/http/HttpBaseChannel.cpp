@@ -3034,8 +3034,6 @@ HttpBaseChannel::SetupReplacementChannel(nsIURI       *newURI,
       if (loadContext) {
         loadContext->GetOriginAttributes(docShellAttrs);
       }
-      MOZ_ASSERT(docShellAttrs.mFirstPartyDomain.IsEmpty(),
-                 "top-level docshell shouldn't have firstPartyDomain attribute.");
 
       NeckoOriginAttributes attrs = newLoadInfo->GetOriginAttributes();
 
