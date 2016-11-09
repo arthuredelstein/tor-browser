@@ -1986,9 +1986,7 @@ PatchIfFile::Finish(int status)
 class AddSymlink : public Action
 {
 public:
-  AddSymlink() : mLinkName(NULL)
-               , mTarget(NULL)
-               , mAdded(false)
+  AddSymlink() : mAdded(false)
             { }
 
   virtual int Parse(NS_tchar *line);
@@ -1997,8 +1995,9 @@ public:
   virtual void Finish(int status);
 
 private:
-  const NS_tchar *mLinkName;
-  const NS_tchar *mTarget;
+  mozilla::UniquePtr<NS_tchar[]> mLinkPath;
+  mozilla::UniquePtr<NS_tchar[]> mRelPath;
+  mozilla::UniquePtr<NS_tchar[]> mTarget;
   bool mAdded;
 };
 
@@ -2007,18 +2006,28 @@ AddSymlink::Parse(NS_tchar *line)
 {
   // format "<linkname>" "target"
 
-  mLinkName = get_valid_path(&line);
-  if (!mLinkName)
+  NS_tchar * validPath = get_valid_path(&line);
+  if (!validPath)
     return PARSE_ERROR;
+
+  mRelPath = mozilla::MakeUnique<NS_tchar[]>(MAXPATHLEN);
+  NS_tstrcpy(mRelPath.get(), validPath);
+  mLinkPath.reset(get_full_path(validPath));
+  if (!mLinkPath) {
+     return PARSE_ERROR;
+  }
 
   // consume whitespace between args
   NS_tchar *q = mstrtok(kQuote, &line);
   if (!q)
     return PARSE_ERROR;
 
-  mTarget = get_valid_path(&line, false, true);
-  if (!mTarget)
+  validPath = get_valid_path(&line, false, true);
+  if (!validPath)
     return PARSE_ERROR;
+
+  mTarget = mozilla::MakeUnique<NS_tchar[]>(MAXPATHLEN);
+  NS_tstrcpy(mTarget.get(), validPath);
 
   return OK;
 }
@@ -2026,7 +2035,7 @@ AddSymlink::Parse(NS_tchar *line)
 int
 AddSymlink::Prepare()
 {
-  LOG(("PREPARE ADDSYMLINK " LOG_S " -> " LOG_S, mLinkName, mTarget));
+  LOG(("PREPARE ADDSYMLINK " LOG_S " -> " LOG_S, mRelPath.get(), mTarget.get()));
 
   return OK;
 }
@@ -2034,26 +2043,26 @@ AddSymlink::Prepare()
 int
 AddSymlink::Execute()
 {
-  LOG(("EXECUTE ADDSYMLINK " LOG_S " -> " LOG_S, mLinkName, mTarget));
+  LOG(("EXECUTE ADDSYMLINK " LOG_S " -> " LOG_S, mRelPath.get(), mTarget.get()));
 
   // First make sure that we can actually get rid of any existing file or link.
   struct stat linkInfo;
-  int rv = lstat(mLinkName, &linkInfo);
+  int rv = lstat(mLinkPath.get(), &linkInfo);
   if ((0 == rv) && !S_ISLNK(linkInfo.st_mode)) {
-    rv = NS_taccess(mLinkName, F_OK);
+    rv = NS_taccess(mLinkPath.get(), F_OK);
   }
   if (rv == 0) {
-    rv = backup_create(mLinkName);
+    rv = backup_create(mLinkPath.get());
     if (rv)
       return rv;
   } else {
-    rv = ensure_parent_dir(mLinkName);
+    rv = ensure_parent_dir(mLinkPath.get());
     if (rv)
       return rv;
   }
 
   // Create the link.
-  rv = symlink(mTarget, mLinkName);
+  rv = symlink(mTarget.get(), mLinkPath.get());
   if (!rv) {
     mAdded = true;
   }
@@ -2064,12 +2073,12 @@ AddSymlink::Execute()
 void
 AddSymlink::Finish(int status)
 {
-  LOG(("FINISH ADDSYMLINK " LOG_S " -> " LOG_S, mLinkName, mTarget));
+  LOG(("FINISH ADDSYMLINK " LOG_S " -> " LOG_S, mRelPath.get(), mTarget.get()));
   // When there is an update failure and a link has been added it is removed
   // here since there might not be a backup to replace it.
   if (status && mAdded)
-    NS_tremove(mLinkName);
-  backup_finish(mLinkName, status);
+    NS_tremove(mLinkPath.get());
+  backup_finish(mLinkPath.get(), mRelPath.get(), status);
 }
 #endif
 
