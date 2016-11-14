@@ -147,6 +147,7 @@ pref("ui.use_standins_for_native_colors", true); // https://bugzilla.mozilla.org
 // bug 18950 for more details.
 pref("browser.reader.detectedFirstArticle", true);
 pref("reader.parse-on-load.enabled", false);
+pref("privacy.use_utc_timezone", true);
 
 // Third party stuff
 pref("network.cookie.cookieBehavior", 1);
