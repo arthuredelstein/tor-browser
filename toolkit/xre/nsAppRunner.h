@@ -96,6 +96,9 @@ WriteConsoleLog();
 void
 OverrideDefaultLocaleIfNeeded();
 
+void
+UseUTCTimeZoneIfNeeded();
+
 #ifdef XP_WIN
 void
 UseParentConsole();

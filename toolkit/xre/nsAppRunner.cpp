@@ -4680,6 +4680,8 @@ XREMain::XRE_mainRun()
 
   OverrideDefaultLocaleIfNeeded();
 
+  UseUTCTimeZoneIfNeeded();
+
 #ifdef MOZ_CRASHREPORTER
   nsCString userAgentLocale;
   // Try a localized string first. This pref is always a localized string in
@@ -5383,5 +5385,12 @@ OverrideDefaultLocaleIfNeeded() {
     // to avoid interfering with non-ASCII keyboard input on some Linux desktops.
     // Otherwise fall back to the "C" locale, which is available on all platforms.
     setlocale(LC_ALL, "C.UTF-8") || setlocale(LC_ALL, "C");
+  }
+}
+
+void
+UseUTCTimeZoneIfNeeded() {
+  if (mozilla::Preferences::GetBool("privacy.use_utc_timezone", false)) {
+    SaveToEnv("TZ=UTC");
   }
 }
