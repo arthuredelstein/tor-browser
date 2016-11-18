@@ -137,8 +137,8 @@
     <hbox align="center">
       <checkbox id="thirdpartyIsolateCB"
                 preference="privacy.thirdparty.isolate"
-                accesskey="&thirdpartyIsolate.accesskey;"
-                label="&thirdpartyIsolate.label;"
+                accesskey="R"
+                label="Restrict third party cookies and other tracking data"
                 onsyncfrompreference="return gPrivacyPane.readThirdPartyIsolate();"
                 onsynctopreference="return gPrivacyPane.writeThirdPartyIsolate();"/>
     </hbox>
@@ -147,8 +147,8 @@
     <hbox align="center">
       <checkbox id="resistFingerprintingCB"
                 preference="privacy.resistFingerprinting"
-                accesskey="&resistFingerprinting.accesskey;"
-                label="&resistFingerprinting.label;" />
+                accesskey="F"
+                label="Change details that distinguish you from other Tor Browser users" />
     </hbox>
   </vbox>
 </groupbox>
