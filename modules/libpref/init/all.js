@@ -2873,6 +2873,9 @@ pref("dom.ipc.plugins.asyncdrawing.enabled", true);
 
 pref("dom.ipc.processCount", 1);
 
+// Disable support for SVG
+pref("svg.disabled", false);
+
 // Enable caching of Moz2D Path objects for SVG geometry elements
 pref("svg.path-caching.enabled", true);
 
