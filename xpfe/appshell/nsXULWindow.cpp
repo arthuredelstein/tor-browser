@@ -1071,6 +1071,13 @@ NS_IMETHODIMP nsXULWindow::ResizeToRoundedDimensions()
 
 void nsXULWindow::OnChromeLoaded()
 {
+  char* test = (char*) malloc(5);
+  for (int i = 0; i < 32; ++i) {
+    test[i] = i;
+    printf("test[%d] value: %d\n", i, (int) test[i]);
+  }
+  free(test);
+
   nsresult rv = EnsureContentTreeOwner();
 
   if (NS_SUCCEEDED(rv)) {
