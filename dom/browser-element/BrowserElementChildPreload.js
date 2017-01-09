@@ -1060,7 +1060,7 @@ BrowserElementChild.prototype = {
     if (expectedUrl) {
       let expectedURI
       try {
-       expectedURI = Services.io.newURI(expectedUrl, null, null);
+       expectedURI = Services.io.newURI(expectedUrl);
       } catch(e) {
         sendError("Malformed URL");
         return;

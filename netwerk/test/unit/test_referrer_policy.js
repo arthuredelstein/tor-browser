@@ -3,13 +3,13 @@ Cu.import("resource://gre/modules/NetUtil.jsm");
 function test_policy(test) {
   do_print("Running test: " + test.toSource());
 
-  var uri = NetUtil.newURI(test.url, "", null)
+  var uri = NetUtil.newURI(test.url, "")
   var chan = NetUtil.newChannel({
     uri: uri,
     loadUsingSystemPrincipal: true
   });
 
-  var referrer = NetUtil.newURI(test.referrer, "", null);
+  var referrer = NetUtil.newURI(test.referrer, "");
   chan.QueryInterface(Components.interfaces.nsIHttpChannel);
   chan.setReferrerWithPolicy(referrer, test.policy);
   if (test.expectedReferrerSpec === undefined) {
