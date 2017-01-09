@@ -58,7 +58,7 @@ protected:
 
   void ToBlob(JSContext* aCx, nsIGlobalObject* global, BlobCallback& aCallback,
               const nsAString& aType, JS::Handle<JS::Value> aParams,
-              bool usePlaceholder, ErrorResult& aRv);
+              ErrorResult& aRv);
 
   void ToBlob(JSContext* aCx, nsIGlobalObject* aGlobal, EncodeCompleteCallback* aCallback,
               const nsAString& aType, JS::Handle<JS::Value> aParams,
