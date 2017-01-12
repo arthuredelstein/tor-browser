@@ -926,9 +926,15 @@ nsHttpPipeline::FillSendBuf()
         if (avail == 0) {
 #ifdef WTF_TEST
             nsHttpRequestHead *head = trans->RequestHead();
+			nsAutoCString requestURI;
+			if (head) {
+				head->RequestURI(requestURI);
+			} else {
+				requestURI = "<unknown?>";
+			}
             fprintf(stderr, "WTF-order: Pipelined req %d/%d (%dB). Url: %s%s\n",
                     trans->PipelinePosition(), PipelineDepth(), n,
-                    ci->Origin(), head ? head->RequestURI().BeginReading() : "<unknown?>");
+                    ci->Origin(), requestURI.get());
 #endif
             reqsSent++;
 
@@ -954,7 +960,7 @@ nsHttpPipeline::FillSendBuf()
 
 #ifdef WTF_TEST
     if (totalSent)
-      fprintf(stderr, "WTF-combine: Sent %ld/%ld bytes of %ld combined pipelined requests for host %s\n",
+      fprintf(stderr, "WTF-combine: Sent %lld/%lld bytes of %lld combined pipelined requests for host %s\n",
               alreadyPending+totalSent, totalAvailable, reqsSent, ci->Origin());
 #endif
 

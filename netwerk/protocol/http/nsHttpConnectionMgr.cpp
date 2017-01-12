@@ -1473,7 +1473,7 @@ nsHttpConnectionMgr::AddToBestPipeline(nsConnectionEntry *ent,
 #ifdef WTF_DEBUG
     pipeline = activeTrans->QueryPipeline();
     fprintf(stderr,
-            "WTF-depth: Added trans to %s of %d/%d/%d/%d pipelines. Request len %d/%d/%d for %s\n",
+            "WTF-depth: Added trans to %s of %zu/%zu/%zu/%u pipelines. Request len %d/%d/%d for %s\n",
             type, bestConns.Length(), betterConns.Length(), validConns.Length(),
             numPipelines, pipeline->RequestDepth(), activeTrans->PipelineDepth(),
             maxdepth, ent->mConnInfo->Origin());
@@ -1715,9 +1715,14 @@ nsHttpConnectionMgr::TryDispatchTransaction(nsConnectionEntry *ent,
     // XXX: We dequeue and queue the same url here sometimes..
 #ifdef WTF_DEBUG
     nsHttpRequestHead *head = trans->RequestHead();
+    nsAutoCString requestURI;
+    if (head) {
+        head->RequestURI(requestURI);
+    } else {
+        requestURI = "<unknown?>";
+    }
     fprintf(stderr, "WTF: Queuing url %s%s\n",
-            ent->mConnInfo->Origin(),
-            head ? head->RequestURI().BeginReading() : "<unknown?>");
+            ent->mConnInfo->Origin(), requestURI.get());
 #endif
 
 
@@ -1853,11 +1858,11 @@ nsHttpConnectionMgr::DispatchAbstractTransaction(nsConnectionEntry *ent,
 #ifdef WTF_DEBUG
         if (HasPipelines(ent) &&
                 ent->mPendingQ.Length()+1 < mMaxOptimisticPipelinedRequests) {
-            fprintf(stderr, "WTF-new-bug: New pipeline created from %d idle conns for host %s with %d/%d pending\n",
+            fprintf(stderr, "WTF-new-bug: New pipeline created from %zu idle conns for host %s with %zu/%u pending\n",
                     ent->mIdleConns.Length(), ent->mConnInfo->Origin(), ent->mPendingQ.Length(),
                     mMaxOptimisticPipelinedRequests);
         } else {
-            fprintf(stderr, "WTF-new: New pipeline created from %d idle conns for host %s with %d/%d pending\n",
+            fprintf(stderr, "WTF-new: New pipeline created from %zu idle conns for host %s with %zu/%u pending\n",
                     ent->mIdleConns.Length(), ent->mConnInfo->Origin(), ent->mPendingQ.Length(),
                     mMaxOptimisticPipelinedRequests);
         }
@@ -1868,9 +1873,14 @@ nsHttpConnectionMgr::DispatchAbstractTransaction(nsConnectionEntry *ent,
         transaction = aTrans;
 #ifdef WTF_TEST
         nsHttpRequestHead *head = transaction->RequestHead();
+        nsAutoCString requestURI;
+        if (head) {
+            head->RequestURI(requestURI);
+        } else {
+            requestURI = "<unknown?>";
+        }
         fprintf(stderr, "WTF-order: Pipeline forbidden for url %s%s\n",
-                ent->mConnInfo->Origin(),
-                head ? head->RequestURI().BeginReading() : "<unknown?>");
+                ent->mConnInfo->Origin(), requestURI.get());
 #endif
     }
 
