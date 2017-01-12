@@ -504,7 +504,7 @@ LoginManager.prototype = {
    */
   getLoginSavingEnabled(origin) {
     log.debug("Checking if logins to", origin, "can be saved.");
-    if (!this._remember || !this._storage)
+    if (!this._remember || !this._storage) {
       return false;
     }
 
