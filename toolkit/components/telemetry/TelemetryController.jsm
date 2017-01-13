@@ -631,7 +631,7 @@ var Impl = {
     if (IS_UNIFIED_TELEMETRY) {
       // Enable extended Telemetry on pre-release channels and disable it
       // on Release/ESR.
-      let prereleaseChannels = ["nightly", "aurora", "beta"];
+      let prereleaseChannels = ["nightly", "aurora", "alpha", "beta"];
       if (!AppConstants.MOZILLA_OFFICIAL) {
         // Turn extended telemetry for local developer builds.
         prereleaseChannels.push("default");

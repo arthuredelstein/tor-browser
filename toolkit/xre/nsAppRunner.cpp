@@ -4777,12 +4777,20 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
   if (CheckArg("test-process-updates")) {
     SaveToEnv("MOZ_TEST_PROCESS_UPDATES=1");
   }
+#ifdef TOR_BROWSER_UPDATE
+  nsAutoCString compatVersion(TOR_BROWSER_VERSION);
+#endif
   ProcessUpdates(mDirProvider.GetGREDir(),
                  exeDir,
                  updRoot,
                  gRestartArgc,
                  gRestartArgv,
-                 mAppData->version);
+#ifdef TOR_BROWSER_UPDATE
+                 compatVersion.get()
+#else
+                 mAppData->version
+#endif
+                 );
   if (EnvHasValue("MOZ_TEST_PROCESS_UPDATES")) {
     SaveToEnv("MOZ_TEST_PROCESS_UPDATES=");
     *aExitFlag = true;
