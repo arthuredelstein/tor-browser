@@ -984,6 +984,13 @@ uprv_tzname(int n)
 {
     const char *tzid = NULL;
 #if U_PLATFORM_USES_ONLY_WIN32_API
+    char* envValue = getenv("TZ");
+    if (envValue != NULL) {
+      char *tmpTzid = (char*) uprv_malloc(uprv_strlen(envValue) + 1);
+      uprv_strcpy(tmpTzid, envValue);
+      return tmpTzid;
+    }
+
     tzid = uprv_detectWindowsTimeZone();
 
     if (tzid != NULL) {
