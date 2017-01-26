@@ -83,7 +83,7 @@ pref("toolkit.telemetry.unified", false);
 // Disable the UITour backend so there is no chance that a remote page
 // can use it to confuse Tor Browser users.
 pref("browser.uitour.enabled", false);
-pref("security.mixed_content.block_active_content", false); // Disable until https://bugzilla.mozilla.org/show_bug.cgi?id=878890 is patched
+pref("security.mixed_content.block_active_content", true); // https://bugs.torproject.org/21323
 pref("browser.syncPromoViewsLeftMap", "{\"addons\":0, \"passwords\":0, \"bookmarks\":0}"); // Don't promote sync
 pref("services.sync.engine.prefs", false); // Never sync prefs, addons, or tabs with other browsers
 pref("services.sync.engine.addons", false);
