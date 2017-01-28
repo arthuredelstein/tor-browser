@@ -1087,6 +1087,31 @@ nsWindow::Show(bool aState)
     return NS_OK;
 }
 
+void
+nsWindow::GetDecorationSize(gint& oDecorationWidth,
+                            gint& oDecorationHeight) {
+    if (mIsTopLevel) {
+        GdkWindow* window = gtk_widget_get_window(GTK_WIDGET(mContainer));
+        // Get the current outer size.
+        GdkRectangle oldOuterRect;
+        gdk_window_get_frame_extents(window, &oldOuterRect);
+        // Get the current inner size.
+        gint oldInnerWidth, oldInnerHeight;
+#if (MOZ_WIDGET_GTK == 2)
+        gdk_drawable_get_size(window, &oldInnerWidth, &oldInnerHeight);
+#else
+        oldInnerWidth = gdk_window_get_width(window);
+        oldInnerHeight = gdk_window_get_height(window);
+#endif
+        // The decoration width and height are outer-inner:
+        oDecorationWidth = oldOuterRect.width - oldInnerWidth;
+        oDecorationHeight = oldOuterRect.height - oldInnerHeight;
+    } else {
+        oDecorationWidth = 0;
+        oDecorationHeight = 0;
+    }
+}
+
 NS_IMETHODIMP
 nsWindow::Resize(double aWidth, double aHeight, bool aRepaint)
 {
@@ -1096,16 +1121,17 @@ nsWindow::Resize(double aWidth, double aHeight, bool aRepaint)
     int32_t height = NSToIntRound(scale.scale * aHeight);
     ConstrainSize(&width, &height);
 
-    // For top-level windows, aWidth and aHeight should possibly be
-    // interpreted as frame bounds, but NativeResize treats these as window
-    // bounds (Bug 581866).
-
     mBounds.SizeTo(width, height);
 
     if (!mCreated)
         return NS_OK;
 
-    NativeResize();
+    GdkRectangle newRect = DevicePixelsToGdkSizeRoundUp(mBounds.Size());
+    gint decorationWidth, decorationHeight;
+    GetDecorationSize(decorationWidth, decorationHeight);
+    newRect.width -= decorationWidth;
+    newRect.height -= decorationHeight;
+    NativeResize(newRect);
 
     NotifyRollupGeometryChange();
     ResizePluginSocketWidget();
@@ -1502,6 +1528,10 @@ nsWindow::GetScreenBounds(LayoutDeviceIntRect& aRect)
     // frame bounds, but mBounds.Size() is returned here for consistency
     // with Resize.
     aRect.SizeTo(LayoutDeviceIntSize::FromUnknownSize(mBounds.Size()));
+    gint decorationWidth, decorationHeight;
+    GetDecorationSize(decorationWidth, decorationHeight);
+    aRect.width += GdkCoordToDevicePixels(decorationWidth);
+    aRect.height += GdkCoordToDevicePixels(decorationHeight);
     LOG(("GetScreenBounds %d,%d | %dx%d\n",
          aRect.x, aRect.y, aRect.width, aRect.height));
     return NS_OK;
@@ -3620,7 +3650,7 @@ nsWindow::Create(nsIWidget* aParent,
         // We only move a general managed toplevel window if someone has
         // actually placed the window somewhere.  If no placement has taken
         // place, we just let the window manager Do The Right Thing.
-        NativeResize();
+        NativeResize(DevicePixelsToGdkSizeRoundUp(mBounds.Size()));
 
         if (mWindowType == eWindowType_dialog) {
             SetDefaultIcon();
@@ -4036,7 +4066,7 @@ nsWindow::SetWindowClass(const nsAString &xulWinType)
 }
 
 void
-nsWindow::NativeResize()
+nsWindow::NativeResize(GdkRectangle size)
 {
     if (!AreBoundsSane()) {
         // If someone has set this so that the needs show flag is false
@@ -4052,8 +4082,6 @@ nsWindow::NativeResize()
         return;
     }
 
-    GdkRectangle size = DevicePixelsToGdkSizeRoundUp(mBounds.Size());
-    
     LOG(("nsWindow::NativeResize [%p] %d %d\n", (void *)this,
          size.width, size.height));
 

@@ -222,7 +222,7 @@ private:
     void               UpdateAlpha(mozilla::gfx::SourceSurface* aSourceSurface, nsIntRect aBoundsRect);
 
     void               NativeMove();
-    void               NativeResize();
+    void               NativeResize(GdkRectangle size);
     void               NativeMoveResize();
 
     void               NativeShow  (bool    aAction);
@@ -234,7 +234,8 @@ private:
     void               ReleaseGrabs (void);
 
     void               UpdateClientOffset();
-
+    void               GetDecorationSize(gint& oDecorationWidth,
+                                         gint& oDecorationHeight);
 public:
     enum PluginType {
         PluginType_NONE = 0,   /* do not have any plugin */
