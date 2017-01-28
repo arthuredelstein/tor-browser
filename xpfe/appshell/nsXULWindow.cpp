@@ -1028,12 +1028,6 @@ NS_IMETHODIMP nsXULWindow::ResizeToRoundedDimensions()
   int32_t availHeight = NSToIntRound(devicePerCSSPixels *
                                      availHeightCSS); // device pixels
   shellWindow->GetSize(&contentWidth, &contentHeight); // device pixels
-  /* Useful for debugging:
-  printf("\nscaling factor: %f\n", devicePerCSSPixels);
-  printf("window size: %d x %d\n", windowWidth, windowHeight);
-  printf("avail screen size: %d x %d\n", availWidth, availHeight);
-  printf("primary content shell: %d x %d\n", contentWidth, contentHeight);
-  */
   int32_t chromeWidth = windowWidth - contentWidth;
   int32_t chromeHeight = windowHeight - contentHeight;
   int maxInnerWidth = Preferences::GetInt("privacy.window.maxInnerWidth",
@@ -1052,6 +1046,14 @@ NS_IMETHODIMP nsXULWindow::ResizeToRoundedDimensions()
   int32_t targetContentHeight =
     NSToIntRound(devicePerCSSPixels *
                  (availForContentHeightCSS - (availForContentHeightCSS % 100)));
+  /* Useful for debugging:
+  printf("\nscaling factor: %f\n", devicePerCSSPixels);
+  printf("window size: %d x %d\n", windowWidth, windowHeight);
+  printf("avail screen size: %d x %d\n", availWidth, availHeight);
+  printf("primary content shell: %d x %d\n", contentWidth, contentHeight);
+  printf("availy content wxh css: %d x %d\n", availForContentWidthCSS, availForContentHeightCSS);
+  printf("target content shell: %d x %d\n", targetContentWidth, targetContentHeight);
+  */
   SizeShellTo(mPrimaryContentShell,
               targetContentWidth, targetContentHeight);
   mIgnoreXULSize = true;
