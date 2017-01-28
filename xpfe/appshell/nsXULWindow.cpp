@@ -1041,10 +1041,10 @@ NS_IMETHODIMP nsXULWindow::ResizeToRoundedDimensions()
   int maxInnerHeight = Preferences::GetInt("privacy.window.maxInnerHeight",
                                            1000);
   int32_t availForContentWidthCSS =
-    std::min(maxInnerWidth, NSToIntRound((0.95 * availWidth - chromeWidth) /
+    std::min(maxInnerWidth, NSToIntRound((availWidth - chromeWidth) /
                                          devicePerCSSPixels));
   int32_t availForContentHeightCSS =
-    std::min(maxInnerHeight, NSToIntRound((0.95 * availHeight - chromeHeight) /
+    std::min(maxInnerHeight, NSToIntRound((availHeight - chromeHeight) /
                                           devicePerCSSPixels));
   int32_t targetContentWidth =
     NSToIntRound(devicePerCSSPixels *
