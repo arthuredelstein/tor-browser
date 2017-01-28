@@ -1112,11 +1112,26 @@ nsWindow::Resize(double aWidth, double aHeight, bool aRepaint)
     int32_t height = NSToIntRound(scale * aHeight);
     ConstrainSize(&width, &height);
 
-    // For top-level windows, aWidth and aHeight should possibly be
-    // interpreted as frame bounds, but NativeResize treats these as window
-    // bounds (Bug 581866).
-
-    mBounds.SizeTo(width, height);
+    if (mIsTopLevel && mContainer) {
+        // For top-level windows, interpret aWidth and aHeight as
+        // frame bounds.
+        gint w, h;
+        GdkWindow* window = gtk_widget_get_window(GTK_WIDGET(mContainer));
+#if (MOZ_WIDGET_GTK == 2)
+        gdk_drawable_get_size(window, &w, &h);
+#else
+        w = gdk_window_get_width(window);
+        h = gdk_window_get_height(window);
+#endif
+        GdkRectangle gdkOldFrameRect;
+        gdk_window_get_frame_extents(window, &gdkOldFrameRect);
+        LayoutDeviceIntRect oldFrameRect = GdkRectToDevicePixels(gdkOldFrameRect);
+        // newInnerWidth = oldInnerWidth + newFrameWidth - oldFrameWidth
+        mBounds.SizeTo(GdkCoordToDevicePixels(w) + width - oldFrameRect.width,
+                       GdkCoordToDevicePixels(h) + height - oldFrameRect.height);
+    } else {
+        mBounds.SizeTo(width, height);
+    }
 
     if (!mCreated)
         return;
@@ -1492,18 +1507,20 @@ nsWindow::GetScreenBounds()
 {
     LayoutDeviceIntRect rect;
     if (mIsTopLevel && mContainer) {
-        // use the point including window decorations
+        // include window decorations
         gint x, y;
-        gdk_window_get_root_origin(gtk_widget_get_window(GTK_WIDGET(mContainer)), &x, &y);
+        GdkWindow* window = gtk_widget_get_window(GTK_WIDGET(mContainer));
+        gdk_window_get_root_origin(window, &x, &y);
         rect.MoveTo(GdkPointToDevicePixels({ x, y }));
+        GdkRectangle rectangle;
+        gdk_window_get_frame_extents(window, &rectangle);
+        LayoutDeviceIntRect deviceRectangle = GdkRectToDevicePixels(rectangle);
+        rect.SizeTo(deviceRectangle.width, deviceRectangle.height);
     } else {
         rect.MoveTo(WidgetToScreenOffset());
+        rect.SizeTo(mBounds.Size());
     }
-    // mBounds.Size() is the window bounds, not the window-manager frame
-    // bounds (bug 581863).  gdk_window_get_frame_extents would give the
-    // frame bounds, but mBounds.Size() is returned here for consistency
-    // with Resize.
-    rect.SizeTo(mBounds.Size());
+
     LOG(("GetScreenBounds %d,%d | %dx%d\n",
          rect.x, rect.y, rect.width, rect.height));
     return rect;
