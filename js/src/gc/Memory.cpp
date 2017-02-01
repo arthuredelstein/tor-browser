@@ -854,7 +854,7 @@ ProtectPages(void* p, size_t size)
     DWORD oldProtect;
     if (!VirtualProtect(p, size, PAGE_NOACCESS, &oldProtect)) {
         snprintf(sCrashReason, sizeof(sCrashReason),
-            "MOZ_CRASH(VirtualProtect(PAGE_NOACCESS) failed! Error code: %u)", GetLastError());
+            "MOZ_CRASH(VirtualProtect(PAGE_NOACCESS) failed! Error code: %lu)", GetLastError());
         MOZ_CRASH_ANNOTATE(sCrashReason);
         MOZ_REALLY_CRASH();
     }
@@ -875,7 +875,7 @@ MakePagesReadOnly(void* p, size_t size)
     DWORD oldProtect;
     if (!VirtualProtect(p, size, PAGE_READONLY, &oldProtect)) {
         snprintf(sCrashReason, sizeof(sCrashReason),
-            "MOZ_CRASH(VirtualProtect(PAGE_READONLY) failed! Error code: %u)", GetLastError());
+            "MOZ_CRASH(VirtualProtect(PAGE_READONLY) failed! Error code: %lu)", GetLastError());
         MOZ_CRASH_ANNOTATE(sCrashReason);
         MOZ_REALLY_CRASH();
     }
@@ -896,7 +896,7 @@ UnprotectPages(void* p, size_t size)
     DWORD oldProtect;
     if (!VirtualProtect(p, size, PAGE_READWRITE, &oldProtect)) {
         snprintf(sCrashReason, sizeof(sCrashReason),
-            "MOZ_CRASH(VirtualProtect(PAGE_READWRITE) failed! Error code: %u)", GetLastError());
+            "MOZ_CRASH(VirtualProtect(PAGE_READWRITE) failed! Error code: %lu)", GetLastError());
         MOZ_CRASH_ANNOTATE(sCrashReason);
         MOZ_REALLY_CRASH();
     }
