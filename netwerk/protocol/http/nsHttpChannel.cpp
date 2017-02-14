@@ -352,12 +352,17 @@ nsHttpChannel::Connect()
         nsContentUtils::GetSecurityManager()->
           GetChannelResultPrincipal(this, getter_AddRefs(resultPrincipal));
     }
+    NeckoOriginAttributes originAttributes;
+    if (!NS_GetOriginAttributes(this, originAttributes)) {
+        return NS_ERROR_FAILURE;
+    }
     bool shouldUpgrade = false;
     rv = NS_ShouldSecureUpgrade(mURI,
                                 mLoadInfo,
                                 resultPrincipal,
                                 mPrivateBrowsing,
                                 mAllowSTS,
+                                originAttributes,
                                 shouldUpgrade);
     NS_ENSURE_SUCCESS(rv, rv);
     if (shouldUpgrade) {
@@ -1577,9 +1582,12 @@ nsHttpChannel::ProcessSingleSecurityHeader(uint32_t aType,
         NS_ENSURE_TRUE(sss, NS_ERROR_OUT_OF_MEMORY);
         // Process header will now discard the headers itself if the channel
         // wasn't secure (whereas before it had to be checked manually)
+        NeckoOriginAttributes originAttributes;
+        NS_GetOriginAttributes(this, originAttributes);
         uint32_t failureResult;
         rv = sss->ProcessHeader(aType, mURI, securityHeader, aSSLStatus,
-                                aFlags, nullptr, nullptr, &failureResult);
+                                aFlags, originAttributes, nullptr, nullptr,
+                                &failureResult);
         if (NS_FAILED(rv)) {
             nsAutoString consoleErrorCategory;
             nsAutoString consoleErrorTag;
@@ -8089,8 +8097,10 @@ nsHttpChannel::OnHSTSPrimingFailed(nsresult aError, bool aCached)
     // security.mixed_content.hsts_priming_cache_timeout seconds.
     nsISiteSecurityService* sss = gHttpHandler->GetSSService();
     NS_ENSURE_TRUE(sss, NS_ERROR_OUT_OF_MEMORY);
+    NeckoOriginAttributes originAttributes;
+    NS_GetOriginAttributes(this, originAttributes);
     nsresult rv = sss->CacheNegativeHSTSResult(mURI,
-            nsMixedContentBlocker::sHSTSPrimingCacheTimeout);
+            nsMixedContentBlocker::sHSTSPrimingCacheTimeout, originAttributes);
     if (NS_FAILED(rv)) {
         NS_ERROR("nsISiteSecurityService::CacheNegativeHSTSResult failed");
     }
