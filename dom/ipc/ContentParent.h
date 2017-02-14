@@ -765,11 +765,14 @@ private:
                                    nsTArray<uint8_t>* aSignature) override;
 
   virtual bool RecvIsSecureURI(const uint32_t& aType, const URIParams& aURI,
-                               const uint32_t& aFlags, bool* aIsSecureURI) override;
+                               const uint32_t& aFlags,
+                               const NeckoOriginAttributes& aOriginAttributes,
+                               bool* aIsSecureURI) override;
 
   virtual bool RecvAccumulateMixedContentHSTS(const URIParams& aURI,
                                               const bool& aActive,
-                                              const bool& aHSTSPriming) override;
+                                              const bool& aHSTSPriming,
+                                              const NeckoOriginAttributes& aOriginAttributes) override;
 
   virtual bool DeallocPHalParent(PHalParent*) override;
 
