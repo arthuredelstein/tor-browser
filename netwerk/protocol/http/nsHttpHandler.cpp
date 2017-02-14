@@ -2258,9 +2258,24 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
     uint32_t flags = 0;
     if (loadContext && loadContext->UsePrivateBrowsing())
         flags |= nsISocketProvider::NO_PERMANENT_STORAGE;
+
+    NeckoOriginAttributes neckoOriginAttributes;
+    // If the principal is given, we use the originAttributes from this
+    // principal. Otherwise, we use the originAttributes from the
+    // loadContext.
+    if (aPrincipal) {
+        neckoOriginAttributes.InheritFromDocToNecko(
+          BasePrincipal::Cast(aPrincipal)->OriginAttributesRef());
+    } else if (loadContext) {
+        DocShellOriginAttributes docshellOriginAttributes;
+        loadContext->GetOriginAttributes(docshellOriginAttributes);
+        neckoOriginAttributes.InheritFromDocShellToNecko(docshellOriginAttributes);
+    }
+
     nsCOMPtr<nsIURI> clone;
     if (NS_SUCCEEDED(sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS,
-                                      aURI, flags, nullptr, &isStsHost)) &&
+                                      aURI, flags, neckoOriginAttributes,
+                                      nullptr, &isStsHost)) &&
                                       isStsHost) {
         if (NS_SUCCEEDED(NS_GetSecureUpgradedURI(aURI,
                                                  getter_AddRefs(clone)))) {
@@ -2305,19 +2320,6 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
 
     nsAutoCString username;
     aURI->GetUsername(username);
-
-    NeckoOriginAttributes neckoOriginAttributes;
-    // If the principal is given, we use the originAttributes from this
-    // principal. Otherwise, we use the originAttributes from the
-    // loadContext.
-    if (aPrincipal) {
-        neckoOriginAttributes.InheritFromDocToNecko(
-            BasePrincipal::Cast(aPrincipal)->OriginAttributesRef());
-    } else if (loadContext) {
-        DocShellOriginAttributes docshellOriginAttributes;
-        loadContext->GetOriginAttributes(docshellOriginAttributes);
-        neckoOriginAttributes.InheritFromDocShellToNecko(docshellOriginAttributes);
-    }
 
     auto *ci =
         new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr,

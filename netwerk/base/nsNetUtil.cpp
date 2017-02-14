@@ -2228,6 +2228,7 @@ NS_ShouldSecureUpgrade(nsIURI* aURI,
                        nsIPrincipal* aChannelResultPrincipal,
                        bool aPrivateBrowsing,
                        bool aAllowSTS,
+                       const NeckoOriginAttributes& aOriginAttributes,
                        bool& aShouldUpgrade)
 {
   // Even if we're in private browsing mode, we still enforce existing STS
@@ -2286,7 +2287,7 @@ NS_ShouldSecureUpgrade(nsIURI* aURI,
     bool isStsHost = false;
     uint32_t flags = aPrivateBrowsing ? nsISocketProvider::NO_PERMANENT_STORAGE : 0;
     rv = sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS, aURI, flags,
-                          nullptr, &isStsHost);
+                          aOriginAttributes, nullptr, &isStsHost);
 
     // if the SSS check fails, it's likely because this load is on a
     // malformed URI or something else in the setup is wrong, so any error
@@ -2406,7 +2407,7 @@ NS_CompareLoadInfoAndLoadContext(nsIChannel *aChannel)
     return NS_ERROR_UNEXPECTED;
   }
 
-  OriginAttributes originAttrsLoadInfo = loadInfo->GetOriginAttributes();
+  NeckoOriginAttributes originAttrsLoadInfo = loadInfo->GetOriginAttributes();
   DocShellOriginAttributes originAttrsLoadContext;
   loadContext->GetOriginAttributes(originAttrsLoadContext);
 
