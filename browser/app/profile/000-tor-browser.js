@@ -105,6 +105,7 @@ pref("privacy.trackingprotection.pbmode.enabled", false);
 pref("browser.pocket.enabled", false);
 pref("browser.pocket.api", "");
 pref("browser.pocket.site", "");
+pref("network.http.referer.hideOnionSource", true);
 
 // Fingerprinting
 pref("webgl.min_capability_mode", true);
