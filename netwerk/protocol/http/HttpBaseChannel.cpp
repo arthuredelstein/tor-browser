@@ -14,7 +14,6 @@
 #include "nsMimeTypes.h"
 #include "nsNetCID.h"
 #include "nsNetUtil.h"
-#include "nsReadableUtils.h"
 
 #include "nsICachingChannel.h"
 #include "nsIDOMDocument.h"
@@ -1522,15 +1521,13 @@ HttpBaseChannel::SetReferrerWithPolicy(nsIURI *referrer,
       return NS_OK;
   }
 
-  bool leavingOnion = !currentHost.Equals(referrerHost) &&
-    StringEndsWith(referrerHost, NS_LITERAL_CSTRING(".onion"));
-
-  // send spoofed referrer if desired by user, or if we are leaving a .onion
-  if (userSpoofReferrerSource || leavingOnion) {
+  // send spoofed referrer if desired
+  if (userSpoofReferrerSource) {
     nsCOMPtr<nsIURI> mURIclone;
     rv = mURI->CloneIgnoringRef(getter_AddRefs(mURIclone));
     if (NS_FAILED(rv)) return rv;
     clone = mURIclone;
+    currentHost = referrerHost;
   }
 
   // strip away any userpass; we don't want to be giving out passwords ;-)
