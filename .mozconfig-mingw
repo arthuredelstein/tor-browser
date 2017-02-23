@@ -28,4 +28,3 @@ ac_add_options --disable-webrtc
 ac_add_options --disable-tests
 
 #ac_add_options --disable-ctypes
-ac_add_options --disable-loop
