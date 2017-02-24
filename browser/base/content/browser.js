@@ -6301,16 +6301,17 @@ var CanvasPermissionPromptHelper = {
   // aData is an URL string.
   observe:
   function CanvasPermissionPromptHelper_observe(aSubject, aTopic, aData) {
-    if ((aTopic != this._permissionsPrompt) || !aData)
-      throw new Error("Unexpected topic or missing URL");
+    if (aTopic != this._permissionsPrompt) {
+        throw new Error("Unexpected topic");
+    }
+    if (!aData) {
+      throw new Error("Missing URL");
+    }
 
     var uri = makeURI(aData);
     var contentWindow = aSubject.QueryInterface(Ci.nsIDOMWindow);
-    var contentDocument = contentWindow.document;
-    var browserWindow =
-      OfflineApps._getBrowserWindowForContentWindow(contentWindow);
-
-    if (browserWindow != window) {
+    var browser = gBrowser.getBrowserForContentWindow(contentWindow);
+    if (gBrowser.selectedBrowser !== browser) {
       // Must belong to some other window.
       return;
     }
@@ -6382,8 +6383,6 @@ var CanvasPermissionPromptHelper = {
                          Ci.nsIPermissionManager.EXPIRE_NEVER);
     }
 
-    var browser = OfflineApps._getBrowserForContentWindow(browserWindow,
-                                                          contentWindow);
     notification = PopupNotifications.show(browser, aTopic, message,
                                            this._notificationIcon, mainAction,
                                            secondaryActions, null);
