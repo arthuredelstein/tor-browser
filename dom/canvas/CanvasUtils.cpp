@@ -91,14 +91,14 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
 
     nsIDocument* topLevelDocument = aDocument->GetTopLevelContentDocument();
     nsIURI *topLevelDocURI = topLevelDocument ? topLevelDocument->GetDocumentURI() : nullptr;
+    nsCString topLevelDocURISpec;
+    topLevelDocURI->GetSpec(topLevelDocURISpec);
 
     // Load Third Party Util service.
     nsresult rv;
     nsCOMPtr<mozIThirdPartyUtil> thirdPartyUtil =
         do_GetService(THIRDPARTYUTIL_CONTRACTID, &rv);
     NS_ENSURE_SUCCESS(rv, false);
-    NS_ConvertUTF16toUTF8 firstPartyDomain(
-      nsContentUtils::GetOriginAttributes(aDocument).mFirstPartyDomain);
 
     // Block all third-party attempts to extract canvas.
     bool isThirdParty = true;
@@ -107,7 +107,7 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
     if (isThirdParty) {
         nsAutoCString message;
         message.AppendPrintf("Blocked third party %s in page %s from extracting canvas data.",
-                             docURISpec.get(), firstPartyDomain.get());
+                             docURISpec.get(), topLevelDocURISpec.get());
         if (isScriptKnown) {
           message.AppendPrintf(" %s:%u.", scriptFile.get(), scriptLine);
         }
@@ -135,7 +135,7 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
     // At this point, permission is unknown (nsIPermissionManager::UNKNOWN_ACTION).
     nsAutoCString message;
     message.AppendPrintf("Blocked %s in page %s from extracting canvas data.",
-                         docURISpec.get(), firstPartyDomain.get());
+                         docURISpec.get(), topLevelDocURISpec.get());
     if (isScriptKnown) {
       message.AppendPrintf(" %s:%u.", scriptFile.get(), scriptLine);
     }
@@ -144,7 +144,7 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
     // Prompt the user (asynchronous).
     nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
     obs->NotifyObservers(win, TOPIC_CANVAS_PERMISSIONS_PROMPT,
-                         NS_ConvertUTF8toUTF16(firstPartyDomain).get());
+                         NS_ConvertUTF8toUTF16(topLevelDocURISpec).get());
 
     // We don't extract the image for now -- user may override at prompt.
     return false;
