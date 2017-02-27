@@ -605,3 +605,37 @@ js::jit::CanLikelyAllocateMoreExecutableMemory()
 
     return execMemory.bytesAllocated() + BufferSize <= MaxCodeBytesPerProcess;
 }
+
+bool
+js::jit::ReprotectRegion(void* start, size_t size, ProtectionSetting protection)
+{
+    // Calculate the start of the page containing this region,
+    // and account for this extra memory within size.
+    size_t pageSize = gc::SystemPageSize();
+    intptr_t startPtr = reinterpret_cast<intptr_t>(start);
+    intptr_t pageStartPtr = startPtr & ~(pageSize - 1);
+    void* pageStart = reinterpret_cast<void*>(pageStartPtr);
+    size += (startPtr - pageStartPtr);
+
+    // Round size up
+    size += (pageSize - 1);
+    size &= ~(pageSize - 1);
+
+    MOZ_ASSERT((uintptr_t(pageStart) % pageSize) == 0);
+
+    execMemory.assertValidAddress(pageStart, size);
+
+    #ifdef XP_WIN
+    DWORD oldProtect;
+    DWORD flags = ProtectionSettingToFlags(protection);
+    if (!VirtualProtect(pageStart, size, flags, &oldProtect))
+        return false;
+    #else
+    unsigned flags = ProtectionSettingToFlags(protection);
+    if (mprotect(pageStart, size, flags))
+        return false;
+    #endif
+
+    execMemory.assertValidAddress(pageStart, size);
+    return true;
+}
