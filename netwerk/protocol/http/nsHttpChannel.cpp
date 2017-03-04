@@ -6558,8 +6558,12 @@ nsHttpChannel::RemoveAuthorizationHeaderIfAppropriate()
     nsresult rv = thirdPartySvc->GetFirstPartyURIFromChannel(this, false,
                                                getter_AddRefs(firstPartyURI));
     if (NS_SUCCEEDED(rv) && firstPartyURI) {
-        isAuthAllowed = (mURI == firstPartyURI)
-                        || HostPartIsTheSame(firstPartyURI);
+        bool isThirdParty;
+        rv = thirdPartySvc->IsThirdPartyURI(firstPartyURI, mURI, &isThirdParty);
+        if (NS_SUCCEEDED(rv)) {
+            // Prevent third-party requests from sending auth tokens.
+            isAuthAllowed = !isThirdParty;
+        }
     } else {
         // We failed to get the first party URI. Check the document URI so
         // that we can allow authentication if the request originates from the
