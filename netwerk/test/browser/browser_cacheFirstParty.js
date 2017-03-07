@@ -46,6 +46,26 @@ let listen = function (target, eventType, timeoutMs, useCapture) {
   });
 };
 
+// __observeOnce(topic, timeoutMs)__.
+// Temporarily adds an observer, and returns a promise
+// that will resolve when the observer is notified.
+// After a single notification, observer is removed.
+// Throws an error if no notification is received
+// before the timeout elapses.
+let observeOnce = function (topic, timeoutMs) {
+  return new Promise(function (resolve, reject) {
+    let observer = {
+      observe : function (aSubject, aTopic, aData) {
+        if (topic === aTopic) {
+          Services.obs.removeObserver(observer, topic);
+          resolve([aSubject, aData]);
+        }
+      }
+    };
+    Services.obs.addObserver(observer, topic, false);
+    window.setTimeout(() => reject(new Error("Timed out")), timeoutMs);
+  });
+};
 
 // __cacheDataForContext()__.
 // Returns a promise that resolves to an array of cache entries for
@@ -79,14 +99,15 @@ let cacheDataForContext = function(loadContextInfo, timeoutMs)
   });
 }
 
-
 // __loadURLinNewTab(URL)__.
-// Opens a new tab at a given URL, and waits for it to load. Times out after 5 sec.
+// Opens a new tab at a given URL, and waits for it to load (as well as a link
+// rel=prefetch to be completed. Times out after 10 sec.
 // Returns a promise that resolves to the tab. (Task.jsm coroutine.)
 let loadURLinNewTab = function* (URL) {
   let tab = gBrowser.addTab(URL),
       browser = gBrowser.getBrowserForTab(tab),
-      result = yield listen(browser, "load", 10000, true);
+      result = yield Promise.all([listen(browser, "load", 10000, true),
+                                  observeOnce("prefetch-load-completed", 10000)]);
   return tab;
 };
 
@@ -100,8 +121,7 @@ let countMatchingCacheEntries = function (cacheEntries, domain, fileSuffix) {
 };
 
 // __Constants__.
-let privacyPref = "privacy.thirdparty.isolate",
-    parentPage = "/browser/netwerk/test/browser/firstPartyParent.html",
+let parentPage = "/browser/netwerk/test/browser/firstPartyParent.html",
     grandParentPage = "/browser/netwerk/test/browser/firstPartyGrandParent.html",
     // Parent domains (the iframe "child" domain is example.net):
     domains = ["test1", "test2"],
@@ -116,6 +136,7 @@ let privacyPref = "privacy.thirdparty.isolate",
                 "video.ogv", /*"track.vtt",*/ "favicon.ico",
                 "fetch.html", "worker.fetch.html",
                 "request.html", "worker.request.html",
+                "prefetch.html",
                 "import.js", "worker.js", "sharedworker.js"];
 
 // __checkCachePopulation(isolate, numberOfDomains)__.
@@ -144,8 +165,7 @@ let checkCachePopulation = function* (isolate, numberOfDomains) {
           (expectedEntryCount === 1 ? (foundEntryCount <= 1) : (foundEntryCount > 1)) :
           (expectedEntryCount === foundEntryCount);
     // Report results to mochitest
-    ok(result, "Cache entries expected for " + suffix +
-                           ": " + expectedEntryCount);
+    ok(result, `Cache entries expected for ${suffix}: ${expectedEntryCount}; ${foundEntryCount} found.`);
   }
 };
 
@@ -196,8 +216,9 @@ let startObservingChannels = function() {
 // Launch a Task.jsm coroutine so we can open tabs and wait for each of them to open,
 // one by one.
 add_task(function* () {
-  // Keep original pref value for restoring after the tests.
-  let originalPrefValue = Services.prefs.getIntPref(privacyPref);
+  // Make sure link rel=prefetch functionality is enabled.
+  yield SpecialPowers.pushPrefEnv({set: [["network.prefetch-next", true]]});
+  yield SpecialPowers.pushPrefEnv({set: [["network.prefetch-next.aggressive", true]]});
   // Test the pref with both values: 2 (isolating by first party) or 0 (not isolating)
   for (let isolate of [true, false]) {
     let stopObservingChannels;
@@ -207,7 +228,7 @@ add_task(function* () {
     // Clear the cache.
     Services.cache2.clear();
     // Set the pref to desired value
-    Services.prefs.setIntPref(privacyPref, isolate ? 2 : 0);
+    yield SpecialPowers.pushPrefEnv({set: [["privacy.thirdparty.isolate", isolate ? 2 : 0]]});
     // Open test tabs
     let tabs = [];
     for (let domain of duplicatedDomains) {
@@ -224,6 +245,4 @@ add_task(function* () {
       stopObservingChannels();
     }
   }
-  // Restore the pref to its original value.
-  Services.prefs.setIntPref(privacyPref, originalPrefValue);
 });
