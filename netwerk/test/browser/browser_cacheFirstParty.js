@@ -113,7 +113,7 @@ let privacyPref = "privacy.thirdparty.isolate",
     // track, favicon, fetch, request
     suffixes = ["iframe.html", "link.css", "script.js", "img.png", "object.png",
                 "embed.png", "xhr.html", "worker.xhr.html", "audio.ogg",
-                "video.ogv", "track.vtt", "favicon.ico",
+                "video.ogv", /*"track.vtt",*/ "favicon.ico",
                 "fetch.html", "worker.fetch.html",
                 "request.html", "worker.request.html",
                 "import.js", "worker.js", "sharedworker.js"];
