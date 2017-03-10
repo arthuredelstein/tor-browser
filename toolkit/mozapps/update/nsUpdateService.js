@@ -1550,6 +1550,15 @@ function Update(update) {
       this.unsupported = (Services.vc.compare(osVersion, minOSVersion) < 0);
     } catch (e) {}
   }
+  if (!this.unsupported && update.hasAttribute("minSupportedInstructionSet")) {
+    let minInstructionSet = update.getAttribute("minSupportedInstructionSet");
+    if (['MMX', 'SSE', 'SSE2', 'SSE3',
+        'SSE4A', 'SSE4_1', 'SSE4_2'].indexOf(minInstructionSet) >= 0) {
+      try {
+        this.unsupported = !Services.sysinfo.getProperty("has" + minInstructionSet);
+      } catch (e) {}
+    }
+  }
 
   if (this._patches.length == 0 && !this.unsupported) {
     throw Cr.NS_ERROR_ILLEGAL_VALUE;
