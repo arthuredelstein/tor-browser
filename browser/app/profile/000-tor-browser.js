@@ -217,7 +217,7 @@ pref("devtools.debugger.chrome-debugging-host", "127.0.0.1");
 pref("dom.mozTCPSocket.enabled", false);
 
 // Security slider
-pref("svg.in-content.enabled", true);
+pref("svg.disabled", true);
 pref("mathml.disabled", false);
 // Until we address at least the linkability concerns in #19417 let's disable
 // asmjs.
