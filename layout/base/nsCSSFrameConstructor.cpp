@@ -111,7 +111,6 @@
 #include "nsMathMLParts.h"
 #include "mozilla/dom/SVGTests.h"
 #include "nsSVGUtils.h"
-#include "nsIDOMSVGElement.h"
 
 #include "nsRefreshDriver.h"
 #include "nsRuleProcessorData.h"
@@ -2540,8 +2539,7 @@ nsCSSFrameConstructor::ConstructDocElementFrame(Element*                 aDocEle
   else
 #endif
   if (aDocElement->IsSVGElement()) {
-    nsCOMPtr<nsIDOMSVGElement> svgElem = do_QueryInterface(aDocElement);
-    if (!svgElem || !aDocElement->IsSVGElement(nsGkAtoms::svg)) {
+    if (!aDocElement->IsSVGElement(nsGkAtoms::svg)) {
       return nullptr;
     }
     // We're going to call the right function ourselves, so no need to give a
@@ -5828,13 +5826,10 @@ nsCSSFrameConstructor::AddFrameConstructionItemsInternal(nsFrameConstructorState
       data = FindMathMLData(element, aTag, aNameSpaceID, styleContext);
     }
     if (!data) {
-      nsCOMPtr<nsIDOMSVGElement> svgElem = do_QueryInterface(element);
-      if (svgElem) {
-        data = FindSVGData(element, aTag, aNameSpaceID, aParentFrame,
-                          aFlags & ITEM_IS_WITHIN_SVG_TEXT,
-                          aFlags & ITEM_ALLOWS_TEXT_PATH_CHILD,
-                          styleContext);
-      }
+      data = FindSVGData(element, aTag, aNameSpaceID, aParentFrame,
+                         aFlags & ITEM_IS_WITHIN_SVG_TEXT,
+                         aFlags & ITEM_ALLOWS_TEXT_PATH_CHILD,
+                         styleContext);
     }
 
     // Now check for XUL display types

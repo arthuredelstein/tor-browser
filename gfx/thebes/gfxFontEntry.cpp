@@ -357,10 +357,7 @@ gfxFontEntry::RenderSVGGlyph(gfxContext *aContext, uint32_t aGlyphId,
 bool
 gfxFontEntry::TryGetSVGData(gfxFont* aFont)
 {
-    // For the NS_SVGEnabled() check, we pass nullptr because we do not have
-    // access to the document here. That is OK because we do not expect
-    // chrome documents to use custom fonts that contain embedded SVG glyphs.
-    if (!gfxPlatform::GetPlatform()->OpenTypeSVGEnabled() || !NS_SVGEnabled(nullptr)) {
+    if (!gfxPlatform::GetPlatform()->OpenTypeSVGEnabled()) {
         return false;
     }
 
