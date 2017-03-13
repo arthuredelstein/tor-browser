@@ -36,7 +36,6 @@
 #include "nsString.h"
 #include "nsThreadUtils.h"
 #include "nsReadableUtils.h"
-#include "nsSVGUtils.h"
 #include "nsError.h"
 
 #include "nsICategoryManager.h"
@@ -471,15 +470,11 @@ nsresult nsDocumentOpenInfo::DispatchContent(nsIRequest *request, nsISupports * 
       //
       // Fourth step: try to find an nsIContentHandler for our type.
       //
-      nsCOMPtr<nsIContentHandler> contentHandler;
-      if (!mContentType.EqualsASCII(IMAGE_SVG_XML) ||
-          NS_SVGEnabledForChannel(aChannel)) {
-        nsAutoCString handlerContractID (NS_CONTENT_HANDLER_CONTRACTID_PREFIX);
-        handlerContractID += mContentType;
+      nsAutoCString handlerContractID (NS_CONTENT_HANDLER_CONTRACTID_PREFIX);
+      handlerContractID += mContentType;
 
-        contentHandler = do_CreateInstance(handlerContractID.get());
-      }
-
+      nsCOMPtr<nsIContentHandler> contentHandler =
+        do_CreateInstance(handlerContractID.get());
       if (contentHandler) {
         LOG(("  Content handler found"));
         rv = contentHandler->HandleContent(mContentType.get(),
