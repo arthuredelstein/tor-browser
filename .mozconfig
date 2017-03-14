@@ -9,6 +9,9 @@ ac_add_options --enable-optimize
 #ac_add_options --disable-optimize
 ac_add_options --enable-official-branding
 
+# Let's support GTK2 for ESR52
+ac_add_options --enable-default-toolkit=cairo-gtk2
+
 ac_add_options --enable-tor-browser-update
 ac_add_options --enable-signmar
 ac_add_options --enable-verify-mar
@@ -21,7 +24,6 @@ ac_add_options --disable-maintenance-service
 ac_add_options --disable-crashreporter
 ac_add_options --disable-webrtc
 # Let's not compile EME at least until we can enable ClearKey and only Clearkey.
-# (Apart from that there is no Adobe CRM module for Linux right now)
 ac_add_options --disable-eme
 #ac_add_options --disable-ctypes
 ac_add_options --enable-jemalloc=4
