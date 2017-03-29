@@ -2115,6 +2115,13 @@ nsContentUtils::IsCallerChrome()
   return xpc::IsUniversalXPConnectEnabled(GetCurrentJSContext());
 }
 
+/* static */
+bool
+nsContentUtils::ShouldResistFingerprinting()
+{
+  return sPrivacyResistFingerprinting;
+}
+
 bool
 nsContentUtils::ShouldResistFingerprinting(nsIDocShell* aDocShell)
 {
