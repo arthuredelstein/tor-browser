@@ -3743,7 +3743,12 @@ var XPIInstall = {
 
     let addon = await loadManifestFromFile(source, location);
 
+    // Make sure Torbutton, TorLauncher, EFF's HTTPS-Everywhere and meek
     if (XPIDatabase.mustSign(addon.type) &&
+        addon.id != "torbutton@torproject.org" &&
+        addon.id != "tor-launcher@torproject.org" &&
+        addon.id != "https-everywhere-eff@eff.org" &&
+        addon.id != "meek-http-helper@bamsoftware.com" &&
         addon.signedState <= AddonManager.SIGNEDSTATE_MISSING) {
       throw new Error(`Refusing to install staged add-on ${id} with signed state ${addon.signedState}`);
     }
