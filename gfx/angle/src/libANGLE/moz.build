@@ -112,7 +112,6 @@ UNIFIED_SOURCES += [
     '../compiler/translator/VersionGLSL.cpp',
     '../image_util/copyimage.cpp',
     '../image_util/imageformats.cpp',
-    '../image_util/loadimage.cpp',
     '../image_util/loadimage_etc.cpp',
     '../third_party/compiler/ArrayBoundsClamper.cpp',
     '../third_party/murmurhash/MurmurHash3.cpp',
@@ -290,10 +289,12 @@ SOURCES += [
     '../compiler/translator/glslang_tab.cpp',
     '../compiler/translator/RewriteTexelFetchOffset.cpp',
     '../compiler/translator/ShaderLang.cpp',
+    '../image_util/loadimage.cpp',
     'Display.cpp',
     'renderer/d3d/DisplayD3D.cpp',
     'renderer/d3d/HLSLCompiler.cpp',
 ]
+SOURCES['../image_util/loadimage.cpp'].flags += CONFIG['SSE2_FLAGS']
 if CONFIG['MOZ_HAS_WINSDK_WITH_D3D']:
     UNIFIED_SOURCES += [
         'renderer/d3d/d3d11/Blit11.cpp',
