@@ -1964,6 +1964,14 @@ this.XPIDatabase = {
    *        True if the add-on should not be appDisabled
    */
   isUsableAddon(aAddon) {
+  // Ensure that we allow torbutton, tor-launcher, and https-everywhere
+    if (aAddon.id == "torbutton@torproject.org" ||
+        aAddon.id == "tor-launcher@torproject.org" ||
+        aAddon.id == "https-everywhere-eff@eff.org" ||
+        aAddon.id == "meek-http-helper@bamsoftware.com") {
+      return true;
+    }
+
     if (this.mustSign(aAddon.type) && !aAddon.isCorrectlySigned) {
       logger.warn(`Add-on ${aAddon.id} is not correctly signed.`);
       if (Services.prefs.getBoolPref(PREF_XPI_SIGNATURES_DEV_ROOT, false)) {
