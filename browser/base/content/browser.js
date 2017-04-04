@@ -1580,7 +1580,7 @@ var gBrowserInit = {
 
       BrowserOffline.uninit();
       IndexedDBPromptHelper.uninit();
-      CanvasPermissionPromptHelper.init();
+      CanvasPermissionPromptHelper.uninit();
       LightweightThemeListener.uninit();
       PanelUI.uninit();
       AutoShowBookmarksToolbar.uninit();
