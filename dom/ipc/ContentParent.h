@@ -1089,6 +1089,9 @@ private:
                   InfallibleTArray<Accumulation>&& aAccumulations) override;
   virtual bool RecvAccumulateChildKeyedHistogram(
                   InfallibleTArray<KeyedAccumulation>&& aAccumulations) override;
+
+  virtual bool RecvCanvasPermissionRequest(const URIParams& uri) override;
+
 public:
   void SendGetFilesResponseAndForget(const nsID& aID,
                                      const GetFilesResponseResult& aResult);

@@ -37,6 +37,8 @@ using namespace mozilla::gfx;
 #include "nsPrintfCString.h"
 #include "nsIConsoleService.h"
 #include "jsapi.h"
+#include "mozilla/ipc/URIUtils.h"
+#include "mozilla/dom/ContentChild.h"
 
 #define TOPIC_CANVAS_PERMISSIONS_PROMPT "canvas-permissions-prompt"
 #define PERMISSION_CANVAS_EXTRACT_DATA "canvas/extractData"
@@ -91,10 +93,13 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
 
     nsIDocument* topLevelDocument = aDocument->GetTopLevelContentDocument();
     nsIURI *topLevelDocURI = topLevelDocument ? topLevelDocument->GetDocumentURI() : nullptr;
-    nsCString topLevelDocURISpec;
-    if (topLevelDocURI) {
-        topLevelDocURI->GetSpec(topLevelDocURISpec);
+    if (!topLevelDocURI) {
+        // We don't have a top-level document. To be safe, block
+        // this attempt.
+        return false;
     }
+    nsCString topLevelDocURISpec;
+    topLevelDocURI->GetSpec(topLevelDocURISpec);
 
     // Load Third Party Util service.
     nsresult rv;
@@ -144,9 +149,19 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
     nsContentUtils::LogMessageToConsole(message.get());
 
     // Prompt the user (asynchronous).
-    nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
-    obs->NotifyObservers(win, TOPIC_CANVAS_PERMISSIONS_PROMPT,
-                         NS_ConvertUTF8toUTF16(topLevelDocURISpec).get());
+    if (XRE_IsContentProcess()) {
+        URIParams uri;
+        SerializeURI(topLevelDocURI, uri);
+        mozilla::dom::ContentChild* cpc =
+            mozilla::dom::ContentChild::GetSingleton();
+        NS_ASSERTION(cpc, "Content Protocol is NULL!");
+        (void)cpc->SendCanvasPermissionRequest(uri);
+        return false;
+    } else {
+        nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+        obs->NotifyObservers(win, TOPIC_CANVAS_PERMISSIONS_PROMPT,
+                             NS_ConvertUTF8toUTF16(topLevelDocURISpec).get());
+    }
 
     // We don't extract the image for now -- user may override at prompt.
     return false;

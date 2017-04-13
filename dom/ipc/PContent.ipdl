@@ -1179,6 +1179,8 @@ parent:
 
     sync GetA11yContentId() returns (uint32_t aContentId);
 
+    async CanvasPermissionRequest(URIParams uri);
+
 both:
      async AsyncMessage(nsString aMessage, CpowEntry[] aCpows,
                         Principal aPrincipal, ClonedMessageData aData);

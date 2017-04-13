@@ -5243,3 +5243,18 @@ ContentParent::RecvAccumulateChildKeyedHistogram(
   Telemetry::AccumulateChildKeyed(GeckoProcessType_Content, aAccumulations);
   return true;
 }
+
+bool
+ContentParent::RecvCanvasPermissionRequest(const URIParams& aURI)
+{
+  nsCOMPtr<nsIURI> theURI = DeserializeURI(aURI);
+  if (!theURI) {
+    return false;
+  }
+  nsCString theURISpec;
+  newURI->GetSpec(newURISpec);
+  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+  obs->NotifyObservers(win, "canvas-permissions-prompt",
+                       NS_ConvertUTF8toUTF16(theURISpec).get());
+  return true;
+}
