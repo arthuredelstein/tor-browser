@@ -195,6 +195,10 @@ pref("media.navigator.enabled", false);
 // clever solution for https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=769716.
 pref("media.gmp-provider.enabled", false);
 pref("media.gmp-manager.url.override", "data:text/plain,");
+// Since ESR52 it is not enough anymore to block pinging the GMP update/download
+// server. There is a local fallback that must be blocked now as well. See:
+// https://bugzilla.mozilla.org/show_bug.cgi?id=1267495.
+pref("media.gmp-manager.updateEnabled", false);
 // EME prefs: Strictly speaking these prefs don't need to be set as we are
 // using the --disable-eme compile flag. However, in order to not confuse users,
 // who might stumble upon them while looking into about:config, we set them to
