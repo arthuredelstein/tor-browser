@@ -29,6 +29,9 @@ nsSVGFeatures::HasExtension(const nsAString& aExtension, const bool aIsInChrome)
   if (aIsInChrome || !nameSpaceManager->mMathMLDisabled) {
     SVG_SUPPORTED_EXTENSION("http://www.w3.org/1998/Math/MathML")
   }
+  if (aIsInChrome || !nameSpaceManager->mSVGDisabled) {
+    SVG_SUPPORTED_EXTENSION("http://www.w3.org/2000/svg")
+  }
 #undef SVG_SUPPORTED_EXTENSION
 
   return false;

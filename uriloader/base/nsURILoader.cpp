@@ -50,6 +50,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/Preferences.h"
 #include "nsContentUtils.h"
+#include "nsNameSpaceManager.h"
 
 mozilla::LazyLogModule nsURILoader::mLog("URILoader");
 
@@ -470,11 +471,14 @@ nsresult nsDocumentOpenInfo::DispatchContent(nsIRequest *request, nsISupports * 
       //
       // Fourth step: try to find an nsIContentHandler for our type.
       //
-      nsAutoCString handlerContractID (NS_CONTENT_HANDLER_CONTRACTID_PREFIX);
-      handlerContractID += mContentType;
+      nsCOMPtr<nsIContentHandler> contentHandler;
+      if (!mContentType.EqualsASCII(IMAGE_SVG_XML) ||
+          !nsNameSpaceManager::GetInstance()->mSVGDisabled) {
+        nsAutoCString handlerContractID (NS_CONTENT_HANDLER_CONTRACTID_PREFIX);
+        handlerContractID += mContentType;
+        contentHandler = do_CreateInstance(handlerContractID.get());
+      }
 
-      nsCOMPtr<nsIContentHandler> contentHandler =
-        do_CreateInstance(handlerContractID.get());
       if (contentHandler) {
         LOG(("  Content handler found"));
         rv = contentHandler->HandleContent(mContentType.get(),

@@ -171,6 +171,32 @@ nsNameSpaceManager::GetNameSpaceID(nsIAtom* aURI,
   return kNameSpaceID_Unknown;
 }
 
+bool
+IsContentSVGInChrome(nsILoadInfo* loadInfo) {
+  bool isBlocked = false;
+  nsINode *node = loadInfo->LoadingNode();
+  if (node) {
+    nsCOMPtr<nsIDOMElement> elem(do_QueryInterface(node));
+    if (elem) {
+      nsAutoString anonid;
+      elem->GetAttribute(NS_LITERAL_STRING("anonid"), anonid);
+      isBlocked = anonid.EqualsLiteral("tab-icon-image");
+
+      if (!isBlocked) {
+        // For the Page Info "Media" tab, block this SVG image load if
+        // it originated from a node within a chrome document that has
+        // an id of "thepreviewimage".
+        if (nsContentUtils::IsChromeDoc(node->OwnerDoc())) {
+          nsAutoString loadingID;
+          elem->GetId(loadingID);
+          isBlocked = loadingID.EqualsLiteral("thepreviewimage");
+        }
+      }
+    }
+  }
+  return isBlocked;
+}
+
 nsresult
 NS_NewElement(Element** aResult,
               already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
@@ -224,7 +250,8 @@ NS_NewElement(Element** aResult,
          (loadInfo->GetExternalContentPolicyType() == nsIContentPolicy::TYPE_IMAGE ||
          loadInfo->GetExternalContentPolicyType() == nsIContentPolicy::TYPE_OTHER) &&
          (nsContentUtils::IsSystemPrincipal(loadInfo->LoadingPrincipal()) ||
-          nsContentUtils::IsSystemPrincipal(loadInfo->TriggeringPrincipal())
+          nsContentUtils::IsSystemPrincipal(loadInfo->TriggeringPrincipal()) ||
+          IsContentSVGInChrome(loadInfo)
          )
         )
        ) {

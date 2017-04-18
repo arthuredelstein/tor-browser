@@ -43,6 +43,7 @@
 #include "harfbuzz/hb-ot.h"
 #include "graphite2/Font.h"
 
+#include "nsNameSpaceManager.h"
 #include <algorithm>
 
 using namespace mozilla;
@@ -357,7 +358,9 @@ gfxFontEntry::RenderSVGGlyph(gfxContext *aContext, uint32_t aGlyphId,
 bool
 gfxFontEntry::TryGetSVGData(gfxFont* aFont)
 {
-    if (!gfxPlatform::GetPlatform()->OpenTypeSVGEnabled()) {
+    // If SVG is disabled, we ban all uses here, even in Chrome documents.
+    if (!gfxPlatform::GetPlatform()->OpenTypeSVGEnabled() ||
+        nsNameSpaceManager::GetInstance()->mSVGDisabled) {
         return false;
     }
 

@@ -2874,8 +2874,12 @@ nsObjectLoadingContent::GetTypeOfContent(const nsCString& aMIMEType)
     return eType_Document;
   }
 
-  if ((caps & eSupportDocuments) && IsSupportedDocument(aMIMEType)) {
-    return eType_Document;
+  bool isSVG = aMIMEType.LowerCaseEqualsLiteral("image/svg+xml");
+
+  if (!isSVG || nsNameSpaceManager::GetInstance()->mSVGDisabled) {
+    if ((caps & eSupportDocuments) && IsSupportedDocument(aMIMEType)) {
+      return eType_Document;
+    }
   }
 
   RefPtr<nsPluginHost> pluginHost = nsPluginHost::GetInst();

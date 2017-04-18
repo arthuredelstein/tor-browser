@@ -25,6 +25,7 @@
 #include "nsIScriptSecurityManager.h"
 
 #include "gfxPrefs.h"
+#include "nsNameSpaceManager.h"
 
 namespace mozilla {
 namespace image {
@@ -94,6 +95,19 @@ ImageFactory::CreateImage(nsIRequest* aRequest,
 
   // Select the type of image to create based on MIME type.
   if (aMimeType.EqualsLiteral(IMAGE_SVG_XML)) {
+    if(nsNameSpaceManager::GetInstance()->mSVGDisabled) {
+      // SVG is disabled.  We must return an image object that is marked
+      // "bad", but we want to avoid invoking the VectorImage class (SVG code),
+      // so we return a PNG with the error flag set.
+      RefPtr<RasterImage> badImage = new RasterImage(aURI);
+      (void)badImage->Init(IMAGE_PNG, Image::INIT_FLAG_NONE);
+      if (aProgressTracker) {
+        aProgressTracker->SetImage(badImage);
+        badImage->SetProgressTracker(aProgressTracker);
+      }
+      badImage->SetHasError();
+      return badImage.forget();
+    }
     return CreateVectorImage(aRequest, aProgressTracker, aMimeType,
                              aURI, imageFlags, aInnerWindowId);
   } else {
