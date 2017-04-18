@@ -602,8 +602,8 @@ void
 nsHtml5TreeOperation::PreventScriptExecution(nsIContent* aNode)
 {
   nsCOMPtr<nsIScriptElement> sele = do_QueryInterface(aNode);
-  if (sele)
-    sele->PreventExecution();
+  MOZ_ASSERT(sele);
+  sele->PreventExecution();
 }
 
 void
@@ -830,18 +830,14 @@ nsHtml5TreeOperation::Perform(nsHtml5TreeOpExecutor* aBuilder,
     case eTreeOpSetStyleLineNumber: {
       nsIContent* node = *(mOne.node);
       nsCOMPtr<nsIStyleSheetLinkingElement> ssle = do_QueryInterface(node);
-      if (!ssle)
-        return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
-
+      NS_ASSERTION(ssle, "Node didn't QI to style.");
       ssle->SetLineNumber(mFour.integer);
       return NS_OK;
     }
     case eTreeOpSetScriptLineNumberAndFreeze: {
       nsIContent* node = *(mOne.node);
       nsCOMPtr<nsIScriptElement> sele = do_QueryInterface(node);
-      if (!sele)
-        return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
-
+      NS_ASSERTION(sele, "Node didn't QI to script.");
       sele->SetScriptLineNumber(mFour.integer);
       sele->FreezeUriAsyncDefer();
       return NS_OK;

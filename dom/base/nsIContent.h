@@ -274,9 +274,15 @@ public:
     return IsHTMLElement() && IsNodeInternal(aFirst, aArgs...);
   }
 
-  bool IsSVGElement() const;
+  inline bool IsSVGElement() const
+  {
+    return IsInNamespace(kNameSpaceID_SVG);
+  }
 
-  bool IsSVGElement(nsIAtom* aTag) const;
+  inline bool IsSVGElement(nsIAtom* aTag) const
+  {
+    return mNodeInfo->Equals(aTag, kNameSpaceID_SVG);
+  }
 
   template<typename First, typename... Args>
   inline bool IsAnyOfSVGElements(First aFirst, Args... aArgs) const

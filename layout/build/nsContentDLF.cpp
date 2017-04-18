@@ -24,7 +24,6 @@
 #include "nsCRT.h"
 #include "nsIViewSourceChannel.h"
 #include "nsContentUtils.h"
-#include "nsSVGUtils.h"
 #include "imgLoader.h"
 #include "nsCharsetSource.h"
 #include "nsMimeTypes.h"
@@ -162,7 +161,7 @@ nsContentDLF::CreateInstance(const char* aCommand,
         IsTypeInList(type, gHTMLTypes)) ||
       nsContentUtils::IsPlainTextType(type) ||
       IsTypeInList(type, gXMLTypes) ||
-      (NS_SVGEnabledForChannel(aChannel) && IsTypeInList(type, gSVGTypes)) ||
+      IsTypeInList(type, gSVGTypes) ||
       IsTypeInList(type, gXMLTypes);
 
     if (knownType) {
@@ -197,8 +196,7 @@ nsContentDLF::CreateInstance(const char* aCommand,
   }
 
   // Try SVG
-  if (NS_SVGEnabledForChannel(aChannel) &&
-      IsTypeInList(contentType, gSVGTypes)) {
+  if (IsTypeInList(contentType, gSVGTypes)) {
     return CreateDocument(aCommand,
                           aChannel, aLoadGroup,
                           aContainer, kSVGDocumentCID,
