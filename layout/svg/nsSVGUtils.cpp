@@ -114,6 +114,7 @@ NS_SVGEnabledForChannel(nsIChannel *aChannel)
 
 #ifdef DEBUG_SVG_ENABLE
   nsAutoCString topDocSpec;  // Set if approved via a whitelisted top doc.
+  bool checkedSystemPrincipal = false;
 #endif
 
   bool isSVGAllowed = false;
@@ -152,6 +153,18 @@ NS_SVGEnabledForChannel(nsIChannel *aChannel)
               if (isSVGAllowed)
                 topDocURI->GetSpec(topDocSpec);
 #endif
+            } else {
+              // Unable to retrieve the top window's URI. Fallback to checking
+              // the system principal (see bug 21962).
+#ifdef DEBUG_SVG_ENABLE
+              checkedSystemPrincipal = true;
+#endif
+              nsCOMPtr<nsIScriptObjectPrincipal> scriptObjPrin =
+                                                    do_QueryInterface(topWin);
+              if (scriptObjPrin) {
+                isSVGAllowed = nsContentUtils::IsSystemPrincipal(
+                                               scriptObjPrin->GetPrincipal());
+              }
             }
           }
         }
@@ -166,7 +179,10 @@ NS_SVGEnabledForChannel(nsIChannel *aChannel)
   if (uri)
     uri->GetSpec(spec);
 
-  if (topDocSpec.IsEmpty()) {
+  if (checkedSystemPrincipal) {
+    printf("NS_SVGEnabledForChannel for %s: %s (via system principal check)\n",
+           spec.get(), isSVGAllowed ? "YES" : "NO");
+  } else if (topDocSpec.IsEmpty()) {
     printf("NS_SVGEnabledForChannel for %s: %s\n", spec.get(),
            isSVGAllowed ? "YES" : "NO");
   } else {
