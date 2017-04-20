@@ -79,7 +79,7 @@ public:
   int32_t RadiusY() const { return ResistFingerprinting() ? 1 : mRadius.y; }
   float RotationAngle() const { return ResistFingerprinting() ?
                                        0.0 : mRotationAngle; }
-  float Force() const { return ResistFingerprinting() ? 0.0 : mForce}
+  float Force() const { return ResistFingerprinting() ? 0.0 : mForce; }
 
   nsCOMPtr<EventTarget> mTarget;
   LayoutDeviceIntPoint mRefPoint;

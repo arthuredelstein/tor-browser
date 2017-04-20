@@ -1,0 +1,58 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=1000870
+-->
+  <head>
+    <meta charset="utf-8">
+    <title>Test for Tor Bug 100286</title>
+    <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+    <script type="text/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
+    <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+  </head>
+  <body>
+    <div id="target0">target0</div>
+    <script type="application/javascript">
+     SimpleTest.waitForExplicitFinish();
+
+    let promiseEvent = (target, eventName) => {
+       return new Promise(resolve => {
+         target.addEventListener(eventName, function eventOccurred(event) {
+           target.removeEventListener(eventName, eventOccurred, false);
+           resolve(event);
+         }, false);
+       });
+     }
+
+     let promiseTouchEvent = (target, type, offsetX, offsetY, params) => {
+       let touchEventPromise = promiseEvent(target, type);
+       params.type = type;
+       synthesizeTouch(target, offsetX, offsetY, { type: type });
+       return touchEventPromise;
+     };
+
+     let target0 = document.getElementById("target0");
+
+     let runTest = async () => {
+       await SpecialPowers.pushPrefEnv({set:[["privacy.resistFingerprinting", true]]});
+       info("starting test");
+       let touchEvent = await promiseTouchEvent(target0, "touchstart", 5, 5,
+                                                { force: 1.0, rotationAngle: 1.0, radiusX: 2, radiusY: 3 });
+       info("touch event received");
+       console.log(touchEvent);
+       let touch = touchEvent.touches[0];
+       console.log(touch);
+       is(touch.screenX, touch.clientX, "touch.screenX should be the same as touch.clientX");
+       is(touch.screenY, touch.clientY, "touch.screenY should be the same as touch.clientY");
+       is(touch.force, 0.0, "touch.force should be zero");
+       is(touch.radiusX, 1, "touch.radiusX should be 1");
+       is(touch.radiusY, 1, "touch.radiusY should be 1");
+       is(touch.rotationAngle, 0, "touch.rotationAngle should be 0");
+     };
+
+     window.onload = () => {
+       runTest().then(() => SimpleTest.finish());
+     };
+    </script>
+  </body>
+</html>
