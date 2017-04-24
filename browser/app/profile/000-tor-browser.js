@@ -149,6 +149,7 @@ pref("ui.use_standins_for_native_colors", true); // https://bugzilla.mozilla.org
 pref("browser.reader.detectedFirstArticle", true);
 pref("reader.parse-on-load.enabled", false);
 pref("privacy.use_utc_timezone", true);
+pref("media.webspeech.synth.enabled", false); // Bug 10283: Disable SpeechSynthesis API
 
 // Third party stuff
 pref("network.cookie.cookieBehavior", 1);
