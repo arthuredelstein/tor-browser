@@ -6302,20 +6302,35 @@ var CanvasPermissionPromptHelper = {
     Services.obs.removeObserver(this, this._permissionsPrompt, false);
   },
 
-  // aSubject is an nsIDOMWindow.
+  // aSubject is an nsIBrowser (e10s) or an nsIDOMWindow (non-e10s).
   // aData is an URL string.
   observe:
   function CanvasPermissionPromptHelper_observe(aSubject, aTopic, aData) {
     if (aTopic != this._permissionsPrompt) {
-        throw new Error("Unexpected topic");
+      throw new Error("Unexpected topic");
     }
+
+    let browser;
+    try {
+      browser = aSubject.QueryInterface(Ci.nsIBrowser);
+    } catch (e) {}
+
+    if (!browser) {
+      try {
+        let contentWindow = aSubject.QueryInterface(Ci.nsIDOMWindow);
+        browser = gBrowser.getBrowserForContentWindow(contentWindow);
+      } catch (e) {}
+
+      if (!browser) {
+        throw new Error("No browser");
+      }
+    }
+
     if (!aData) {
       throw new Error("Missing URL");
     }
 
     var uri = makeURI(aData);
-    var contentWindow = aSubject.QueryInterface(Ci.nsIDOMWindow);
-    var browser = gBrowser.getBrowserForContentWindow(contentWindow);
     if (gBrowser.selectedBrowser !== browser) {
       // Must belong to some other window.
       return;

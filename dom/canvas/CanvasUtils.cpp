@@ -15,6 +15,7 @@
 #include "nsICanvasRenderingContextInternal.h"
 #include "nsIHTMLCollection.h"
 #include "mozilla/dom/HTMLCanvasElement.h"
+#include "mozilla/dom/TabChild.h"
 #include "nsIPrincipal.h"
 
 #include "nsGfxCIID.h"
@@ -144,9 +145,19 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
     nsContentUtils::LogMessageToConsole(message.get());
 
     // Prompt the user (asynchronous).
-    nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
-    obs->NotifyObservers(win, TOPIC_CANVAS_PERMISSIONS_PROMPT,
-                         NS_ConvertUTF8toUTF16(topLevelDocURISpec).get());
+    if (XRE_IsContentProcess()) {
+      TabChild* tabChild = TabChild::GetFrom(win);
+      if (tabChild) {
+        tabChild->SendShowCanvasPermissionPrompt(topLevelDocURISpec);
+      }
+    } else {
+      nsCOMPtr<nsIObserverService> obs =
+                                      mozilla::services::GetObserverService();
+      if (obs) {
+        obs->NotifyObservers(win, TOPIC_CANVAS_PERMISSIONS_PROMPT,
+                             NS_ConvertUTF8toUTF16(topLevelDocURISpec).get());
+      }
+    }
 
     // We don't extract the image for now -- user may override at prompt.
     return false;
