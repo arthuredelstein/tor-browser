@@ -1037,9 +1037,10 @@ static int backup_restore(const NS_tchar *path, const NS_tchar *relPath)
   bool isLink = false;
 #ifndef XP_WIN
   struct stat linkInfo;
-  int rv = lstat(path, &linkInfo);
-  if (!rv) {
-    LOG(("backup_restore: cannot get info for backup file: " LOG_S, relBackup));
+  int rv = lstat(backup, &linkInfo);
+  if (rv) {
+    LOG(("backup_restore: cannot get info for backup file: " LOG_S ", err: %d",
+         relBackup, errno));
     return OK;
   }
   isLink = S_ISLNK(linkInfo.st_mode);
