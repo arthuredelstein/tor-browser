@@ -150,6 +150,7 @@ pref("browser.reader.detectedFirstArticle", true);
 pref("reader.parse-on-load.enabled", false);
 pref("privacy.use_utc_timezone", true);
 pref("media.webspeech.synth.enabled", false); // Bug 10283: Disable SpeechSynthesis API
+pref("dom.w3c_touch_events.enabled", 1); // Bug 10286: Always enable Touch API
 
 // Third party stuff
 pref("network.cookie.cookieBehavior", 1);
