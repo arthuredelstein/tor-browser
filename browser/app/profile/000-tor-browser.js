@@ -151,6 +151,7 @@ pref("reader.parse-on-load.enabled", false);
 pref("privacy.use_utc_timezone", true);
 pref("media.webspeech.synth.enabled", false); // Bug 10283: Disable SpeechSynthesis API
 pref("dom.webaudio.enabled", false); // Bug 13017: Disable Web Audio API
+pref("dom.maxHardwareConcurrency", 1); // Bug 21675: Spoof single-core cpu
 
 // Third party stuff
 pref("network.cookie.cookieBehavior", 1);
