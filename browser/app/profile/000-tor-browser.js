@@ -150,6 +150,7 @@ pref("browser.reader.detectedFirstArticle", true);
 pref("reader.parse-on-load.enabled", false);
 pref("privacy.use_utc_timezone", true);
 pref("media.webspeech.synth.enabled", false); // Bug 10283: Disable SpeechSynthesis API
+pref("dom.maxHardwareConcurrency", 1); // Bug 21675: Spoof single-core cpu
 
 // Third party stuff
 pref("network.cookie.cookieBehavior", 1);
