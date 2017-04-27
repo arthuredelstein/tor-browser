@@ -181,9 +181,9 @@ add_task(function* () {
       "The details pane should still be visible after filtering.");
 
     is(RequestsMenu.items.length, visibility.length,
-      "There should be a specific amount of items in the requests menu.");
+       "There should be a specific amount of items in the requests menu.");
     is(RequestsMenu.visibleItems.length, visibility.filter(e => e).length,
-      "There should be a specific amount of visbile items in the requests menu.");
+       "There should be a specific amount of visbile items in the requests menu.");
 
     for (let i = 0; i < visibility.length; i++) {
       is(RequestsMenu.getItemAtIndex(i).target.hidden, !visibility[i],
