@@ -1,0 +1,38 @@
+<!DOCTYPE HTML>
+<html>
+  <!--
+  https://trac.torproject.org/16337
+     -->
+  <head>
+    <meta charset="utf-8">
+    <title>Test for Tor Bug 16337</title>
+    <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+    <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+  </head>
+  <body>
+    <div id="testDiv">test</div>
+    <script type="application/javascript">
+     SimpleTest.waitForExplicitFinish();
+     let runTest = function () {
+       let isRounded = x => (Math.floor(x/100)*100) === x;
+       let testDiv = document.getElementById("testDiv");
+       let animation = testDiv.animate({ opacity: [0,1] }, 100000);
+       animation.play();
+       SimpleTest.waitForCondition(
+         () => animation.currentTime > 1000,
+         function () {
+           let startTime = animation.startTime;
+           let currentTime = animation.currentTime;
+           info("startTime: " + startTime);
+           info("currentTime: " + currentTime);
+           ok(isRounded(startTime), "Animation.startTime is rounded");
+           ok(isRounded(currentTime), "Animation.currentTime is rounded");
+           SimpleTest.finish();
+         },
+         "animation failed to start");
+     }
+
+     window.onload = runTest;
+    </script>
+  </body>
+</html>

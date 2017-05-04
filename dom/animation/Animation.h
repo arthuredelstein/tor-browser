@@ -445,6 +445,8 @@ protected:
   bool mFinishedIsResolved;
 
   nsString mId;
+
+  static Nullable<double> RoundTime(const Nullable<double>& unrounded);
 };
 
 } // namespace dom

@@ -535,10 +535,20 @@ Animation::Reverse(ErrorResult& aRv)
 //
 // ---------------------------------------------------------------------------
 
+/*static*/ Nullable<double>
+Animation::RoundTime(const Nullable<double>& unrounded)
+{
+  Nullable<double> rounded;
+  if (!unrounded.IsNull()) {
+    rounded.SetValue(floor(unrounded.Value() / 100) * 100);
+  }
+  return rounded;
+}
+
 Nullable<double>
 Animation::GetStartTimeAsDouble() const
 {
-  return AnimationUtils::TimeDurationToDouble(mStartTime);
+  return RoundTime(AnimationUtils::TimeDurationToDouble(mStartTime));
 }
 
 void
@@ -550,7 +560,7 @@ Animation::SetStartTimeAsDouble(const Nullable<double>& aStartTime)
 Nullable<double>
 Animation::GetCurrentTimeAsDouble() const
 {
-  return AnimationUtils::TimeDurationToDouble(GetCurrentTime());
+  return RoundTime(AnimationUtils::TimeDurationToDouble(GetCurrentTime()));
 }
 
 void
