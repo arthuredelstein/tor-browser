@@ -267,7 +267,7 @@ pref("browser.uiCustomization.state", "{\"placements\":{\"PanelUI-contents\":[\"
 
 // Putting the search engine prefs into this file to fix #11236.
 // Default search engine
-pref("browser.search.defaultenginename", "DuckDuckGo");
+pref("browser.search.defaultenginename", "data:text/plain,browser.search.defaultenginename=DuckDuckGo");
 // Make sure we use the same search engine regardless of locale
 pref("browser.search.geoSpecificDefaults", false);
 
