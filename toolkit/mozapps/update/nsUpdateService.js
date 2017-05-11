@@ -378,6 +378,11 @@ function areDirectoryEntriesWriteable(aDir) {
  * @return true if elevation is required, false otherwise
  */
 function getElevationRequired() {
+#if defined(TOR_BROWSER_UPDATE)
+  // To avoid potential security holes associated with running the updater
+  // process with elevated privileges, Tor Browser does not support elevation.
+  return false;
+#else
   if (AppConstants.platform != "macosx") {
     return false;
   }
@@ -401,6 +406,7 @@ function getElevationRequired() {
   LOG("getElevationRequired - able to write to application bundle, elevation " +
       "not required");
   return false;
+#endif
 }
 
 /**
@@ -1203,6 +1209,9 @@ function handleUpdateFailure(update, errorCode) {
     cancelations++;
     Services.prefs.setIntPref(PREF_APP_UPDATE_CANCELATIONS, cancelations);
     if (AppConstants.platform == "macosx") {
+#if defined(TOR_BROWSER_UPDATE)
+      cleanupActiveUpdate();
+#else
       let osxCancelations = getPref("getIntPref",
                                   PREF_APP_UPDATE_CANCELATIONS_OSX, 0);
       osxCancelations++;
@@ -1219,6 +1228,7 @@ function handleUpdateFailure(update, errorCode) {
         writeStatusFile(getUpdatesDir(),
                         update.state = STATE_PENDING_ELEVATE);
       }
+#endif
       update.statusText = gUpdateBundle.GetStringFromName("elevationFailure");
       update.QueryInterface(Ci.nsIWritablePropertyBag);
       update.setProperty("patchingFailed", "elevationFailure");

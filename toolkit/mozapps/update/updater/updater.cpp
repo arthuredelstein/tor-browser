@@ -83,7 +83,9 @@ bool IsRecursivelyWritable(const char* aPath);
 void LaunchChild(int argc, const char** argv);
 void LaunchMacPostProcess(const char* aAppBundle);
 bool ObtainUpdaterArguments(int* argc, char*** argv);
+#ifndef TOR_BROWSER_UPDATE
 bool ServeElevatedUpdate(int argc, const char** argv);
+#endif
 void SetGroupOwnershipAndPermissions(const char* aAppBundle);
 struct UpdateServerThreadArgs
 {
@@ -2913,11 +2915,15 @@ UpdateThreadFunc(void *param)
 static void
 ServeElevatedUpdateThreadFunc(void* param)
 {
+#ifdef TOR_BROWSER_UPDATE
+  WriteStatusFile(ELEVATION_CANCELED);
+#else
   UpdateServerThreadArgs* threadArgs = (UpdateServerThreadArgs*)param;
   gSucceeded = ServeElevatedUpdate(threadArgs->argc, threadArgs->argv);
   if (!gSucceeded) {
     WriteStatusFile(ELEVATION_CANCELED);
   }
+#endif
   QuitProgressUI();
 }
 
@@ -2986,7 +2992,11 @@ int NS_main(int argc, NS_tchar **argv)
 
 #ifdef XP_MACOSX
   bool isElevated =
+#ifdef TOR_BROWSER_UPDATE
+    false;
+#else
     strstr(argv[0], "/Library/PrivilegedHelperTools/org.mozilla.updater") != 0;
+#endif
   if (isElevated) {
     if (!ObtainUpdaterArguments(&argc, &argv)) {
       // Won't actually get here because ObtainUpdaterArguments will terminate

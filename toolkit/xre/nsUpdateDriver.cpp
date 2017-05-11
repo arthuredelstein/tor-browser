@@ -1114,6 +1114,7 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
 #ifdef DEBUG
   dump_argv("ApplyUpdate after SetupMacCommandLine", argv, argc);
 #endif
+#ifndef TOR_BROWSER_UPDATE
   // We need to detect whether elevation is required for this update. This can
   // occur when an admin user installs the application, but another admin
   // user attempts to update (see bug 394984).
@@ -1124,12 +1125,15 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
     }
     exit(0);
   } else {
+#endif
     if (restart) {
       LaunchChildMac(argc, argv);
       exit(0);
     }
     LaunchChildMac(argc, argv, outpid);
+#ifndef TOR_BROWSER_UPDATE
   }
+#endif
 #else
   *outpid = PR_CreateProcess(updaterPath.get(), argv, nullptr, nullptr);
   if (restart) {
