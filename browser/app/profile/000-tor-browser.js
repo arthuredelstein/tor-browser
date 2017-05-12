@@ -245,6 +245,9 @@ pref("mathml.disabled", false);
 // Until we address at least the linkability concerns in #19417 let's disable
 // asmjs.
 pref("javascript.options.asmjs", false);
+// Mozilla keeps still finding critical bugs in Graphite code. Disable it for
+// now, see bug 21726.
+pref("gfx.font_rendering.graphite.enabled"; false);
 
 // Network and performance
 pref("network.http.pipelining", true);
