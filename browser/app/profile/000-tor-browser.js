@@ -314,6 +314,9 @@ pref("security.tls.unrestricted_rc4_fallback", false);
 // Enforce certificate pinning, see: https://bugs.torproject.org/16206
 pref("security.cert_pinning.enforcement_level", 2);
 
+// Don't allow MitM via Microsoft Family Safety, see bug 21686
+pref("security.family_safety.mode", 0);
+
 // Enforce SHA1 deprecation, see: bug 18042.
 pref("security.pki.sha1_enforcement_level", 2);
 
