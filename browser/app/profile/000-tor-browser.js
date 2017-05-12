@@ -257,7 +257,8 @@ pref("network.http.pipelining.read-timeout", 60000);
 pref("network.http.pipelining.max-optimistic-requests", 3);
 pref("security.ssl.disable_session_identifiers", true);
 pref("network.manage-offline-status", false);
-
+// No need to leak things to Mozilla, see bug 21790
+pref("network.captive-portal-service.enabled", false);
 // As a "defense in depth" measure, configure an empty push server URL (the
 // DOM Push features are disabled by default via other prefs).
 pref("dom.push.serverURL", "");
