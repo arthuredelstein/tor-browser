@@ -29,6 +29,10 @@ pref("extensions.hotfix.id", ""); // Bug 16837: Disable hotfix updates as they m
 pref("app.update.staging.enabled", false);
 #endif
 
+// No need to contact the Kinto-based blocklist system in addition to the old
+// one which is still used, see bug 22071.
+pref("services.blocklist.update_enabled", false);
+
 // Disable "Slow startup" warnings and associated disk history
 // (bug #13346)
 pref("browser.slowStartup.notificationDisabled", true);
