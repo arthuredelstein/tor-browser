@@ -95,6 +95,7 @@ pref("browser.newtabpage.directory.source", "data:text/plain,"); // Bug 16316 - 
 pref("browser.newtabpage.enhanced", false); // Bug 16316 - Avoid potential confusion over tiles for now.
 pref("browser.newtabpage.introShown", true); // Bug 16316 - Avoid potential confusion over tiles for now.
 pref("browser.newtabpage.preload", false); // Bug 16316 - Avoid potential confusion over tiles for now.
+pref("browser.newtabpage.remote", false); // Bug 21685: Disable remote new tab pages
 pref("browser.search.countryCode", "US"); // The next three prefs disable GeoIP search lookups (#16254)
 pref("browser.search.region", "US");
 pref("browser.search.geoip.url", "");
