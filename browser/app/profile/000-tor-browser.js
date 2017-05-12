@@ -71,6 +71,17 @@ pref("geo.wifi.uri", "");
 pref("browser.search.suggest.enabled", false);
 pref("browser.safebrowsing.enabled", false);
 pref("browser.safebrowsing.malware.enabled", false);
+pref("browser.safebrowsing.phishing.enabled", false);
+pref("browser.safebrowsing.downloads.enabled", false);
+pref("browser.safebrowsing.downloads.remote.enabled", false);
+pref("browser.safebrowsing.blockedURIs.enabled", false);
+pref("browser.safebrowsing.downloads.remote.url", "");
+pref("browser.safebrowsing.provider.google.updateURL", "");
+pref("browser.safebrowsing.provider.google.gethashURL", "");
+pref("browser.safebrowsing.provider.google4.updateURL", "");
+pref("browser.safebrowsing.provider.google4.gethashURL", "");
+pref("browser.safebrowsing.provider.mozilla.updateURL", "");
+pref("browser.safebrowsing.provider.mozilla.gethashURL", "");
 pref("browser.download.manager.scanWhenDone", false); // prevents AV remote reporting of downloads
 pref("extensions.ui.lastCategory", "addons://list/extension");
 pref("datareporting.healthreport.service.enabled", false); // Yes, all three of these must be set
