@@ -106,6 +106,7 @@
 
 #include "mozilla/Preferences.h"
 #include "mozilla/ipc/URIUtils.h"
+#include "mozilla/Unused.h"
 
 using namespace mozilla;
 using namespace mozilla::ipc;
@@ -731,14 +732,6 @@ NS_IMETHODIMP nsExternalHelperAppService::DoContent(const nsACString& aMimeConte
                                          aForceSave, aWindowContext, aStreamListener);
   }
 
-  // Give other modules, including extensions, a chance to cancel.
-  bool doCancel = false;
-  nsresult rv = shouldCancel(&doCancel);
-  NS_ENSURE_SUCCESS(rv, rv);
-  if (doCancel) {
-    return NS_ERROR_FAILURE;
-  }
-
   nsAutoString fileName;
   nsAutoCString fileExtension;
   uint32_t reason = nsIHelperAppLauncherDialog::REASON_CANTHANDLE;
@@ -775,6 +768,7 @@ NS_IMETHODIMP nsExternalHelperAppService::DoContent(const nsACString& aMimeConte
         nsAutoCString query;
 
         // We only care about the query for HTTP and HTTPS URLs
+        nsresult rv;
         bool isHTTP, isHTTPS;
         rv = uri->SchemeIs("http", &isHTTP);
         if (NS_FAILED(rv)) {
@@ -1673,6 +1667,37 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest *request, nsISuppo
   // for OnStartRequest.
   if (XRE_IsContentProcess()) {
     return NS_OK;
+  }
+
+  // Give other modules, including extensions, a chance to cancel.
+  // To avoid a problem where OnDataAvailable fires but is not handled
+  // correctly while a modal dialog displayed by Torbutton is open, we
+  // suspend and then we either cancel or resume active requests.
+  // See bugs 21766 and 21886.
+  bool isPending = false;
+  nsCOMPtr<nsIHttpChannel> httpChan = do_QueryInterface(request);
+  if (httpChan) {
+    rv = httpChan->IsPendingUnforced(&isPending);
+  } else {
+    rv = request->IsPending(&isPending);
+  }
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  if (isPending) {
+    Unused << request->Suspend(); // Best effort: ignore failures.
+  }
+
+  bool doCancel = false;
+  rv = shouldCancel(&doCancel);
+  NS_ENSURE_SUCCESS(rv, rv);
+  if (doCancel) {
+    mCanceled = true;
+    request->Cancel(NS_BINDING_ABORTED);
+    return NS_OK;
+  }
+
+  if (isPending) {
+    Unused << request->Resume();  // Best effort: ignore failures.
   }
 
   rv = SetUpTempFile(aChannel);
