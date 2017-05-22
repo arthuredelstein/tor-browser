@@ -137,7 +137,6 @@ pref("social.whitelist", "");
 pref("webgl.min_capability_mode", true);
 pref("webgl.disable-extensions", true);
 pref("webgl.disable-fail-if-major-performance-caveat", true);
-pref("dom.battery.enabled", false); // fingerprinting due to differing OS implementations
 pref("dom.network.enabled",false); // fingerprinting due to differing OS implementations
 pref("gfx.downloadable_fonts.fallback_delay", -1);
 pref("general.appname.override", "Netscape");
