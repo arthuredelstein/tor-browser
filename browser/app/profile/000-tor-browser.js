@@ -228,12 +228,15 @@ pref("media.gmp-manager.url.override", "data:text/plain,");
 // server. There is a local fallback that must be blocked now as well. See:
 // https://bugzilla.mozilla.org/show_bug.cgi?id=1267495.
 pref("media.gmp-manager.updateEnabled", false);
-// EME prefs: Strictly speaking these prefs don't need to be set as we are
-// using the --disable-eme compile flag. However, in order to not confuse users,
-// who might stumble upon them while looking into about:config, we set them to
-// 'false' communicating that EME is really disabled.
+// Mozilla is relying on preferences to make sure no DRM blob is downloaded and
+// run. Even though those prefs should be set correctly by specifying
+// --disable-eme (which we do), we disable all of them here as well for defense
+// in depth.
 pref("browser.eme.ui.enabled", false);
+pref("media.gmp-eme-adobe.visible", false);
 pref("media.gmp-eme-adobe.enabled", false);
+pref("media.gmp-widevinecdm.visible", false);
+pref("media.gmp-widevinecdm.enabled", false);
 pref("media.eme.enabled", false);
 pref("media.eme.apiVisible", false);
 // WebIDE can bypass proxy settings for remote debugging. It also downloads
