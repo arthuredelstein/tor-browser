@@ -409,7 +409,8 @@
 @RESPATH@/browser/chrome/icons/default/default64.png
 @RESPATH@/browser/chrome/icons/default/default128.png
 #endif
-@RESPATH@/browser/features/*
+; In Tor Browser, the browser/features directory is missing (no system extensions).
+;@RESPATH@/browser/features/*
 
 ; [Webide Files]
 @RESPATH@/browser/chrome/webide@JAREXT@
