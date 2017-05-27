@@ -965,7 +965,7 @@ nsHttpPipeline::FillSendBuf()
 
 #ifdef WTF_TEST
     if (totalSent)
-      fprintf(stderr, "WTF-combine: Sent %lld/%lld bytes of %lld combined pipelined requests for host %s\n",
+      fprintf(stderr, "WTF-combine: Sent %lu/%lu bytes of %lu combined pipelined requests for host %s\n",
               alreadyPending+totalSent, totalAvailable, reqsSent, ci->Origin());
 #endif
 
