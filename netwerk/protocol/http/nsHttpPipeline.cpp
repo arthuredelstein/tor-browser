@@ -16,6 +16,10 @@
 #include <algorithm>
 #include "nsHttpRequestHead.h"
 
+#ifdef WTF_TEST
+#include <inttypes.h>
+#endif
+
 #ifdef DEBUG
 #include "prthread.h"
 #endif
@@ -965,7 +969,9 @@ nsHttpPipeline::FillSendBuf()
 
 #ifdef WTF_TEST
     if (totalSent)
-      fprintf(stderr, "WTF-combine: Sent %lld/%lld bytes of %lld combined pipelined requests for host %s\n",
+      fprintf(stderr,
+              "WTF-combine: Sent %" PRIu64 "/%" PRIu64 " bytes of %" PRIu64
+              " combined pipelined requests for host %s\n",
               alreadyPending+totalSent, totalAvailable, reqsSent, ci->Origin());
 #endif
 
