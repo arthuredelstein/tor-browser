@@ -1187,7 +1187,7 @@ nsContextMenu.prototype = {
       let dataURL = message.data.dataURL;
       saveImageURL(dataURL, name, "SaveImageTitle", true, false,
                    document.documentURIObject, null, null, null,
-                   isPrivate);
+                   isPrivate, this.principal);
     };
     mm.addMessageListener("ContextMenu:SaveVideoFrameAsImage:Result", onMessage);
   },
@@ -1429,14 +1429,15 @@ nsContextMenu.prototype = {
       this._canvasToBlobURL(this.target).then(function(blobURL) {
         saveImageURL(blobURL, "canvas.png", "SaveImageTitle",
                      true, false, referrerURI, null, null, null,
-                     isPrivate);
+                     isPrivate, this.principal);
       }, Cu.reportError);
     }
     else if (this.onImage) {
       urlSecurityCheck(this.mediaURL, this.principal);
       saveImageURL(this.mediaURL, null, "SaveImageTitle", false,
                    false, referrerURI, null, gContextMenuContentData.contentType,
-                   gContextMenuContentData.contentDisposition, isPrivate);
+                   gContextMenuContentData.contentDisposition, isPrivate,
+                   this.principal);
     }
     else if (this.onVideo || this.onAudio) {
       urlSecurityCheck(this.mediaURL, this.principal);

@@ -13,6 +13,7 @@ interface nsIWebProgressListener;
 interface nsIFile;
 interface nsIChannel;
 interface nsILoadContext;
+interface nsIPrincipal;
 
 /**
  * Interface for persisting DOM documents and URIs to local or remote storage.
@@ -110,6 +111,8 @@ interface nsIWebBrowserPersist : nsICancelable
    * @see nsIInterfaceRequestor
    */
   attribute nsIWebProgressListener progressListener;
+
+  attribute nsIPrincipal loadingPrincipal;
 
   /**
    * Save the specified URI to file.
