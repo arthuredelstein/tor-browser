@@ -277,6 +277,7 @@ const char *kWebBrowserPersistStringBundle =
 nsWebBrowserPersist::nsWebBrowserPersist() :
     mCurrentDataPathIsRelative(false),
     mCurrentThingsToPersist(0),
+    mLoadingPrincipal(nsContentUtils::GetSystemPrincipal()),
     mFirstAndOnlyUse(true),
     mSavingDocument(false),
     mCancel(false),
@@ -410,6 +411,19 @@ NS_IMETHODIMP nsWebBrowserPersist::SetProgressListener(
     mProgressListener = aProgressListener;
     mProgressListener2 = do_QueryInterface(aProgressListener);
     mEventSink = do_GetInterface(aProgressListener);
+    return NS_OK;
+}
+
+NS_IMETHODIMP nsWebBrowserPersist::GetLoadingPrincipal(nsIPrincipal** loadingPrincipal)
+{
+    *loadingPrincipal = mLoadingPrincipal;
+    return NS_OK;
+}
+
+NS_IMETHODIMP nsWebBrowserPersist::SetLoadingPrincipal(nsIPrincipal* loadingPrincipal)
+{
+    mLoadingPrincipal = loadingPrincipal ? loadingPrincipal :
+        nsContentUtils::GetSystemPrincipal();
     return NS_OK;
 }
 
@@ -1385,7 +1399,7 @@ nsresult nsWebBrowserPersist::SaveURIInternal(
     nsCOMPtr<nsIChannel> inputChannel;
     rv = NS_NewChannel(getter_AddRefs(inputChannel),
                        aURI,
-                       nsContentUtils::GetSystemPrincipal(),
+                       mLoadingPrincipal,
                        nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                        nsIContentPolicy::TYPE_OTHER,
                        nullptr,  // aPerformanceStorage
@@ -2756,7 +2770,7 @@ nsWebBrowserPersist::CreateChannelFromURI(nsIURI *aURI, nsIChannel **aChannel)
 
     rv = NS_NewChannel(aChannel,
                        aURI,
-                       nsContentUtils::GetSystemPrincipal(),
+                       mLoadingPrincipal,
                        nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                        nsIContentPolicy::TYPE_OTHER);
     NS_ENSURE_SUCCESS(rv, rv);
