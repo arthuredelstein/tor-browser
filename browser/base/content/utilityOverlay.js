@@ -258,14 +258,16 @@ function openLinkIn(url, where, params) {
 
     // ContentClick.jsm passes isContentWindowPrivate for saveURL instead of passing a CPOW initiatingDoc
     if ("isContentWindowPrivate" in params) {
-      saveURL(url, null, null, true, true, aNoReferrer ? null : aReferrerURI, null, params.isContentWindowPrivate);
+      saveURL(url, null, null, true, true, aNoReferrer ? null : aReferrerURI,
+              null, params.isContentWindowPrivate,
+              aPrincipal || aTriggeringPrincipal);
     } else {
       if (!aInitiatingDoc) {
         Cu.reportError("openUILink/openLinkIn was called with " +
           "where == 'save' but without initiatingDoc.  See bug 814264.");
         return;
       }
-      saveURL(url, null, null, true, true, aNoReferrer ? null : aReferrerURI, aInitiatingDoc);
+      saveURL(url, null, null, true, true, aNoReferrer ? null : aReferrerURI, aInitiatingDoc, params.isContentWindowPrivate, aPrincipal || aTriggeringPrincipal);
     }
     return;
   }

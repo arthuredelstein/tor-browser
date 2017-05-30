@@ -121,8 +121,6 @@ GetLoadContextInfo(nsIChannel * aChannel)
 {
   nsresult rv;
 
-  DebugOnly<bool> pb = NS_UsePrivateBrowsing(aChannel);
-
   bool anon = false;
   nsLoadFlags loadFlags;
   rv = aChannel->GetLoadFlags(&loadFlags);
@@ -132,7 +130,21 @@ GetLoadContextInfo(nsIChannel * aChannel)
 
   OriginAttributes oa;
   NS_GetOriginAttributes(aChannel, oa);
-  MOZ_ASSERT(pb == (oa.mPrivateBrowsingId > 0));
+
+#ifdef DEBUG
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
+  if (loadInfo) {
+    nsCOMPtr<nsIPrincipal> principal = loadInfo->LoadingPrincipal();
+    if (principal) {
+      bool chrome;
+      principal->GetIsSystemPrincipal(&chrome);
+      if (!chrome) {
+        bool pb = NS_UsePrivateBrowsing(aChannel);
+        MOZ_ASSERT(pb == (oa.mPrivateBrowsingId > 0));
+      }
+    }
+  }
+#endif
 
   return new LoadContextInfo(anon, oa);
 }
