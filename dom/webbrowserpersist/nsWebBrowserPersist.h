@@ -147,6 +147,8 @@ private:
     nsCOMPtr<nsIMIMEService>  mMIMEService;
     nsCOMPtr<nsIURI>          mURI;
     nsCOMPtr<nsIWebProgressListener> mProgressListener;
+    nsCOMPtr<nsIPrincipal> mLoadingPrincipal;
+
     /**
      * Progress listener for 64-bit values; this is the same object as
      * mProgressListener, but is a member to avoid having to qi it for each

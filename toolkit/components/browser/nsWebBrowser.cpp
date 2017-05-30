@@ -997,6 +997,18 @@ nsWebBrowser::SetProgressListener(nsIWebProgressListener* aProgressListener)
 }
 
 NS_IMETHODIMP
+nsWebBrowser::GetLoadingPrincipal(nsIPrincipal** loadingPrincipal)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsWebBrowser::SetLoadingPrincipal(nsIPrincipal* loadingPrincipal)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 nsWebBrowser::SaveURI(nsIURI* aURI,
                       nsISupports* aCacheKey,
                       nsIURI* aReferrer,
