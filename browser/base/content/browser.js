@@ -5601,7 +5601,7 @@ function handleLinkClick(event, href, linkNode) {
 
   if (where == "save") {
     saveURL(href, linkNode ? gatherTextUnder(linkNode) : "", null, true,
-            true, doc.documentURIObject, doc);
+            true, doc.documentURIObject, doc, doc.nodePrincipal);
     event.preventDefault();
     return true;
   }
