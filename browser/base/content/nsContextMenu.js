@@ -1185,9 +1185,11 @@ nsContextMenu.prototype = {
     let onMessage = (message) => {
       mm.removeMessageListener("ContextMenu:SaveVideoFrameAsImage:Result", onMessage);
       let dataURL = message.data.dataURL;
+      const principal = Services.scriptSecurityManager.createCodebasePrincipal(
+        makeURI(dataURL), this.principal.originAttributes);
       saveImageURL(dataURL, name, "SaveImageTitle", true, false,
                    document.documentURIObject, null, null, null,
-                   isPrivate);
+                   isPrivate, principal);
     };
     mm.addMessageListener("ContextMenu:SaveVideoFrameAsImage:Result", onMessage);
   },
@@ -1358,15 +1360,13 @@ nsContextMenu.prototype = {
       }
     }
 
+    const principal = sm.createCodebasePrincipal(makeURI(linkURL),
+                                                 this.principal.originAttributes);
+
     // setting up a new channel for 'right click - save link as ...'
-    // ideally we should use:
-    // * doc            - as the loadingNode, and/or
-    // * this.principal - as the loadingPrincipal
-    // for now lets use systemPrincipal to bypass mixedContentBlocker
-    // checks after redirects, see bug: 1136055
     var channel = NetUtil.newChannel({
                     uri: makeURI(linkURL),
-                    loadUsingSystemPrincipal: true
+                    loadingPrincipal: principal
                   });
 
     if (linkDownload)
@@ -1424,19 +1424,25 @@ nsContextMenu.prototype = {
     let doc = this.ownerDoc;
     let referrerURI = gContextMenuContentData.documentURIObject;
     let isPrivate = PrivateBrowsingUtils.isBrowserPrivate(this.browser);
+    const sm = Services.scriptSecurityManager;
     if (this.onCanvas) {
       // Bypass cache, since it's a data: URL.
       this._canvasToBlobURL(this.target).then(function(blobURL) {
+        const principal = sm.createCodebasePrincipal(makeURI(blobURL),
+                                                     this.principal.originAttributes);
         saveImageURL(blobURL, "canvas.png", "SaveImageTitle",
                      true, false, referrerURI, null, null, null,
-                     isPrivate);
+                     isPrivate, principal);
       }, Cu.reportError);
     }
     else if (this.onImage) {
-      urlSecurityCheck(this.mediaURL, this.principal);
+      const principal = sm.createCodebasePrincipal(makeURI(this.mediaURL),
+                                                   this.principal.originAttributes);
+      urlSecurityCheck(this.mediaURL, principal);
       saveImageURL(this.mediaURL, null, "SaveImageTitle", false,
                    false, referrerURI, null, gContextMenuContentData.contentType,
-                   gContextMenuContentData.contentDisposition, isPrivate);
+                   gContextMenuContentData.contentDisposition, isPrivate,
+                   principal);
     }
     else if (this.onVideo || this.onAudio) {
       urlSecurityCheck(this.mediaURL, this.principal);
