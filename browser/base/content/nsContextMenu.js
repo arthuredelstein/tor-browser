@@ -1185,9 +1185,11 @@ nsContextMenu.prototype = {
     let onMessage = (message) => {
       mm.removeMessageListener("ContextMenu:SaveVideoFrameAsImage:Result", onMessage);
       let dataURL = message.data.dataURL;
+      const principal = Services.scriptSecurityManager.createCodebasePrincipal(
+        makeURI(dataURL), this.principal.originAttributes);
       saveImageURL(dataURL, name, "SaveImageTitle", true, false,
                    document.documentURIObject, null, null, null,
-                   isPrivate);
+                   isPrivate, principal);
     };
     mm.addMessageListener("ContextMenu:SaveVideoFrameAsImage:Result", onMessage);
   },
@@ -1258,7 +1260,7 @@ nsContextMenu.prototype = {
   // Helper function to wait for appropriate MIME-type headers and
   // then prompt the user with a file picker
   saveHelper: function(linkURL, linkText, dialogTitle, bypassCache, doc, docURI,
-                       windowID, linkDownload) {
+                       windowID, linkDownload, isContentWindowPrivate, contentPrincipal) {
     // canonical def in nsURILoader.h
     const NS_ERROR_SAVE_LINK_AS_TIMEOUT = 0x805d0020;
 
@@ -1317,7 +1319,7 @@ nsContextMenu.prototype = {
           // do it the old fashioned way, which will pick the best filename
           // it can without waiting.
           saveURL(linkURL, linkText, dialogTitle, bypassCache, false, docURI,
-                  doc);
+                  doc, isContentWindowPrivate, contentPrincipal);
         }
         if (this.extListener)
           this.extListener.onStopRequest(aRequest, aContext, aStatusCode);
@@ -1358,16 +1360,16 @@ nsContextMenu.prototype = {
       }
     }
 
+    const principal = Services.scriptSecurityManager.createCodebasePrincipal(
+      makeURI(linkURL), this.principal.originAttributes);
+
     // setting up a new channel for 'right click - save link as ...'
-    // ideally we should use:
-    // * doc            - as the loadingNode, and/or
-    // * this.principal - as the loadingPrincipal
-    // for now lets use systemPrincipal to bypass mixedContentBlocker
-    // checks after redirects, see bug: 1136055
     var channel = NetUtil.newChannel({
-                    uri: makeURI(linkURL),
-                    loadUsingSystemPrincipal: true
-                  });
+      uri: makeURI(linkURL),
+      loadingPrincipal: principal,
+      securityFlags: Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+      contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER
+    });
 
     if (linkDownload)
       channel.contentDispositionFilename = linkDownload;
@@ -1406,11 +1408,15 @@ nsContextMenu.prototype = {
 
   // Save URL of clicked-on link.
   saveLink: function() {
-    urlSecurityCheck(this.linkURL, this.principal);
+    const principal = Services.scriptSecurityManager.createCodebasePrincipal(
+      makeURI(this.linkURL), this.principal.originAttributes);
+    urlSecurityCheck(this.linkURL, principal);
     this.saveHelper(this.linkURL, this.linkTextStr, null, true, this.ownerDoc,
                     gContextMenuContentData.documentURIObject,
                     this.frameOuterWindowID,
-                    this.linkDownload);
+                    this.linkDownload,
+                    PrivateBrowsingUtils.isBrowserPrivate(this.browser),
+                    principal);
   },
 
   // Backwards-compatibility wrapper
@@ -1424,25 +1430,34 @@ nsContextMenu.prototype = {
     let doc = this.ownerDoc;
     let referrerURI = gContextMenuContentData.documentURIObject;
     let isPrivate = PrivateBrowsingUtils.isBrowserPrivate(this.browser);
+    let thisPrincipal = this.principal;
     if (this.onCanvas) {
       // Bypass cache, since it's a data: URL.
       this._canvasToBlobURL(this.target).then(function(blobURL) {
+        const principal = Services.scriptSecurityManager.createCodebasePrincipal(
+          makeURI(blobURL), thisPrincipal.originAttributes);
         saveImageURL(blobURL, "canvas.png", "SaveImageTitle",
                      true, false, referrerURI, null, null, null,
-                     isPrivate);
+                     isPrivate, principal);
       }, Cu.reportError);
     }
     else if (this.onImage) {
-      urlSecurityCheck(this.mediaURL, this.principal);
+      const principal = Services.scriptSecurityManager.createCodebasePrincipal(
+        makeURI(this.mediaURL), thisPrincipal.originAttributes);
+      urlSecurityCheck(this.mediaURL, principal);
       saveImageURL(this.mediaURL, null, "SaveImageTitle", false,
                    false, referrerURI, null, gContextMenuContentData.contentType,
-                   gContextMenuContentData.contentDisposition, isPrivate);
+                   gContextMenuContentData.contentDisposition, isPrivate,
+                   principal);
     }
     else if (this.onVideo || this.onAudio) {
-      urlSecurityCheck(this.mediaURL, this.principal);
+      const principal = Services.scriptSecurityManager.createCodebasePrincipal(
+        makeURI(this.mediaURL), thisPrincipal.originAttributes);
+      urlSecurityCheck(this.mediaURL, principal);
       var dialogTitle = this.onVideo ? "SaveVideoTitle" : "SaveAudioTitle";
       this.saveHelper(this.mediaURL, null, dialogTitle, false, doc, referrerURI,
-                      this.frameOuterWindowID, "");
+                      this.frameOuterWindowID, "", isPrivate,
+                      principal);
     }
   },
 

@@ -86,15 +86,15 @@ function forbidCPOW(arg, func, argname)
 // - A linked document using Alt-click Save Link As...
 //
 function saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
-                 aSkipPrompt, aReferrer, aSourceDocument, aIsContentWindowPrivate)
+                 aSkipPrompt, aReferrer, aSourceDocument, aIsContentWindowPrivate,
+                 aContentPrincipal)
 {
   forbidCPOW(aURL, "saveURL", "aURL");
   forbidCPOW(aReferrer, "saveURL", "aReferrer");
   // Allow aSourceDocument to be a CPOW.
-
   internalSave(aURL, null, aFileName, null, null, aShouldBypassCache,
                aFilePickerTitleKey, null, aReferrer, aSourceDocument,
-               aSkipPrompt, null, aIsContentWindowPrivate);
+               aSkipPrompt, null, aIsContentWindowPrivate, aContentPrincipal);
 }
 
 // Just like saveURL, but will get some info off the image before
@@ -134,10 +134,12 @@ const nsISupportsCString = Components.interfaces.nsISupportsCString;
  * @param aIsContentWindowPrivate (bool)
  *        Whether or not the containing window is in private browsing mode.
  *        Does not need to be provided is aDoc is passed.
+ * @param aContentPrincipal [optional]
+ *        The principal to be used for fetching and saving the target URL.
  */
 function saveImageURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
                       aSkipPrompt, aReferrer, aDoc, aContentType, aContentDisp,
-                      aIsContentWindowPrivate)
+                      aIsContentWindowPrivate, aContentPrincipal)
 {
   forbidCPOW(aURL, "saveImageURL", "aURL");
   forbidCPOW(aReferrer, "saveImageURL", "aReferrer");
@@ -182,7 +184,8 @@ function saveImageURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
 
   internalSave(aURL, null, aFileName, aContentDisp, aContentType,
                aShouldBypassCache, aFilePickerTitleKey, null, aReferrer,
-               null, aSkipPrompt, null, aIsContentWindowPrivate);
+               null, aSkipPrompt, null, aIsContentWindowPrivate,
+               aContentPrincipal);
 }
 
 // This is like saveDocument, but takes any browser/frame-like element
@@ -199,7 +202,7 @@ function saveBrowser(aBrowser, aSkipPrompt, aOuterWindowID=0)
   let stack = Components.stack.caller;
   persistable.startPersistence(aOuterWindowID, {
     onDocumentReady: function (document) {
-      saveDocument(document, aSkipPrompt);
+      saveDocument(document, aSkipPrompt, aBrowser.contentPrincipal);
     },
     onError: function (status) {
       throw new Components.Exception("saveBrowser failed asynchronously in startPersistence",
@@ -215,7 +218,9 @@ function saveBrowser(aBrowser, aSkipPrompt, aOuterWindowID=0)
 // case "save as" modes that serialize the document's DOM are
 // unavailable.  This is a temporary measure for the "Save Frame As"
 // command (bug 1141337) and pre-e10s add-ons.
-function saveDocument(aDocument, aSkipPrompt)
+//
+// aContentPrincipal is the principal for downloading and saving the document.
+function saveDocument(aDocument, aSkipPrompt, aContentPrincipal)
 {
   const Ci = Components.interfaces;
 
@@ -273,7 +278,7 @@ function saveDocument(aDocument, aSkipPrompt)
   internalSave(aDocument.documentURI, aDocument, null, contentDisposition,
                aDocument.contentType, false, null, null,
                aDocument.referrer ? makeURI(aDocument.referrer) : null,
-               aDocument, aSkipPrompt, cacheKey);
+               aDocument, aSkipPrompt, cacheKey, undefined, aContentPrincipal);
 }
 
 function DownloadListener(win, transfer) {
@@ -384,11 +389,13 @@ XPCOMUtils.defineConstant(this, "kSaveAsType_Text", kSaveAsType_Text);
  *        This parameter is provided when the aInitiatingDocument is not a
  *        real document object. Stores whether aInitiatingDocument.defaultView
  *        was private or not.
+ * @param aContentPrincipal [optional]
+ *        The principal to be used for fetching and saving the target URL.
  */
 function internalSave(aURL, aDocument, aDefaultFileName, aContentDisposition,
                       aContentType, aShouldBypassCache, aFilePickerTitleKey,
                       aChosenData, aReferrer, aInitiatingDocument, aSkipPrompt,
-                      aCacheKey, aIsContentWindowPrivate)
+                      aCacheKey, aIsContentWindowPrivate, aContentPrincipal)
 {
   forbidCPOW(aURL, "internalSave", "aURL");
   forbidCPOW(aReferrer, "internalSave", "aReferrer");
@@ -460,6 +467,7 @@ function internalSave(aURL, aDocument, aDefaultFileName, aContentDisposition,
     let nonCPOWDocument =
       aDocument && !Components.utils.isCrossProcessWrapper(aDocument);
 
+
     let isPrivate = aIsContentWindowPrivate;
     if (isPrivate === undefined) {
       isPrivate = aInitiatingDocument instanceof Components.interfaces.nsIDOMDocument
@@ -477,6 +485,7 @@ function internalSave(aURL, aDocument, aDefaultFileName, aContentDisposition,
       sourcePostData    : nonCPOWDocument ? getPostData(aDocument) : null,
       bypassCache       : aShouldBypassCache,
       isPrivate         : isPrivate,
+      loadingPrincipal  : aContentPrincipal,
     };
 
     // Start the actual save process
@@ -513,11 +522,16 @@ function internalSave(aURL, aDocument, aDefaultFileName, aContentDisposition,
  *        If true, the document will always be refetched from the server
  * @param persistArgs.isPrivate
  *        Indicates whether this is taking place in a private browsing context.
+ * @param persistArgs.loadingPrincipal
+ *        The principal assigned to the document being saved.
  */
 function internalPersist(persistArgs)
 {
   var persist = makeWebBrowserPersist();
 
+  if (["http", "https", "ftp"].includes(persistArgs.sourceURI.scheme)) {
+    persist.loadingPrincipal = persistArgs.loadingPrincipal;
+  }
   // Calculate persist flags.
   const nsIWBP = Components.interfaces.nsIWebBrowserPersist;
   const flags = nsIWBP.PERSIST_FLAGS_REPLACE_EXISTING_FILES |
