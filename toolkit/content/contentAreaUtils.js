@@ -467,6 +467,8 @@ function internalSave(aURL, aDocument, aDefaultFileName, aContentDisposition,
         : aInitiatingDocument.isPrivate;
     }
 
+    let loadingPrincipal = aInitiatingDocument.nodePrincipal || aDocument.nodePrincipal;
+
     var persistArgs = {
       sourceURI         : sourceURI,
       sourceReferrer    : aReferrer,
@@ -477,6 +479,7 @@ function internalSave(aURL, aDocument, aDefaultFileName, aContentDisposition,
       sourcePostData    : nonCPOWDocument ? getPostData(aDocument) : null,
       bypassCache       : aShouldBypassCache,
       isPrivate         : isPrivate,
+      loadingPrincipal  : loadingPrincipal,
     };
 
     // Start the actual save process
@@ -517,6 +520,8 @@ function internalSave(aURL, aDocument, aDefaultFileName, aContentDisposition,
 function internalPersist(persistArgs)
 {
   var persist = makeWebBrowserPersist();
+
+  persist.loadingPrincipal = persistArgs.loadingPrincipal;
 
   // Calculate persist flags.
   const nsIWBP = Components.interfaces.nsIWebBrowserPersist;
