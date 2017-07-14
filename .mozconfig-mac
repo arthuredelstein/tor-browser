@@ -4,7 +4,7 @@ mk_add_options "export LD_LIBRARY_PATH=$topsrcdir/clang/lib"
 CROSS_CCTOOLS_PATH=$topsrcdir/cctools
 CROSS_SYSROOT=$topsrcdir/MacOSX10.7.sdk
 CROSS_PRIVATE_FRAMEWORKS=$CROSS_SYSROOT/System/Library/PrivateFrameworks
-FLAGS="-target x86_64-apple-darwin10 -mlinker-version=136 -B $CROSS_CCTOOLS_PATH/bin -isysroot $CROSS_SYSROOT -Werror=format -Werror=format-security -fstack-protector-strong --param ssp-buffer-size=4 -pie -fPIE -D_FORTIFY_SOURCE=2 -O1 -Wl,-z,relro,-z,now"
+FLAGS="-target x86_64-apple-darwin10 -mlinker-version=136 -B $CROSS_CCTOOLS_PATH/bin -isysroot $CROSS_SYSROOT"
 
 export CC="$topsrcdir/clang/bin/clang $FLAGS"
 export CXX="$topsrcdir/clang/bin/clang++ $FLAGS"
@@ -19,12 +19,13 @@ export STRIP=${TOOLCHAIN_PREFIX}strip
 export OTOOL=${TOOLCHAIN_PREFIX}otool
 export DSYMUTIL=$topsrcdir/clang/bin/llvm-dsymutil
 
+export HOST_FLAGS="-Werror=format -Werror=format-security -fstack-protector-strong --param ssp-buffer-size=4 -pie -fPIE -D_FORTIFY_SOURCE=2 -O1 -Wl,-z,relro,-z,now"
 export HOST_CC="$topsrcdir/clang/bin/clang"
 export HOST_CXX="$topsrcdir/clang/bin/clang++"
 export HOST_CPP="$topsrcdir/clang/bin/clang -E"
-export HOST_CFLAGS="-g"
-export HOST_CXXFLAGS="-g"
-export HOST_LDFLAGS="-g"
+export HOST_CFLAGS="-g $HOST_FLAGS"
+export HOST_CXXFLAGS="-g $HOST_FLAGS"
+export HOST_LDFLAGS="-g $HOST_FLAGS"
 
 ac_add_options --target=x86_64-apple-darwin
 ac_add_options --with-macos-private-frameworks=$CROSS_PRIVATE_FRAMEWORKS
