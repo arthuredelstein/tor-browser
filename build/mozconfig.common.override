@@ -9,3 +9,5 @@
 # to override anything done previously.
 #
 # The common expected usage is for try builds with nondefault options.
+
+export CPPFLAGS="-fsanitize=undefined"
