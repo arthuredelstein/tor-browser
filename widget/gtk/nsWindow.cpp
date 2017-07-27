@@ -1619,7 +1619,7 @@ nsWindow::SetCursor(imgIContainer* aCursor,
         return window->SetCursor(aCursor, aHotspotX, aHotspotY);
     }
 
-    mCursor = nsCursor(-1);
+    mCursor = eCursor_undefined;
 
     // Get the image's current frame
     GdkPixbuf* pixbuf = nsImageToPixbuf::ImageToPixbuf(aCursor);

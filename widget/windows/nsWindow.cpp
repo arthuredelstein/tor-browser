@@ -3018,7 +3018,7 @@ nsWindow::SetCursor(imgIContainer* aCursor,
   rv = nsWindowGfx::CreateIcon(aCursor, true, aHotspotX, aHotspotY, size, &cursor);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  mCursor = nsCursor(-1);
+  mCursor = eCursor_undefined;
   ::SetCursor(cursor);
 
   NS_IF_RELEASE(sCursorImgContainer);
