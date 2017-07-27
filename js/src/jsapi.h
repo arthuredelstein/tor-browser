@@ -1873,6 +1873,9 @@ typedef enum JSGCParamKey {
 
     /** If true, painting can trigger IGC slices. */
     JSGC_REFRESH_FRAME_SLICES_ENABLED = 24,
+
+    /** For when we don't have a key yet. */
+    JSGC_UNDEFINED = 25,
 } JSGCParamKey;
 
 extern JS_PUBLIC_API(void)

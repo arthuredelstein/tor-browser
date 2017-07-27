@@ -106,19 +106,19 @@ struct JSSettings
     uint32_t value;
 
     JSGCSetting()
-    : key(static_cast<JSGCParamKey>(-1)), value(0)
+    : key(JSGC_UNDEFINED), value(0)
     { }
 
     bool
     IsSet() const
     {
-      return key != static_cast<JSGCParamKey>(-1);
+      return key != JSGC_UNDEFINED;
     }
 
     void
     Unset()
     {
-      key = static_cast<JSGCParamKey>(-1);
+      key = JSGC_UNDEFINED;
       value = 0;
     }
   };
