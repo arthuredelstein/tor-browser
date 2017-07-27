@@ -156,7 +156,7 @@ TabParent::TabParent(nsIContentParent* aManager,
   , mInitedByParent(false)
   , mTabId(aTabId)
   , mCreatingWindow(false)
-  , mCursor(nsCursor(-1))
+  , mCursor(eCursor_undefined)
   , mTabSetsCursor(false)
   , mHasContentOpener(false)
 #ifdef DEBUG
@@ -1081,7 +1081,7 @@ bool TabParent::SendRealMouseEvent(WidgetMouseEvent& event)
       mTabSetsCursor = true;
       if (mCustomCursor) {
         widget->SetCursor(mCustomCursor, mCustomCursorHotspotX, mCustomCursorHotspotY);
-      } else if (mCursor != nsCursor(-1)) {
+      } else if (mCursor != eCursor_undefined) {
         widget->SetCursor(mCursor);
       }
     } else if (eMouseExitFromWidget == event.mMessage) {
