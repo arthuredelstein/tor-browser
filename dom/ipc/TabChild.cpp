@@ -1589,8 +1589,7 @@ TabChild::RecvRealMouseButtonEvent(const WidgetMouseEvent& aEvent,
                                                         aInputBlockId);
   }
 
-  nsEventStatus unused;
-  InputAPZContext context(aGuid, aInputBlockId, unused);
+  InputAPZContext context(aGuid, aInputBlockId, nsEventStatus_eUndefined);
   if (pendingLayerization) {
     context.SetPendingLayerization();
   }
