@@ -1703,8 +1703,7 @@ TabChild::RecvRealMouseButtonEvent(const WidgetMouseEvent& aEvent,
       mPuppetWidget, document, aEvent, aGuid, aInputBlockId);
   }
 
-  nsEventStatus unused;
-  InputAPZContext context(aGuid, aInputBlockId, unused);
+  InputAPZContext context(aGuid, aInputBlockId, nsEventStatus_eUndefined);
 
   WidgetMouseEvent localEvent(aEvent);
   localEvent.mWidget = mPuppetWidget;
