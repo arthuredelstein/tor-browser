@@ -2002,6 +2002,10 @@ typedef enum JSGCParamKey {
      * Pref: None
      */
     JSGC_ALLOCATION_THRESHOLD_FACTOR_AVOID_INTERRUPT = 26,
+
+    /** For when we don't have a key yet. */
+    JSGC_UNDEFINED = 27,
+
 } JSGCParamKey;
 
 extern JS_PUBLIC_API(void)

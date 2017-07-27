@@ -107,8 +107,21 @@ struct JSSettings
     uint32_t value;
 
     JSGCSetting()
-    : key(), value(0)
+    : key(JSGC_UNDEFINED), value(0)
     { }
+
+    bool
+    IsSet() const
+    {
+      return key != JSGC_UNDEFINED;
+    }
+
+    void
+    Unset()
+    {
+      key = JSGC_UNDEFINED;
+      value = 0;
+    }
   };
 
   // There are several settings that we know we need so it makes sense to
