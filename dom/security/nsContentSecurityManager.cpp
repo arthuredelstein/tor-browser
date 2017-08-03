@@ -880,6 +880,7 @@ nsContentSecurityManager::IsOriginPotentiallyTrustworthy(nsIPrincipal* aPrincipa
         }
       }
     }
+
     // Maybe we have a .onion URL. Treat it as whitelisted as well if
     // `dom.securecontext.whitelist_onions` is `true`.
     if (nsMixedContentBlocker::IsPotentiallyTrustworthyOnion(uri)) {
