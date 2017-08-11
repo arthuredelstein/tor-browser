@@ -13,6 +13,9 @@
 #include "sandbox/win/src/sandbox_factory.h"
 #include "sandbox/win/src/target_services.h"
 
+#define __try if(true)
+#define __except(x) else
+
 namespace sandbox {
 
 // This is the list of all imported symbols from ntdll.dll.
