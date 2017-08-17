@@ -192,7 +192,8 @@ class MoveOp
         FLOAT32,
         DOUBLE,
         SIMD128INT,
-        SIMD128FLOAT
+        SIMD128FLOAT,
+        NONE
     };
 
   protected:
@@ -216,8 +217,11 @@ class MoveOp
         cycleEnd_(false),
         cycleBeginSlot_(-1),
         cycleEndSlot_(-1),
-        type_(type)
-    { }
+        type_(type),
+        endCycleType_(NONE)
+    {
+        MOZ_ASSERT(type_ != NONE);
+    }
 
     bool isCycleBegin() const {
         return cycleBegin_;
