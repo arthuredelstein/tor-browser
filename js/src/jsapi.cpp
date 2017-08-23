@@ -1739,14 +1739,14 @@ JS::CompartmentBehaviors::extraWarnings(JSContext* cx) const
 JS::CompartmentCreationOptions&
 JS::CompartmentCreationOptions::setZone(ZoneSpecifier spec)
 {
-    zone_.spec = spec;
+    zone_ = mozilla::AsVariant(spec);
     return *this;
 }
 
 JS::CompartmentCreationOptions&
 JS::CompartmentCreationOptions::setSameZoneAs(JSObject* obj)
 {
-    zone_.pointer = static_cast<void*>(obj->zone());
+    zone_ = mozilla::AsVariant(static_cast<void*>(obj->zone()));
     return *this;
 }
 

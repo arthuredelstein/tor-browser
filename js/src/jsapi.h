@@ -2185,15 +2185,14 @@ class JS_PUBLIC_API(CompartmentCreationOptions)
     CompartmentCreationOptions()
       : addonId_(nullptr),
         traceGlobal_(nullptr),
+        zone_(mozilla::AsVariant<ZoneSpecifier>(JS::FreshZone)),
         invisibleToDebugger_(false),
         mergeable_(false),
         preserveJitCode_(false),
         cloneSingletons_(false),
         sharedMemoryAndAtomics_(false),
         secureContext_(false)
-    {
-        zone_.spec = JS::FreshZone;
-    }
+    { }
 
     // A null add-on ID means that the compartment is not associated with an
     // add-on.
@@ -2212,10 +2211,12 @@ class JS_PUBLIC_API(CompartmentCreationOptions)
     }
 
     void* zonePointer() const {
-        MOZ_ASSERT(uintptr_t(zone_.pointer) > uintptr_t(JS::SystemZone));
-        return zone_.pointer;
+        MOZ_ASSERT(zone_.is<void*>());
+        return zone_.as<void*>();
     }
-    ZoneSpecifier zoneSpecifier() const { return zone_.spec; }
+    ZoneSpecifier zoneSpecifier() const { return zone_.as<ZoneSpecifier>(); }
+    bool hasZonePointer() { return zone_.is<void*>(); }
+
     CompartmentCreationOptions& setZone(ZoneSpecifier spec);
     CompartmentCreationOptions& setSameZoneAs(JSObject* obj);
 
@@ -2269,10 +2270,7 @@ class JS_PUBLIC_API(CompartmentCreationOptions)
   private:
     JSAddonId* addonId_;
     JSTraceOp traceGlobal_;
-    union {
-        ZoneSpecifier spec;
-        void* pointer; // js::Zone* is not exposed in the API.
-    } zone_;
+    mozilla::Variant<ZoneSpecifier, void*> zone_; // js::Zone* is not exposed in the API.
     bool invisibleToDebugger_;
     bool mergeable_;
     bool preserveJitCode_;
