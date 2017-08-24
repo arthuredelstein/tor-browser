@@ -2790,7 +2790,8 @@ CSSParserImpl::ResolveValueWithVariableReferencesRec(
           // that the variable was invalid at computed value time due to
           // unresolveable variable references or cycles.
           nsString variableValue;
-          nsCSSTokenSerializationType varFirstToken, varLastToken;
+          nsCSSTokenSerializationType varFirstToken = eCSSTokenSerialization_Nothing,
+                                      varLastToken  = eCSSTokenSerialization_Nothing;
           bool valid = aVariables->Get(variableName, variableValue,
                                        varFirstToken, varLastToken) &&
                        !variableValue.IsEmpty();
@@ -2960,7 +2961,8 @@ CSSParserImpl::ResolveValueWithVariableReferences(
   UngetToken();
 
   nsString value;
-  nsCSSTokenSerializationType firstToken, lastToken;
+  nsCSSTokenSerializationType firstToken = eCSSTokenSerialization_Nothing,
+                              lastToken  = eCSSTokenSerialization_Nothing;
   bool ok = ResolveValueWithVariableReferencesRec(value, firstToken, lastToken, aVariables) &&
             !GetToken(true);
 
@@ -3023,7 +3025,8 @@ CSSParserImpl::ParsePropertyWithVariableReferences(
     css::ErrorReporter reporter(scanner, aSheet, mChildLoader, aDocURL);
     InitScanner(scanner, reporter, aDocURL, aBaseURL, aDocPrincipal);
 
-    nsCSSTokenSerializationType firstToken, lastToken;
+    nsCSSTokenSerializationType firstToken = eCSSTokenSerialization_Nothing,
+                                lastToken  = eCSSTokenSerialization_Nothing;
     valid = ResolveValueWithVariableReferences(aVariables, expandedValue,
                                                firstToken, lastToken);
     if (!valid) {
