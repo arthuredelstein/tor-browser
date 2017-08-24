@@ -44,7 +44,8 @@ class Channel {
 
   enum Mode {
     MODE_SERVER,
-    MODE_CLIENT
+    MODE_CLIENT,
+    MODE_UNDEFINED
   };
 
   enum {

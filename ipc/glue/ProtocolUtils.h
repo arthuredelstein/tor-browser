@@ -511,7 +511,8 @@ public:
     typedef base::ProcessId ProcessId;
 
     Endpoint()
-      : mValid(false)
+        : mValid(false)
+        , mMode(mozilla::ipc::Transport::Mode::MODE_UNDEFINED)
     {}
 
     Endpoint(const PrivateIPDLInterface&,
