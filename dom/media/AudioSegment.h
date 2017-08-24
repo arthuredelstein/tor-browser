@@ -145,7 +145,9 @@ DownmixAndInterleave(const nsTArray<const SrcT*>& aChannelData,
 struct AudioChunk {
   typedef mozilla::AudioSampleFormat SampleFormat;
 
-  AudioChunk() : mPrincipalHandle(PRINCIPAL_HANDLE_NONE) {}
+  AudioChunk() : mPrincipalHandle(PRINCIPAL_HANDLE_NONE)
+               , mBufferFormat(AUDIO_FORMAT_SILENCE)
+  {}
 
   // Generic methods
   void SliceTo(StreamTime aStart, StreamTime aEnd)
