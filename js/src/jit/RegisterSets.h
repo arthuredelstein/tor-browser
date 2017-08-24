@@ -1305,7 +1305,8 @@ class ABIArg
         GPR_PAIR,
 #endif
         FPU,
-        Stack
+        Stack,
+        Undefined
     };
 
   private:
@@ -1317,7 +1318,7 @@ class ABIArg
     } u;
 
   public:
-    ABIArg() : kind_(Kind(-1)) { u.offset_ = -1; }
+    ABIArg() : kind_(Kind(Undefined)) { u.offset_ = -1; }
     explicit ABIArg(Register gpr) : kind_(GPR) { u.gpr_ = gpr.code(); }
     explicit ABIArg(Register gprLow, Register gprHigh)
     {
@@ -1376,14 +1377,14 @@ class ABIArg
             return false;
 
         switch((int8_t)kind_) {
-            case GPR:   return u.gpr_ == rhs.u.gpr_;
+            case GPR:       return u.gpr_ == rhs.u.gpr_;
 #if defined(JS_CODEGEN_REGISTER_PAIR)
-            case GPR_PAIR: return u.gpr_ == rhs.u.gpr_;
+            case GPR_PAIR:  return u.gpr_ == rhs.u.gpr_;
 #endif
-            case FPU:   return u.fpu_ == rhs.u.fpu_;
-            case Stack: return u.offset_ == rhs.u.offset_;
-            case -1:    return true;
-            default:    MOZ_CRASH("Invalid value for ABIArg kind");
+            case FPU:       return u.fpu_ == rhs.u.fpu_;
+            case Stack:     return u.offset_ == rhs.u.offset_;
+            case Undefined: return true;
+            default:        MOZ_CRASH("Invalid value for ABIArg kind");
         }
     }
 
