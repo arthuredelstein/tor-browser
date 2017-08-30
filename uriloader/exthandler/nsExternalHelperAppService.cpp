@@ -606,7 +606,7 @@ public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIHELPERAPPWARNINGLAUNCHER
 
-  nsExternalLoadURIHandler(nsIInterfaceRequestor * aWindowContext,
+  nsExternalLoadURIHandler(nsIInterfaceRequestor *aWindowContext,
                            nsIURI *aURI,
                            nsIHandlerInfo *aHandlerInfo);
 
@@ -669,7 +669,7 @@ NS_IMETHODIMP nsExternalLoadURIHandler::ContinueRequest()
   bool alwaysAsk = true;
   mHandlerInfo->GetAlwaysAskBeforeHandling(&alwaysAsk);
 
-  // if we are not supposed to ask, and the preferred action is to use
+  // If we are not supposed to ask, and the preferred action is to use
   // a helper app or the system default, we just launch the URI.
   if (!alwaysAsk && (preferredAction == nsIHandlerInfo::useHelperApp ||
                      preferredAction == nsIHandlerInfo::useSystemDefault))
@@ -1786,7 +1786,7 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest *request, nsISuppo
 NS_IMETHODIMP nsExternalAppHandler::ContinueRequest()
 {
   // Break our reference cycle with the download warning dialog (set up in
-  // OnStartRequest)
+  // OnStartRequest).
   mWarningDialog = nullptr;
 
   // now that the temp file is set up, find out if we need to invoke a dialog
@@ -1908,7 +1908,7 @@ NS_IMETHODIMP nsExternalAppHandler::ContinueRequest()
 NS_IMETHODIMP nsExternalAppHandler::CancelRequest(nsresult aReason)
 {
   // Break our reference cycle with the download warning dialog (set up in
-  // OnStartRequest)
+  // OnStartRequest).
   mWarningDialog = nullptr;
 
   return Cancel(aReason);
