@@ -26,6 +26,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AppConstants.jsm");
 
 var gLastHash = "";
+var PREF_SYNC_UI_HIDDEN = "services.sync.ui.hidden";
 
 var gCategoryInits = new Map();
 function init_category_if_required(category) {
@@ -53,6 +54,13 @@ addEventListener("DOMContentLoaded", function onLoad() {
   removeEventListener("DOMContentLoaded", onLoad);
   init_all();
 });
+
+function update_sync_ui_visibility() {
+  try {
+    const hideUI = Services.prefs.getBoolPref(PREF_SYNC_UI_HIDDEN);
+    document.getElementById("category-sync").hidden = hideUI;
+  } catch (e) { }
+}
 
 function init_all() {
   document.documentElement.instantApply = true;
@@ -98,6 +106,9 @@ function init_all() {
     let helpButton = document.querySelector(helpSelector);
     helpButton.setAttribute("href", getHelpLinkURL(category.getAttribute("helpTopic")));
   }
+
+  update_sync_ui_visibility();
+  Services.prefs.addObserver(PREF_SYNC_UI_HIDDEN, update_sync_ui_visibility, false);
 
   // Wait until initialization of all preferences are complete before
   // notifying observers that the UI is now ready.

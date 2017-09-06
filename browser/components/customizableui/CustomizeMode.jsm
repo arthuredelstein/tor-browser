@@ -901,8 +901,10 @@ CustomizeMode.prototype = {
       // binding to a toolbarpaletteitem, which gives it a label node for when
       // it's sitting in the palette.
       wrapper.setAttribute("place", aPlace);
+      if (aNode.getAttribute("id") === "sync-button") {
+         CustomizableUI.bindSyncUIVisibility(wrapper);
+      }
     }
-
 
     // Ensure the wrapped item doesn't look like it's in any special state, and
     // can't be interactved with when in the customization palette.

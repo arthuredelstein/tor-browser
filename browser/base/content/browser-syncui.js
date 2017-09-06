@@ -13,6 +13,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "fxAccounts",
                                   "resource://gre/modules/FxAccounts.jsm");
 
 const MIN_STATUS_ANIMATION_DURATION = 1600;
+const PREF_SYNC_UI_HIDDEN = "services.sync.ui.hidden";
 
 // gSyncUI handles updating the tools menu and displaying notifications.
 var gSyncUI = {
@@ -57,6 +58,7 @@ var gSyncUI = {
 
     Services.obs.addObserver(this, "weave:service:ready", true);
     Services.obs.addObserver(this, "quit-application", true);
+    Services.prefs.addObserver(PREF_SYNC_UI_HIDDEN, this, false);
 
     // Remove the observer if the window is closed before the observer
     // was triggered.
@@ -65,6 +67,7 @@ var gSyncUI = {
       window.removeEventListener("unload", onUnload, false);
       Services.obs.removeObserver(gSyncUI, "weave:service:ready");
       Services.obs.removeObserver(gSyncUI, "quit-application");
+      Services.prefs.removeObserver(PREF_SYNC_UI_HIDDEN, gSyncUI, false);
 
       if (Weave.Status.ready) {
         gSyncUI._obs.forEach(function(topic) {
@@ -169,6 +172,12 @@ var gSyncUI = {
       document.getElementById("sync-reauth-state").hidden = true;
       document.getElementById("sync-setup-state").hidden = true;
       document.getElementById("sync-syncnow-state").hidden = true;
+      try {
+        if (Services.prefs.getBoolPref(PREF_SYNC_UI_HIDDEN)) {
+          // Leave menu hidden
+          return Promise.resolve();
+        }
+      } catch (e) { }
 
       if (CloudSync && CloudSync.ready && CloudSync().adapters.count) {
         document.getElementById("sync-syncnow-state").hidden = false;
@@ -479,6 +488,11 @@ var gSyncUI = {
     // Now non-activity state (eg, enabled, errors, etc)
     // Note that sync uses the ":ui:" notifications for errors because sync.
     switch (topic) {
+      case "nsPref:changed":
+        if (data === PREF_SYNC_UI_HIDDEN) {
+          this.updateUI();
+        }
+        break;
       case "weave:ui:sync:finish":
         // Do nothing.
         break;

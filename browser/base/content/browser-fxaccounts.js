@@ -131,7 +131,7 @@ var gFxAccounts = {
         this.onMigrationStateChanged(data, subject);
         break;
       case this.PREF_SYNC_UI_HIDDEN:
-        this.updateAppMenuItem();
+        this.updateUIVisibility();
         break;
       case this.FxAccountsCommon.ON_PROFILE_CHANGE_NOTIFICATION:
         this._cachedProfile = null;
@@ -200,6 +200,12 @@ var gFxAccounts = {
     }
 
     this.updateAppMenuItem();
+    this.updateUIVisibility();
+  },
+
+  updateUIVisibility: function () {
+    const hiddenUI = Services.prefs.getBoolPref(this.PREF_SYNC_UI_HIDDEN);
+    this.panelUIFooter.hidden = hiddenUI;
   },
 
   // Note that updateAppMenuItem() returns a Promise that's only used by tests.
@@ -210,15 +216,9 @@ var gFxAccounts = {
     } catch (e) { }
 
     // Bail out if FxA is disabled.
-    let hideSyncUI = false;
-    try {
-      hideSyncUI = Services.prefs.getBoolPref(this.PREF_SYNC_UI_HIDDEN);
-    } catch (e) {}
-    if (hideSyncUI || !this.weave.fxAccountsEnabled) {
+    if (!this.weave.fxAccountsEnabled) {
       return Promise.resolve();
     }
-
-    this.panelUIFooter.hidden = false;
 
     // Make sure the button is disabled in customization mode.
     if (this._inCustomizationMode) {

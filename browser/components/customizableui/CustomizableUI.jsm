@@ -1322,6 +1322,16 @@ var CustomizableUIInternal = {
     return null;
   },
 
+  bindSyncUIVisibility: function (element) {
+    const updateFunction = () => {
+      try {
+        element.hidden = Services.prefs.getBoolPref("services.sync.ui.hidden");
+      } catch (e) { }
+    };
+    Services.prefs.addObserver("services.sync.ui.hidden", updateFunction, false);
+    updateFunction();
+  },
+
   buildWidget: function(aDocument, aWidget) {
     if (aDocument.documentURI != kExpectedWindowURL) {
       throw new Error("buildWidget was called for a non-browser window!");
@@ -1349,6 +1359,9 @@ var CustomizableUIInternal = {
       }
       node = aDocument.createElementNS(kNSXUL, "toolbarbutton");
 
+      if (aWidget.id === "sync-button") {
+         this.bindSyncUIVisibility(node);
+      }
       node.setAttribute("id", aWidget.id);
       node.setAttribute("widget-id", aWidget.id);
       node.setAttribute("widget-type", aWidget.type);
@@ -3753,6 +3766,15 @@ this.CustomizableUI = {
    */
   isBuiltinToolbar: function(aToolbarId) {
     return CustomizableUIInternal._builtinToolbars.has(aToolbarId);
+  },
+
+  /**
+   * Binds the "hidden" state of an element to the
+   * "services.sync.ui.hidden" pref.
+   * @param element the DOM element to bind
+   */
+  bindSyncUIVisibility: function(element) {
+    CustomizableUIInternal.bindSyncUIVisibility(element);
   },
 };
 Object.freeze(this.CustomizableUI);
