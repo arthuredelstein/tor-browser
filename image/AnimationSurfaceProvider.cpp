@@ -92,7 +92,7 @@ AnimationSurfaceProvider::IsFinished() const
   return mFrames[0]->IsFinished();
 }
 
-size_t
+double
 AnimationSurfaceProvider::LogicalSizeInBytes() const
 {
   // When decoding animated images, we need at most three live surfaces: the
@@ -107,7 +107,7 @@ AnimationSurfaceProvider::LogicalSizeInBytes() const
   // animation has, so we really can't do better here. This will become correct
   // once bug 1289954 is complete.
   IntSize size = GetSurfaceKey().Size();
-  return 3 * size.width * size.height * sizeof(uint32_t);
+  return (double) 3 * size.width * size.height * sizeof(uint32_t));
 }
 
 void

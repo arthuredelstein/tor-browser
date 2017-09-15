@@ -39,7 +39,7 @@ public:
 
 public:
   bool IsFinished() const override;
-  size_t LogicalSizeInBytes() const override;
+  double LogicalSizeInBytes() const override;
 
 protected:
   DrawableFrameRef DrawableRef(size_t aFrame) override;

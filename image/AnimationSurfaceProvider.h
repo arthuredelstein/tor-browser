@@ -44,7 +44,7 @@ public:
   DrawableSurface Surface() override { return DrawableSurface(WrapNotNull(this)); }
 
   bool IsFinished() const override;
-  size_t LogicalSizeInBytes() const override;
+  double LogicalSizeInBytes() const override;
   void AddSizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
                               size_t& aHeapSizeOut,
                               size_t& aNonHeapSizeOut,

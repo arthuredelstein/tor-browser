@@ -68,13 +68,13 @@ static StaticMutex sInstanceMutex;
  * may be worth taking into account the cost of rematerializing the surface as
  * well.
  */
-typedef size_t Cost;
+typedef double Cost;
 
 static Cost
 ComputeCost(const IntSize& aSize, uint32_t aBytesPerPixel)
 {
   MOZ_ASSERT(aBytesPerPixel == 1 || aBytesPerPixel == 4);
-  return aSize.width * aSize.height * aBytesPerPixel;
+  return (double) aSize.width * aSize.height * aBytesPerPixel;
 }
 
 /**

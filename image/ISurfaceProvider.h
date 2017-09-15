@@ -57,7 +57,7 @@ public:
   /// require. Optimizations may result in lower real memory usage. Trivial
   /// overhead is ignored. Because this value is used in bookkeeping, it's
   /// important that it be constant over the lifetime of this object.
-  virtual size_t LogicalSizeInBytes() const = 0;
+  virtual double LogicalSizeInBytes() const = 0;
 
   /// @return the actual number of bytes of memory this ISurfaceProvider is
   /// using. May vary over the lifetime of the ISurfaceProvider. The default
@@ -250,10 +250,10 @@ public:
 
   bool IsFinished() const override { return mSurface->IsFinished(); }
 
-  size_t LogicalSizeInBytes() const override
+  double LogicalSizeInBytes() const override
   {
     gfx::IntSize size = mSurface->GetSize();
-    return size.width * size.height * mSurface->GetBytesPerPixel();
+    return (double) size.width * size.height * mSurface->GetBytesPerPixel();
   }
 
 protected:
