@@ -230,6 +230,11 @@ if CONFIG['GNU_CC'] or CONFIG['CLANG_CL']:
         '-Wno-unused-but-set-variable'
     ]
 
+if CONFIG['GNU_CC']:
+    CFLAGS += [
+        '-fno-sanitize=signed-integer-overflow'
+    ]
+
 if CONFIG['CLANG_CXX'] or CONFIG['CLANG_CL']:
     CFLAGS += [
         '-Wno-absolute-value',
