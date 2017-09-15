@@ -422,9 +422,11 @@ DOMIntersectionObserver::Update(nsIDocument* aDocument, DOMHighResTimeStamp time
       }
     }
 
-    double targetArea = targetRect.Width() * targetRect.Height();
+    double targetArea = (double) targetRect.Width() *
+                        (double) targetRect.Height();
     double intersectionArea = !intersectionRect ?
-      0 : intersectionRect->Width() * intersectionRect->Height();
+      0 : (double) intersectionRect->Width() *
+          (double) intersectionRect->Height();
 
     double intersectionRatio;
     if (targetArea > 0.0) {
