@@ -2894,6 +2894,7 @@ jsvalToFloat(JSContext* cx, HandleValue val, FloatType* result)
 }
 
 template <class IntegerType, class CharT>
+__attribute__((no_sanitize_undefined))
 static bool
 StringToInteger(JSContext* cx, CharT* cp, size_t length, IntegerType* result,
                 bool* overflow)
