@@ -84,3 +84,8 @@ LOCAL_INCLUDES += [
 RESOURCE_FILES += [
     'svg.css',
 ]
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += [
+        '-fno-sanitize=signed-integer-overflow'
+    ]
