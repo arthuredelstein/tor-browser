@@ -9,3 +9,7 @@ DIRS += ['cairo/src']
 if CONFIG['MOZ_TREE_PIXMAN']:
     DIRS += ['libpixman/src']
 
+# cairo permits several integer overflows
+# TODO: fix any not needed for performance
+CFLAGS += ['-fno-sanitize=signed-integer-overflow']
+CXXFLAGS += ['-fno-sanitize=signed-integer-overflow']
