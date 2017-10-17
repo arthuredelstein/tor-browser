@@ -46,7 +46,6 @@ pref("browser.disableResetPrompt", true);
 pref("browser.privatebrowsing.autostart", true);
 pref("browser.cache.disk.enable", false);
 pref("browser.cache.offline.enable", false);
-pref("dom.indexedDB.enabled", false);
 pref("permissions.memory_only", true);
 pref("network.cookie.lifetimePolicy", 2);
 pref("browser.download.manager.retention", 1);
