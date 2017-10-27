@@ -190,6 +190,14 @@ nsFileProtocolHandler::NewChannel2(nsIURI* uri,
                                    nsILoadInfo* aLoadInfo,
                                    nsIChannel** result)
 {
+#ifdef XP_UNIX
+    if (aLoadInfo && aLoadInfo->TriggeringPrincipal()) {
+        if (aLoadInfo->TriggeringPrincipal()->GetIsCodebasePrincipal()) {
+            return NS_ERROR_FILE_TARGET_DOES_NOT_EXIST;
+        }
+    }
+#endif
+
     nsresult rv;
 
     nsFileChannel *chan;
