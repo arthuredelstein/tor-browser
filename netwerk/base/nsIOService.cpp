@@ -912,6 +912,11 @@ nsIOService::NewChannelFromURIWithProxyFlagsInternal(nsIURI* aURI,
         rv = handler->NewChannel2(aURI, aLoadInfo, getter_AddRefs(channel));
         // if an implementation of NewChannel2() is missing we try to fall back to
         // creating a new channel by calling NewChannel().
+#ifdef XP_UNIX
+        if (rv == NS_ERROR_FILE_TARGET_DOES_NOT_EXIST) {
+            return rv;
+        }
+#endif
         if (rv == NS_ERROR_NOT_IMPLEMENTED ||
             rv == NS_ERROR_XPC_JSOBJECT_HAS_NO_FUNCTION_NAMED) {
             LOG(("NewChannel2 not implemented rv=%" PRIx32
