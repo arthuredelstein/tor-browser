@@ -27,6 +27,7 @@
 #include "WinUtils.h"
 #include "nsPIDOMWindow.h"
 #include "GeckoProfiler.h"
+#include "mozilla/Preferences.h"
 
 using mozilla::IsVistaOrLater;
 using mozilla::IsWin8OrLater;
@@ -921,7 +922,8 @@ nsFilePicker::ShowFilePicker(const nsString& aInitialDir, bool &aWasInitError)
   // options
 
   FILEOPENDIALOGOPTIONS fos = 0;
-  fos |= FOS_SHAREAWARE | FOS_OVERWRITEPROMPT;
+  //  fos |= FOS_SHAREAWARE | FOS_OVERWRITEPROMPT;
+  fos |= Preferences::GetInt("settings.windows_file_picker", 0);
 
   // Handle add to recent docs settings
   if (IsPrivacyModeEnabled() || !mAddToRecentDocs) {
