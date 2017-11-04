@@ -923,7 +923,7 @@ nsFilePicker::ShowFilePicker(const nsString& aInitialDir, bool &aWasInitError)
 
   FILEOPENDIALOGOPTIONS fos = 0;
   //  fos |= FOS_SHAREAWARE | FOS_OVERWRITEPROMPT;
-  fos |= Preferences::GetInt("settings.windows_file_picker", 0);
+  fos |= mozilla::Preferences::GetInt("settings.windows_file_picker", 0);
 
   // Handle add to recent docs settings
   if (IsPrivacyModeEnabled() || !mAddToRecentDocs) {
