@@ -298,6 +298,7 @@ nsFilePicker::GetLocalFiles(const nsString& inTitle, bool inAllowMultiple, nsCOM
   [thePanel setCanChooseDirectories:NO];
   [thePanel setCanChooseFiles:YES];
   [thePanel setResolvesAliases:YES]; //this is default - probably doesn't need to be set
+  [thePanel setCanDownloadUbiquitousContents:NO];
   
   // Get filters
   // filters may be null, if we should allow all file types.
