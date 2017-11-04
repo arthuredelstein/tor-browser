@@ -921,8 +921,7 @@ nsFilePicker::ShowFilePicker(const nsString& aInitialDir, bool &aWasInitError)
   // options
 
   FILEOPENDIALOGOPTIONS fos = 0;
-  fos |= FOS_SHAREAWARE | FOS_OVERWRITEPROMPT |
-         FOS_FORCEFILESYSTEM;
+  fos |= FOS_SHAREAWARE | FOS_OVERWRITEPROMPT;
 
   // Handle add to recent docs settings
   if (IsPrivacyModeEnabled() || !mAddToRecentDocs) {
