@@ -1050,6 +1050,69 @@ nsFilePicker::ShowFilePicker(const nsString& aInitialDir, bool &aWasInitError)
   return true;
 }
 
+/**
+ * Callbacks to prevent URI from being entered into File Dialog.
+ */
+
+static HWND hFilePickerDialog;
+
+static LRESULT CALLBACK
+CallWndProc(int code, WPARAM wParam, LPARAM lParam)
+{
+  PCWPSTRUCT data = (PCWPSTRUCT) lParam;
+  if (data->hwnd == hFilePickerDialog && /* Open file dialog */
+      data->message == WM_COMMAND &&
+      data->wParam == 1 &&
+      data->lParam == (LPARAM) GetDlgItem(hFilePickerDialog, 1)) /* Open button */
+    {
+      // User clicked the Open button, pressed enter, or used the keyboard shortcut.
+      wchar_t text[2048];
+      UINT rv = GetDlgItemText(hFilePickerDialog, 1148, text, 2047);
+      if (rv > 0)
+        {
+          if (wcsstr(text, L"://"))
+            {
+              // User has inputted a filename that looks like a URI.
+              // Wipe the text box before a DNS proxy bypass occurs.
+              SetDlgItemText(hFilePickerDialog, 1148, L"");
+              LPTSTR messageBuffer;
+              if (0 < FormatMessageW(
+                        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                        NULL,
+                        ERROR_NETWORK_ACCESS_DENIED,
+                        0,
+                        (LPWSTR) &messageBuffer,
+                        0,
+                        NULL))
+                {
+                  MessageBoxW(hFilePickerDialog, (LPWSTR) messageBuffer, NULL, MB_OK);
+                }
+            }
+        }
+    }
+  return CallNextHookEx(0, code, wParam, lParam);
+}
+
+static HHOOK hWndProcHook;
+
+static VOID CALLBACK
+WinEventProcCallback(HWINEVENTHOOK hWinEventHook,
+                     DWORD dwEvent, HWND hwnd, LONG idObject, LONG idChild,
+                     DWORD dwEventThread, DWORD dwmsEventTime)
+{
+  if (idObject == OBJID_WINDOW && dwEvent == EVENT_OBJECT_CREATE)
+    {
+      if (IsWindow(hwnd) && GetDlgCtrlID(hwnd) == 1148)
+        {
+          // We have the file dialog's filename text field.
+          hFilePickerDialog = GetParent(hwnd);
+          DWORD threadID = GetWindowThreadProcessId(hFilePickerDialog, NULL);
+          // Hook messages to the file dialog.
+          hWndProcHook = SetWindowsHookEx(WH_CALLWNDPROC, CallWndProc, NULL, threadID);
+        }
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // nsIFilePicker impl.
 
@@ -1092,10 +1155,16 @@ nsFilePicker::ShowW(int16_t *aReturnVal)
     if (!result && wasInitError)
       result = ShowXPFolderPicker(initialDir);
   } else {
+    HWINEVENTHOOK hook = SetWinEventHook(
+      EVENT_OBJECT_CREATE, EVENT_OBJECT_CREATE,
+      NULL, WinEventProcCallback, GetCurrentProcessId(),
+      0, WINEVENT_OUTOFCONTEXT);
     if (IsVistaOrLater())
       result = ShowFilePicker(initialDir, wasInitError);
     if (!result && wasInitError)
       result = ShowXPFilePicker(initialDir);
+    UnhookWinEvent(hook);
+    UnhookWindowsHookEx(hWndProcHook);
   }
 
   // exit, and return returnCancel in aReturnVal
