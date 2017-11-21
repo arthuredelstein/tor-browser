@@ -101,6 +101,7 @@
 #include "mozilla/WindowsVersion.h"
 #include "mozilla/mscom/MainThreadRuntime.h"
 #include "mozilla/widget/AudioSession.h"
+#include "MPRInterceptor.h"
 
 #ifndef PROCESS_DEP_ENABLE
 #define PROCESS_DEP_ENABLE 0x1
@@ -5125,6 +5126,8 @@ XREMain::XRE_main(int argc, char* argv[], const nsXREAppData* aAppData)
   mozilla::IOInterposerInit ioInterposerGuard;
 
 #if defined(XP_WIN)
+  preventMprLeaks();
+
   // Some COM settings are global to the process and must be set before any non-
   // trivial COM is run in the application. Since these settings may affect
   // stability, we should instantiate COM ASAP so that we can ensure that these
