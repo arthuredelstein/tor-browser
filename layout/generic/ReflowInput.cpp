@@ -31,6 +31,7 @@
 #include "CounterStyleManager.h"
 #include <algorithm>
 #include "mozilla/dom/HTMLInputElement.h"
+#include "nsContentUtils.h"
 
 #ifdef DEBUG
 #undef NOISY_VERTICAL_ALIGN
@@ -2848,7 +2849,7 @@ ReflowInput::CalculateBlockSideMargins(LayoutFrameType aFrameType)
 // For risk management, we use preference to control the behavior, and
 // eNoExternalLeading is the old behavior.
 static nscoord
-GetNormalLineHeight(nsFontMetrics* aFontMetrics)
+GetNormalLineHeight(nsIContent* aContent, nsFontMetrics* aFontMetrics)
 {
   NS_PRECONDITION(nullptr != aFontMetrics, "no font metrics");
 
@@ -2857,6 +2858,12 @@ GetNormalLineHeight(nsFontMetrics* aFontMetrics)
   nscoord externalLeading = aFontMetrics->ExternalLeading();
   nscoord internalLeading = aFontMetrics->InternalLeading();
   nscoord emHeight = aFontMetrics->EmHeight();
+
+  if (nsContentUtils::ShouldResistFingerprinting() &&
+      !aContent->IsInChromeDocument()) {
+    return NSToCoordRound(emHeight * NORMAL_LINE_HEIGHT_FACTOR);
+  }
+
   switch (GetNormalLineHeightCalcControl()) {
   case eIncludeExternalLeading:
     normalLineHeight = emHeight+ internalLeading + externalLeading;
@@ -2875,7 +2882,8 @@ GetNormalLineHeight(nsFontMetrics* aFontMetrics)
 }
 
 static inline nscoord
-ComputeLineHeight(nsStyleContext* aStyleContext,
+ComputeLineHeight(nsIContent* aContent,
+                  nsStyleContext* aStyleContext,
                   nscoord aBlockBSize,
                   float aFontSizeInflation)
 {
@@ -2910,7 +2918,7 @@ ComputeLineHeight(nsStyleContext* aStyleContext,
 
   RefPtr<nsFontMetrics> fm = nsLayoutUtils::
     GetFontMetricsForStyleContext(aStyleContext, aFontSizeInflation);
-  return GetNormalLineHeight(fm);
+  return GetNormalLineHeight(aContent, fm);
 }
 
 nscoord
@@ -2933,7 +2941,7 @@ ReflowInput::CalcLineHeight(nsIContent* aContent,
   NS_PRECONDITION(aStyleContext, "Must have a style context");
 
   nscoord lineHeight =
-    ComputeLineHeight(aStyleContext, aBlockBSize, aFontSizeInflation);
+    ComputeLineHeight(aContent, aStyleContext, aBlockBSize, aFontSizeInflation);
 
   NS_ASSERTION(lineHeight >= 0, "ComputeLineHeight screwed up");
 
