@@ -1109,9 +1109,6 @@ pref("privacy.clearOnShutdown.siteSettings",true);
 pref("privacy.donottrackheader.enabled",false);
 pref("privacy.donottrackheader.value",1);
 
-// Don't send a referrer:
-pref("network.http.sendRefererHeader", 0);
-
 // Make sure certificates are up-to-date:
 pref("security.OCSP.require", true); pref("security.checkloaduri",true);
 
