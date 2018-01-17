@@ -5,19 +5,11 @@
 
 /* This content script contains code that requires a tab browser. */
 
-#ifdef TOR_BROWSER_VERSION
-# Add double-quotes back on (stripped by JarMaker.py).
-#expand const TOR_BROWSER_VERSION = "__TOR_BROWSER_VERSION__";
-#endif
-
 var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/ExtensionContent.jsm");
-#ifdef TOR_BROWSER_UPDATE
-Cu.import("resource://gre/modules/NetUtil.jsm");
-#endif
 
 XPCOMUtils.defineLazyModuleGetter(this, "E10SUtils",
   "resource:///modules/E10SUtils.jsm");
@@ -408,80 +400,50 @@ let AboutTBUpdateListener = {
   },
 
   get isAboutTBUpdate() {
-    return content.document.documentURI.split('?')[0].toLowerCase()
-           == "about:tbupdate";
+    return content.document.documentURI.toLowerCase() == "about:tbupdate";
   },
 
   handleEvent: function(aEvent) {
-    if (this.isAboutTBUpdate && (aEvent.type == "AboutTBUpdateLoad"))
-      this.onPageLoad();
+    if (!this.isAboutTBUpdate)
+      return;
+
+    switch (aEvent.type) {
+      case "AboutTBUpdateLoad":
+        this.onPageLoad();
+        break;
+      case "pagehide":
+        this.onPageHide(aEvent);
+        break;
+    }
+  },
+
+  receiveMessage: function(aMessage) {
+    if (this.isAboutTBUpdate && (aMessage.name == "AboutTBUpdate:Update"))
+      this.onUpdate(aMessage.data);
+  },
+
+  onUpdate: function(aData) {
+    let doc = content.document;
+    doc.getElementById("torbrowser-version").textContent = aData.productInfo;
+    if (aData.moreInfoURL)
+      doc.getElementById("infolink").setAttribute("href", aData.moreInfoURL);
+    doc.getElementById("changelog").textContent = aData.changeLog;
   },
 
   onPageLoad: function() {
-    let doc = content.document;
-    doc.getElementById("infolink").setAttribute("href", this.getPostUpdateURL());
-    doc.getElementById("changelog").textContent = this.getChangeLogText();
-
-    const kBrandBundle = "chrome://branding/locale/brand.properties";
-    let brandBundle = Cc["@mozilla.org/intl/stringbundle;1"]
-                        .getService(Ci.nsIStringBundleService)
-                        .createBundle(kBrandBundle);
-    let productName = brandBundle.GetStringFromName("brandFullName");
-    doc.getElementById("torbrowser-version").textContent = productName + "\n"
-                                                           + TOR_BROWSER_VERSION;
+    addMessageListener("AboutTBUpdate:Update", this);
+    addEventListener("pagehide", this, true);
+    sendAsyncMessage("AboutTBUpdate:RequestUpdate");
   },
 
-  // Extract the post update URL from this page's query string.
-  getPostUpdateURL: function() {
-    let idx = content.document.documentURI.indexOf('?');
-    if (idx > 0)
-      return decodeURIComponent(content.document.documentURI.substring(idx+1));
-
-    // No query string: use the default URL.
-    return Services.urlFormatter.formatURLPref("startup.homepage_override_url");
+  onPageHide: function(aEvent) {
+    if (aEvent.target.defaultView.frameElement) {
+      return;
+    }
+    removeMessageListener("AboutTBUpdate:Update", this);
+    removeEventListener("pagehide", this, true);
   },
 
-  // Read and return the text from the beginning of the changelog file that is
-  // located at TorBrowser/Docs/ChangeLog.txt.
-  // On Mac OS, when building with --enable-tor-browser-data-outside-app-dir
-  // to support Gatekeeper signing, the file is located in
-  // TorBrowser.app/Contents/Resources/TorBrowser/Docs/.
-  //
-  // When electrolysis is enabled we will need to adopt an architecture that is
-  // more similar to the one that is used for about:home (see AboutHomeListener
-  // in this file and browser/modules/AboutHome.jsm).
-  getChangeLogText: function() {
-    try {
-#ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
-      // "XREExeF".parent is the directory that contains firefox, i.e.,
-      // Browser/ or, on Mac OS, TorBrowser.app/Contents/MacOS/.
-      let f = Services.dirsvc.get("XREExeF", Ci.nsIFile).parent;
-#ifdef XP_MACOSX
-      f = f.parent;
-      f.append("Resources");
-#endif
-      f.append("TorBrowser");
-#else
-      // "DefProfRt" is .../TorBrowser/Data/Browser
-      let f = Cc["@mozilla.org/file/directory_service;1"]
-                .getService(Ci.nsIProperties).get("DefProfRt", Ci.nsIFile);
-      f = f.parent.parent;  // Remove "Data/Browser"
-#endif
-      f.append("Docs");
-      f.append("ChangeLog.txt");
-
-      let fs = Cc["@mozilla.org/network/file-input-stream;1"]
-                 .createInstance(Ci.nsIFileInputStream);
-      fs.init(f, -1, 0, 0);
-      let s = NetUtil.readInputStreamToString(fs, fs.available());
-      fs.close();
-
-      // Truncate at the first empty line.
-      return s.replace(/[\r\n][\r\n][\s\S]*$/m, "");
-    } catch (e) {}
-
-    return "";
-  },
 };
 AboutTBUpdateListener.init(this);
 #endif

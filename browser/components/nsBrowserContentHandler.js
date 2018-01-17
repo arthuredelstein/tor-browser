@@ -576,7 +576,10 @@ nsBrowserContentHandler.prototype = {
 
 #ifdef TOR_BROWSER_UPDATE
             if (overridePage)
-              overridePage = "about:tbupdate?" + encodeURIComponent(overridePage);
+            {
+              prefb.setCharPref("torbrowser.post_update.url", overridePage);
+              overridePage = "about:tbupdate"
+            }
 #endif
             break;
         }

@@ -215,9 +215,6 @@ this.__defineSetter__("AddonManager", function (val) {
 
 var gInitialPages = [
   "about:tor",
-#ifdef TOR_BROWSER_UPDATE
-  "about:tbupdate",
-#endif
   "about:blank",
   "about:newtab",
   "about:home",
@@ -225,6 +222,9 @@ var gInitialPages = [
   "about:welcomeback",
   "about:sessionrestore"
 ];
+if (AppConstants.TOR_BROWSER_UPDATE) {
+  gInitialPages.push("about:tbupdate");
+}
 
 function* browserWindows() {
   let windows = Services.wm.getEnumerator("navigator:browser");
@@ -2420,13 +2420,8 @@ function URLBarSetURI(aURI) {
     // 2. if remote newtab is enabled and it's the default remote newtab page
     let defaultRemoteURL = gAboutNewTabService.remoteEnabled &&
                            uri.spec === gAboutNewTabService.newTabURL;
-#ifdef TOR_BROWSER_UPDATE
-    if ((gInitialPages.includes(uri.spec.split('?')[0]) || defaultRemoteURL) &&
-        checkEmptyPageOrigin(gBrowser.selectedBrowser, uri))
-#else
     if ((gInitialPages.includes(uri.spec) || defaultRemoteURL) &&
         checkEmptyPageOrigin(gBrowser.selectedBrowser, uri))
-#endif
     {
       value = "";
     } else {
@@ -7453,11 +7448,12 @@ var gIdentityHandler = {
       this._uriHasHost = false;
     }
 
-#ifdef TOR_BROWSER_UPDATE
-    let whitelist = /^(?:accounts|addons|cache|config|crashes|customizing|downloads|healthreport|home|license|newaddon|permissions|preferences|privatebrowsing|rights|searchreset|sessionrestore|support|welcomeback|tor|tbupdate)(?:[?#]|$)/i;
-#else
-    let whitelist = /^(?:accounts|addons|cache|config|crashes|customizing|downloads|healthreport|home|license|newaddon|permissions|preferences|privatebrowsing|rights|searchreset|sessionrestore|support|welcomeback|tor)(?:[?#]|$)/i;
-#endif
+    let whitelist;
+    if (AppConstants.TOR_BROWSER_UPDATE) {
+      whitelist = /^(?:accounts|addons|cache|config|crashes|customizing|downloads|healthreport|home|license|newaddon|permissions|preferences|privatebrowsing|rights|searchreset|sessionrestore|support|welcomeback|tor|tbupdate)(?:[?#]|$)/i;
+    } else {
+      whitelist = /^(?:accounts|addons|cache|config|crashes|customizing|downloads|healthreport|home|license|newaddon|permissions|preferences|privatebrowsing|rights|searchreset|sessionrestore|support|welcomeback|tor)(?:[?#]|$)/i;
+    }
     this._isSecureInternalUI = uri.schemeIs("about") && whitelist.test(uri.path);
 
     // Create a channel for the sole purpose of getting the resolved URI
