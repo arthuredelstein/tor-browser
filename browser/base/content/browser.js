@@ -296,9 +296,6 @@ Object.defineProperty(this, "AddonManager", {
 
 var gInitialPages = [
   "about:tor",
-#ifdef TOR_BROWSER_UPDATE
-  "about:tbupdate",
-#endif
   "about:blank",
   "about:newtab",
   "about:home",
@@ -306,6 +303,9 @@ var gInitialPages = [
   "about:welcomeback",
   "about:sessionrestore"
 ];
+if (AppConstants.TOR_BROWSER_UPDATE) {
+  gInitialPages.push("about:tbupdate");
+}
 
 function isInitialPage(url) {
   return gInitialPages.includes(url) || url == BROWSER_NEW_TAB_URL;
@@ -2756,13 +2756,8 @@ function URLBarSetURI(aURI) {
 
     // Replace initial page URIs with an empty string
     // only if there's no opener (bug 370555).
-#ifdef TOR_BROWSER_UPDATE
-    if (isInitialPage(uri.spec.split('?')[0]) &&
-        checkEmptyPageOrigin(gBrowser.selectedBrowser, uri))
-#else
     if (isInitialPage(uri.spec) &&
         checkEmptyPageOrigin(gBrowser.selectedBrowser, uri))
-#endif
     {
       value = "";
     } else {
@@ -7344,11 +7339,7 @@ var gIdentityHandler = {
    * RegExp used to decide if an about url should be shown as being part of
    * the browser UI.
    */
-#ifdef TOR_BROWSER_UPDATE
-  _secureInternalUIWhitelist: /^(?:accounts|addons|cache|config|crashes|customizing|downloads|healthreport|license|newaddon|permissions|preferences|rights|searchreset|sessionrestore|support|welcomeback|tor|tbupdate)(?:[?#]|$)/i,
-#else
-  _secureInternalUIWhitelist: /^(?:accounts|addons|cache|config|crashes|customizing|downloads|healthreport|license|newaddon|permissions|preferences|rights|searchreset|sessionrestore|support|welcomeback|tor)(?:[?#]|$)/i,
-#endif
+  _secureInternalUIWhitelist: (AppConstants.TOR_BROWSER_UPDATE ? /^(?:accounts|addons|cache|config|crashes|customizing|downloads|healthreport|license|newaddon|permissions|preferences|rights|searchreset|sessionrestore|support|welcomeback|tor|tbupdate)(?:[?#]|$)/i : /^(?:accounts|addons|cache|config|crashes|customizing|downloads|healthreport|license|newaddon|permissions|preferences|rights|searchreset|sessionrestore|support|welcomeback|tor)(?:[?#]|$)/i),
 
   get _isBroken() {
     return this._state & Ci.nsIWebProgressListener.STATE_IS_BROKEN;

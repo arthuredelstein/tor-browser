@@ -170,6 +170,11 @@ if (AppConstants.MOZ_CRASHREPORTER) {
   });
 }
 
+if (AppConstants.TOR_BROWSER_UPDATE) {
+  XPCOMUtils.defineLazyModuleGetter(this, "AboutTBUpdate",
+                                    "resource:///modules/AboutTBUpdate.jsm");
+}
+
 XPCOMUtils.defineLazyGetter(this, "gBrandBundle", function() {
   return Services.strings.createBundle("chrome://branding/locale/brand.properties");
 });
@@ -1118,6 +1123,10 @@ BrowserGlue.prototype = {
 
     if (AppConstants.MOZ_CRASHREPORTER) {
       UnsubmittedCrashHandler.init();
+    }
+
+    if (AppConstants.TOR_BROWSER_UPDATE) {
+      AboutTBUpdate.init();
     }
 
     Sanitizer.onStartup();
