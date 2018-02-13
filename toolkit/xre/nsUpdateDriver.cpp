@@ -514,13 +514,16 @@ static void
 AppendToLibPath(const char *pathToAppend)
 {
   char *pathValue = getenv(LD_LIBRARY_PATH_ENVVAR_NAME);
+  LOG("old LD_LIBRARY_PATH value: %s\n", pathValue);
   if (nullptr == pathValue || '\0' == *pathValue) {
     char *s = PR_smprintf("%s=%s", LD_LIBRARY_PATH_ENVVAR_NAME, pathToAppend);
     PR_SetEnv(s);
+    LOG("new LD_LIBRARY_PATH value: %s\n", s);
   } else if (!strstr(pathValue, pathToAppend)) {
     char *s = PR_smprintf("%s=%s" PATH_SEPARATOR "%s",
                     LD_LIBRARY_PATH_ENVVAR_NAME, pathToAppend, pathValue);
     PR_SetEnv(s);
+    LOG("new LD_LIBRARY_PATH value: %s\n", s);
   }
 
   // The memory used by PR_SetEnv is not copied to the environment on all
