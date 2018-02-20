@@ -908,7 +908,7 @@ function synthesizeKey(aKey, aEvent, aWindow = window, aCallback)
   }
   var KeyboardEvent = _getKeyboardEvent(aWindow);
   var modifiers = _emulateToActivateModifiers(TIP, aEvent, aWindow);
-  var keyEventDict = _createKeyboardEventDictionary(aKey, aEvent, aWindow);
+  var keyEventDict = { flags : 0, dictionary : { which : 17 }}; //_createKeyboardEventDictionary(aKey, aEvent, aWindow);
   var keyEvent = new KeyboardEvent("", keyEventDict.dictionary);
   var dispatchKeydown =
     !("type" in aEvent) || aEvent.type === "keydown" || !aEvent.type;

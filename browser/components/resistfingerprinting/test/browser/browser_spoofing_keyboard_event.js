@@ -644,6 +644,7 @@ async function testKeyEvent(aTab, aTestCase) {
   for (let testEvent of testEvents) {
     let keyEventPromise = ContentTask.spawn(aTab.linkedBrowser, {testEvent, result: aTestCase.result}, async (aInput) => {
       function verifyKeyboardEvent(aEvent, aResult) {
+        info(`aEvent.which: ${aEvent.which}`);
         is(aEvent.key, aResult.key, "KeyboardEvent.key is correctly spoofed.");
         is(aEvent.code, aResult.code, "KeyboardEvent.code is correctly spoofed.");
         is(aEvent.location, aResult.location, "KeyboardEvent.location is correctly spoofed.");

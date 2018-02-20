@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test for bug 1438795</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="/tests/SimpleTest/test.css"/>
+    <script src="/tests/SimpleTest/SimpleTest.js"></script>
+    <script src="/tests/SimpleTest/EventUtils.js"></script>
+  </head>
+  <body>
+    <input id="target0" />
+    <script>
+/* global SimpleTest SpecialPowers synthesizeKey */
+
+SimpleTest.waitForExplicitFinish();
+
+function promiseEvent(target, eventName) {
+  return new Promise(resolve => {
+    target.addEventListener(eventName, resolve, {once: true});
+  });
+}
+
+function promiseKeyEvent(target, type, key, params) {
+  let keyEventPromise = promiseEvent(target, type);
+  sendKey(key);
+  return keyEventPromise;
+}
+
+document.addEventListener("load", async () => {
+   let result = await promiseKeyEvent(document.body, "keydown", "A", {});
+   is(result.which, result.keyCode || result.charCode, "which should match keyCode or charCode");
+   SimpleTest.finish();
+});
+    </script>
+  </body>
+</html>
