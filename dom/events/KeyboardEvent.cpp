@@ -1,3 +1,4 @@
+
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
@@ -49,15 +50,7 @@ KeyboardEvent::AltKey(CallerType aCallerType)
 bool
 KeyboardEvent::CtrlKey(CallerType aCallerType)
 {
-  bool ctrlState = mEvent->AsKeyboardEvent()->IsControl();
-
-  if (!ShouldResistFingerprinting(aCallerType)) {
-    return ctrlState;
-  }
-
-  // We need to give a spoofed state for Control key since it could be used as a
-  // modifier key in certain asian keyboard layouts.
-  return GetSpoofedModifierStates(Modifier::MODIFIER_CONTROL, ctrlState);
+  return mEvent->AsKeyboardEvent()->IsControl();
 }
 
 bool
