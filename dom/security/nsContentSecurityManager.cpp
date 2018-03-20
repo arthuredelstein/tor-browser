@@ -10,6 +10,7 @@
 #include "nsMixedContentBlocker.h"
 
 #include "mozilla/dom/Element.h"
+#include "mozilla/dom/nsMixedContentBlocker.h"
 
 NS_IMPL_ISUPPORTS(nsContentSecurityManager,
                   nsIContentSecurityManager,
@@ -689,11 +690,9 @@ nsContentSecurityManager::IsOriginPotentiallyTrustworthy(nsIPrincipal* aPrincipa
         }
       }
     }
-    // Maybe we have a .onion URL. Treat it as whitelisted as well when
+    // Maybe we have a .onion URL. Treat it as whitelisted as well if
     // `dom.securecontext.whitelist_onions` is `true`.
-    bool whitelistOnions =
-      Preferences::GetBool("dom.securecontext.whitelist_onions", false);
-    if (whitelistOnions && StringEndsWith(host, NS_LITERAL_CSTRING(".onion"))) {
+    if (nsMixedContentBlocker::IsPotentiallyTrustworthyOnion(uri)) {
       *aIsTrustWorthy = true;
       return NS_OK;
     }

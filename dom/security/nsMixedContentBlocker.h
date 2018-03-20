@@ -43,6 +43,8 @@ public:
 
   nsMixedContentBlocker();
 
+  static bool IsPotentiallyTrustworthyOnion(nsIURI* aURL);
+
   /* Static version of ShouldLoad() that contains all the Mixed Content Blocker
    * logic.  Called from non-static ShouldLoad().
    * Called directly from imageLib when an insecure redirect exists in a cached
