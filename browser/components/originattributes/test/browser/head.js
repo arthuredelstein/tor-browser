@@ -175,7 +175,8 @@ this.IsolationTestTools = {
    * @param aTask
    *    The testing task which will be run in different settings.
    */
-  _add_task(aTask) {
+  _add_task(aIsolateByFirstPartyOnly, aTask) {
+    info(`aIsolateByFirstPartyOnly: ${aIsolateByFirstPartyOnly}`);
     let testSettings = [
       { mode: TEST_MODE_FIRSTPARTY,
         skip: false,
@@ -186,7 +187,7 @@ this.IsolationTestTools = {
         prefs: [["privacy.firstparty.isolate", false]]
       },
       { mode: TEST_MODE_CONTAINERS,
-        skip: false,
+        skip: (aIsolateByFirstPartyOnly === true),
         prefs: [["privacy.userContext.enabled", true]]
       },
     ];
@@ -279,9 +280,12 @@ this.IsolationTestTools = {
    *    that the test case can set up/reset local state.
    * @param aGetResultImmediately
    *    An optional boolean to ensure we get results before the next tab is opened.
+   * @param aIsolateByFirstPartyOnly
+   *    An optional boolean indicating we only expect first-party isolation
    */
   runTests(aURL, aGetResultFuncs, aCompareResultFunc, aBeforeFunc,
-           aGetResultImmediately, aUseHttps) {
+           aGetResultImmediately, aUseHttps, aIsolateByFirstPartyOnly) {
+    info(`aIsolateByFirstPartyOnly: ${aIsolateByFirstPartyOnly}`);
     let pageURL;
     let firstFrameSetting;
     let secondFrameSetting;
@@ -311,7 +315,7 @@ this.IsolationTestTools = {
                         { firstPartyDomain: "http://example.org", userContextId: 2}
                       ];
 
-    this._add_task(async function(aMode) {
+    this._add_task(aIsolateByFirstPartyOnly, async function(aMode) {
       let tabSettingA = 0;
 
       for (let tabSettingB of [0, 1]) {
@@ -354,7 +358,7 @@ this.IsolationTestTools = {
           }
 
           let msg = `Testing ${TEST_MODE_NAMES[aMode]} for ` +
-            `isolation ${shouldIsolate ? "on" : "off"} with TabSettingA ` +
+            `isolation ${shouldIsolate ? "on" : "off"} with tabSettingA ` +
             `${tabSettingA} and tabSettingB ${tabSettingB}` +
             `, resultA = ${resultA}, resultB = ${resultB}`;
 
