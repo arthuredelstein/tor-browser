@@ -200,9 +200,8 @@ GetOriginFromPrincipal(nsIPrincipal* aPrincipal, nsACString& aOrigin)
   // any knowledge of private browsing. Allowing it to be true changes the suffix being hashed.
   attrs.mPrivateBrowsingId = 0;
 
-  // Disable userContext and firstParty isolation for permissions.
-  attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID |
-                        mozilla::OriginAttributes::STRIP_FIRST_PARTY_DOMAIN);
+  // Disable userContext for permissions.
+  attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID);
 
   attrs.CreateSuffix(suffix);
   aOrigin.Append(suffix);
@@ -222,9 +221,8 @@ GetPrincipalFromOrigin(const nsACString& aOrigin, nsIPrincipal** aPrincipal)
   // any knowledge of private browsing. Allowing it to be true changes the suffix being hashed.
   attrs.mPrivateBrowsingId = 0;
 
-  // Disable userContext and firstParty isolation for permissions.
-  attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID |
-                        mozilla::OriginAttributes::STRIP_FIRST_PARTY_DOMAIN);
+  // Disable userContext for permissions.
+  attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID);
 
   nsCOMPtr<nsIURI> uri;
   nsresult rv = NS_NewURI(getter_AddRefs(uri), originNoSuffix);
@@ -330,9 +328,8 @@ GetNextSubDomainPrincipal(nsIPrincipal* aPrincipal)
   // Copy the attributes over
   mozilla::OriginAttributes attrs = aPrincipal->OriginAttributesRef();
 
-  // Disable userContext and firstParty isolation for permissions.
-  attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID |
-                        mozilla::OriginAttributes::STRIP_FIRST_PARTY_DOMAIN);
+  // Disable userContext for permissions.
+  attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID);
 
   nsCOMPtr<nsIPrincipal> principal =
     mozilla::BasePrincipal::CreateCodebasePrincipal(newURI, attrs);
@@ -3277,9 +3274,8 @@ nsPermissionManager::GetKeyForOrigin(const nsACString& aOrigin, nsACString& aKey
   // any knowledge of private browsing. Allowing it to be true changes the suffix being hashed.
   attrs.mPrivateBrowsingId = 0;
 
-  // Disable userContext and firstParty isolation for permissions.
-  attrs.StripAttributes(OriginAttributes::STRIP_USER_CONTEXT_ID |
-                        OriginAttributes::STRIP_FIRST_PARTY_DOMAIN);
+  // Disable userContext for permissions.
+  attrs.StripAttributes(OriginAttributes::STRIP_USER_CONTEXT_ID);
 
 #ifdef DEBUG
   // Parse the origin string into a principal, and extract some useful

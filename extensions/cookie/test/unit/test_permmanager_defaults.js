@@ -95,12 +95,13 @@ add_task(async function do_test() {
                pm.testPermissionFromPrincipal(principal3, TEST_PERMISSION));
   Assert.equal(Ci.nsIPermissionManager.ALLOW_ACTION,
                pm.testPermissionFromPrincipal(principal4, TEST_PERMISSION));
-  // make sure principals with userContextId or firstPartyDomain use the same permissions
+  // make sure principals with different userContextId use the same permissions
   Assert.equal(Ci.nsIPermissionManager.ALLOW_ACTION,
                pm.testPermissionFromPrincipal(principal6, TEST_PERMISSION));
-  Assert.equal(Ci.nsIPermissionManager.ALLOW_ACTION,
+  // make sure principals with different firstPartyDomain use different permissions
+  Assert.notEqual(Ci.nsIPermissionManager.ALLOW_ACTION,
                pm.testPermissionFromPrincipal(principal7, TEST_PERMISSION));
-  Assert.equal(Ci.nsIPermissionManager.ALLOW_ACTION,
+  Assert.notEqual(Ci.nsIPermissionManager.ALLOW_ACTION,
                pm.testPermissionFromPrincipal(principal8, TEST_PERMISSION));
 
   // Asking for this permission to be removed should result in that permission
