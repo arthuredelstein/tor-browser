@@ -8,22 +8,17 @@
 
 #ifdef XP_WIN
 # include "jswin.h"
-
 #elif defined(XP_DARWIN) || defined(DARWIN) || defined(XP_UNIX)
 # include <pthread.h>
-
 # if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
 #  include <pthread_np.h>
 # endif
-
-# if defined(ANDROID)
+# if defined(ANDROID) && !defined(__aarch64__)
 #  include <sys/types.h>
 #  include <unistd.h>
 # endif
-
 #else
 # error "Unsupported platform"
-
 #endif
 
 #if defined(XP_WIN)
@@ -31,32 +26,8 @@
 void*
 js::GetNativeStackBaseImpl()
 {
-# if defined(_M_IX86) && defined(_MSC_VER)
-    /*
-     * offset 0x18 from the FS segment register gives a pointer to
-     * the thread information block for the current thread
-     */
-    NT_TIB* pTib;
-    __asm {
-        MOV EAX, FS:[18h]
-        MOV pTib, EAX
-    }
-    return static_cast<void*>(pTib->StackBase);
-
-# elif defined(_M_X64)
-    PNT_TIB64 pTib = reinterpret_cast<PNT_TIB64>(NtCurrentTeb());
-    return reinterpret_cast<void*>(pTib->StackBase);
-
-# elif defined(_M_ARM)
     PNT_TIB pTib = reinterpret_cast<PNT_TIB>(NtCurrentTeb());
     return static_cast<void*>(pTib->StackBase);
-
-# elif defined(_WIN32) && defined(__GNUC__)
-    NT_TIB* pTib;
-    asm ("movl %%fs:0x18, %0\n" : "=r" (pTib));
-    return static_cast<void*>(pTib->StackBase);
-
-# endif
 }
 
 #elif defined(SOLARIS)
@@ -86,6 +57,55 @@ js::GetNativeStackBaseImpl()
     getcontext(&context);
     return static_cast<char*>(context.uc_stack.ss_sp) +
         context.uc_stack.ss_size;
+}
+
+#elif defined(XP_LINUX) && !defined(ANDROID)
+
+# include <dlfcn.h>
+# include <sys/syscall.h>
+static pid_t
+gettid()
+{
+    return syscall(__NR_gettid);
+}
+
+void*
+js::GetNativeStackBaseImpl()
+{
+    // main thread, get stack base from __libc_stack_end rather than pthread APIs
+    // to avoid filesystem calls /proc/self/maps
+    if(gettid() == getpid()) {
+        void** pLibcStackEnd = (void**)dlsym(RTLD_DEFAULT, "__libc_stack_end");
+        // if __libc_stack_end is not found, architecture specific frame pointer hopping will need
+        // to be implemented
+        MOZ_ASSERT(pLibcStackEnd);
+        void* stackBase = *pLibcStackEnd;
+        MOZ_ASSERT(stackBase);
+        // we don't need to fix stackBase, as it already roughly points to beginning of the stack
+        return stackBase;
+    }
+    // non-main threads have the required info stored in memory, no filesystem calls are made
+    else {
+        pthread_t thread = pthread_self();
+        pthread_attr_t sattr;
+        pthread_attr_init(&sattr);
+        pthread_getattr_np(thread, &sattr);
+        // stackBase will be the lowest address on all architectures
+        void* stackBase = nullptr;
+        size_t stackSize = 0;
+        int rc = pthread_attr_getstack(&sattr, &stackBase, &stackSize);
+        if(rc) {
+            MOZ_CRASH();
+        }
+        MOZ_ASSERT(stackBase);
+        pthread_attr_destroy(&sattr);
+
+# if JS_STACK_GROWTH_DIRECTION > 0
+        return stackBase;
+# else
+        return static_cast<char*>(stackBase) + stackSize;
+# endif
+    }
 }
 
 #else /* XP_UNIX */
@@ -120,11 +140,11 @@ js::GetNativeStackBaseImpl()
     rc = pthread_stackseg_np(pthread_self(), &ss);
     stackBase = (void*)((size_t) ss.ss_sp - ss.ss_size);
     stackSize = ss.ss_size;
-# elif defined(ANDROID)
+# elif defined(ANDROID) && !defined(__aarch64__)
     if (gettid() == getpid()) {
-        // bionic's pthread_attr_getstack doesn't tell the truth for the main
-        // thread (see bug 846670). So we scan /proc/self/maps to find the
-        // segment which contains the stack.
+        // bionic's pthread_attr_getstack prior to API 21 doesn't tell the truth
+        // for the main thread (see bug 846670). So we scan /proc/self/maps to
+        // find the segment which contains the stack.
         rc = -1;
 
         // Put the string on the stack, otherwise there is the danger that it
