@@ -61,6 +61,55 @@ js::GetNativeStackBaseImpl()
         context.uc_stack.ss_size;
 }
 
+#elif defined(XP_LINUX) && !defined(ANDROID)
+
+# include <dlfcn.h>
+# include <sys/syscall.h>
+static pid_t
+gettid()
+{
+    return syscall(__NR_gettid);
+}
+
+void*
+js::GetNativeStackBaseImpl()
+{
+    // main thread, get stack base from __libc_stack_end rather than pthread APIs
+    // to avoid filesystem calls /proc/self/maps
+    if(gettid() == getpid()) {
+        void** pLibcStackEnd = (void**)dlsym(RTLD_DEFAULT, "__libc_stack_end");
+        // if __libc_stack_end is not found, architecture specific frame pointer hopping will need
+        // to be implemented
+        MOZ_ASSERT(pLibcStackEnd);
+        void* stackBase = *pLibcStackEnd;
+        MOZ_ASSERT(stackBase);
+        // we don't need to fix stackBase, as it already roughly points to beginning of the stack
+        return stackBase;
+    }
+    // non-main threads have the required info stored in memory, no filesystem calls are made
+    else {
+        pthread_t thread = pthread_self();
+        pthread_attr_t sattr;
+        pthread_attr_init(&sattr);
+        pthread_getattr_np(thread, &sattr);
+        // stackBase will be the lowest address on all architectures
+        void* stackBase = nullptr;
+        size_t stackSize = 0;
+        int rc = pthread_attr_getstack(&sattr, &stackBase, &stackSize);
+        if(rc) {
+            MOZ_CRASH();
+        }
+        MOZ_ASSERT(stackBase);
+        pthread_attr_destroy(&sattr);
+
+# if JS_STACK_GROWTH_DIRECTION > 0
+        return stackBase;
+# else
+        return static_cast<char*>(stackBase) + stackSize;
+# endif
+    }
+}
+
 #else /* XP_UNIX */
 
 void*
