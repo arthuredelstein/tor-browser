@@ -729,8 +729,18 @@ main(int32_t argc, char *argv[])
       SetACookie(cookieService, "http://www.security.test/", nullptr, "test=non-security2; domain=security.test", nullptr);
       GetACookieNoHttp(cookieService, "http://www.security.test/", getter_Copies(cookie));
       rv[8] = CheckResult(cookie.get(), MUST_CONTAIN, "test=non-security2");
+      // .onion secure cookie tests
+      SetACookie(cookieService, "http://123456789abcdef.onion/", nullptr, "test=onion-security; secure", nullptr);
+      GetACookieNoHttp(cookieService, "https://123456789abcdef.onion/", getter_Copies(cookie));
+      rv[9] = CheckResult(cookie.get(), MUST_EQUAL, "test=onion-security");
+      SetACookie(cookieService, "http://123456789abcdef.onion/", nullptr, "test=onion-security2; secure", nullptr);
+      GetACookieNoHttp(cookieService, "http://123456789abcdef.onion/", getter_Copies(cookie));
+      rv[10] = CheckResult(cookie.get(), MUST_EQUAL, "test=onion-security2");
+      SetACookie(cookieService, "https://123456789abcdef.onion/", nullptr, "test=onion-security3; secure", nullptr);
+      GetACookieNoHttp(cookieService, "http://123456789abcdef.onion/", getter_Copies(cookie));
+      rv[11] = CheckResult(cookie.get(), MUST_EQUAL, "test=onion-security3");
 
-      allTestsPassed = PrintResult(rv, 9) && allTestsPassed;
+      allTestsPassed = PrintResult(rv, 12) && allTestsPassed;
 
       // *** nsICookieManager{2} interface tests
       sBuffer = PR_sprintf_append(sBuffer, "*** Beginning nsICookieManager{2} interface tests...\n");
