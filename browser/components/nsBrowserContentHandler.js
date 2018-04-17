@@ -554,13 +554,13 @@ nsBrowserContentHandler.prototype = {
 
             overridePage = overridePage.replace("%OLD_VERSION%", old_mstone);
 
-//#ifdef TOR_BROWSER_UPDATE
+#ifdef TOR_BROWSER_UPDATE
             if (overridePage)
             {
               prefb.setCharPref("torbrowser.post_update.url", overridePage);
               overridePage = "about:tbupdate"
             }
-//#endif
+#endif
 
             break;
           case OVERRIDE_NEW_BUILD_ID:
