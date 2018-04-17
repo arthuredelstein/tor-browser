@@ -27,8 +27,12 @@ const TESTS = [ {
   buttonClick: "finish"
 } ];
 
+const kCertPinningEnforcementLevelPref = "security.cert_pinning.enforcement_level";
+
 function runTest() {
   debugDump("entering");
+
+  SpecialPowers.setIntPref(kCertPinningEnforcementLevelPref, 2); // strict
 
   // Set the update URL.
   // https://badchain.include-subdomains.pinning.example.com is preconfigured
@@ -41,6 +45,12 @@ function runTest() {
   gDefaultPrefBranch.setCharPref(PREF_APP_UPDATE_URL, url);
 
   gUP.checkForUpdates();
+}
+
+function finishTest()
+{
+  SpecialPowers.clearUserPref(kCertPinningEnforcementLevelPref);
+  finishTestDefault();
 }
 
 function checkErrorCode() {
