@@ -978,14 +978,14 @@ var gViewController = {
     },
 
     cmd_pluginEnable: {
-      isEnabled: function cmd_pluginEnable_isEnabled() true,
+      isEnabled: function cmd_pluginEnable_isEnabled() { return true; },
       doCommand: function cmd_pluginEnable_doCommand() {
         Services.prefs.setBoolPref("plugin.disable", false);
       }
     },
 
     cmd_pluginDisable: {
-      isEnabled: function cmd_pluginDisable_isEnabled() true,
+      isEnabled: function cmd_pluginDisable_isEnabled() { return true; },
       doCommand: function cmd_pluginDisable_doCommand() {
         Services.prefs.setBoolPref("plugin.disable", true);
       }
@@ -2567,7 +2567,7 @@ var gListView = {
         for (let element of elements)
           this._listBox.appendChild(element);
       }
-      this.showPluginBUtton();
+      this.showPluginButton();
 
       this.filterDisabledUnsigned(showOnlyDisabledUnsigned);
       let legacyNotice = document.getElementById("legacy-extensions-notice");
