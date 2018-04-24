@@ -94,6 +94,7 @@ pref("datareporting.healthreport.about.reportUrlUnified", "data:text/plain,");
 pref("browser.selfsupport.enabled", false);
 pref("browser.selfsupport.url", "");
 pref("toolkit.telemetry.unified", false);
+pref("toolkit.telemetry.enabled", false);
 // No experiments, use Tor Browser. See 21797.
 pref("experiments.enabled", false);
 // Disable the UITour backend so there is no chance that a remote page
