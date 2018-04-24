@@ -644,13 +644,13 @@ TEST(TestCookie,TestCookieMain)
 
     // .onion secure cookie tests
     SetACookie(cookieService, "http://123456789abcdef.onion/", nullptr, "test=onion-security; secure", nullptr);
-    GetACookieNoHttp(cookieService, "https://123456789abcdef.onion/", getter_Copies(cookie));
+    GetACookieNoHttp(cookieService, "https://123456789abcdef.onion/", cookie);
     EXPECT_TRUE(CheckResult(cookie.get(), MUST_EQUAL, "test=onion-security"));
     SetACookie(cookieService, "http://123456789abcdef.onion/", nullptr, "test=onion-security2; secure", nullptr);
-    GetACookieNoHttp(cookieService, "http://123456789abcdef.onion/", getter_Copies(cookie));
+    GetACookieNoHttp(cookieService, "http://123456789abcdef.onion/", cookie);
     EXPECT_TRUE(CheckResult(cookie.get(), MUST_EQUAL, "test=onion-security2"));
     SetACookie(cookieService, "https://123456789abcdef.onion/", nullptr, "test=onion-security3; secure", nullptr);
-    GetACookieNoHttp(cookieService, "http://123456789abcdef.onion/", getter_Copies(cookie));
+    GetACookieNoHttp(cookieService, "http://123456789abcdef.onion/", cookie);
     EXPECT_TRUE(CheckResult(cookie.get(), MUST_EQUAL, "test=onion-security3"));
 
     // *** nsICookieManager interface tests
