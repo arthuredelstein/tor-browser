@@ -201,8 +201,10 @@ var gUpdateMutexHandle = null;
 
 ChromeUtils.defineModuleGetter(this, "UpdateUtils",
                                "resource://gre/modules/UpdateUtils.jsm");
+#if !defined(TOR_BROWSER_UPDATE)
 ChromeUtils.defineModuleGetter(this, "WindowsRegistry",
                                "resource://gre/modules/WindowsRegistry.jsm");
+#endif
 ChromeUtils.defineModuleGetter(this, "AsyncShutdown",
                                "resource://gre/modules/AsyncShutdown.jsm");
 ChromeUtils.defineModuleGetter(this, "OS",
@@ -2979,6 +2981,7 @@ Checker.prototype = {
    */
   _callback: null,
 
+#if !defined(TOR_BROWSER_UPDATE)
   _getCanMigrate: function UC__getCanMigrate() {
     if (AppConstants.platform != "win") {
       return false;
@@ -3031,6 +3034,7 @@ Checker.prototype = {
     LOG("Checker:_getCanMigrate - no registry entries for this installation");
     return false;
   },
+#endif // !defined(TOR_BROWSER_UPDATE)
 
   /**
    * The URL of the update service XML file to connect to that contains details
@@ -3053,9 +3057,11 @@ Checker.prototype = {
       url += (url.includes("?") ? "&" : "?") + "force=1";
     }
 
+#if !defined(TOR_BROWSER_UPDATE)
     if (this._getCanMigrate()) {
       url += (url.includes("?") ? "&" : "?") + "mig64=1";
     }
+#endif
 
     LOG("Checker:getUpdateURL - update URL: " + url);
     return url;
