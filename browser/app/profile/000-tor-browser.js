@@ -101,6 +101,7 @@ pref("experiments.enabled", false);
 // can use it to confuse Tor Browser users.
 pref("browser.uitour.enabled", false);
 pref("browser.syncPromoViewsLeftMap", "{\"addons\":0, \"passwords\":0, \"bookmarks\":0}"); // Don't promote sync
+pref("identity.fxaccounts.enabled", false); // Disable sync by default
 pref("services.sync.engine.prefs", false); // Never sync prefs, addons, or tabs with other browsers
 pref("services.sync.engine.addons", false);
 pref("services.sync.engine.tabs", false);
