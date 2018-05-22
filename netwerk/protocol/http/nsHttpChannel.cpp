@@ -6156,9 +6156,8 @@ nsHttpChannel::BeginConnect()
     RefPtr<AltSvcMapping> mapping;
     if (!mConnectionInfo && mAllowAltSvc && // per channel
         !(mLoadFlags & LOAD_FRESH_CONNECTION) &&
-        (scheme.EqualsLiteral("http") ||
-         scheme.EqualsLiteral("https")) &&
-        (!proxyInfo || proxyInfo->IsDirect()) &&
+        AltSvcMapping::AcceptableProxy(proxyInfo) &&
+        (scheme.EqualsLiteral("http") || scheme.EqualsLiteral("https")) &&
         (mapping = gHttpHandler->GetAltServiceMapping(scheme,
                                                       host, port,
                                                       mPrivateBrowsing,
