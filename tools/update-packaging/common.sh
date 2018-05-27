@@ -206,7 +206,7 @@ list_files() {
     | sort -r > "temp-filelist"
   while read file; do
     eval "${1}[$count]=\"$file\""
-    (( count++ ))
+    count=$((count + 1))
   done < "temp-filelist"
   rm "temp-filelist"
 }
