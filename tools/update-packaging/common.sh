@@ -218,7 +218,7 @@ list_files() {
       continue;
     fi
     eval "${1}[$count]=\"$file\""
-    (( count++ ))
+    count=$((count + 1))
   done <"${tmpfile}"
   rm -f "${tmpfile}"
 }
