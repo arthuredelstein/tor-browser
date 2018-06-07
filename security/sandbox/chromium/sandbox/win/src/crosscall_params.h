@@ -60,6 +60,7 @@ union MultiType {
 //  - Add another Callback typedef to Dispatcher.
 //  - Add another case to the switch on SharedMemIPCServer::InvokeCallback.
 //  - Add another case to the switch in GetActualAndMaxBufferSize
+//  - Add another case to the switch in GetOffsetOfFirstMemberOfActualCallParams
 const int kMaxIpcParams = 9;
 
 // Contains the information about a parameter in the ipc buffer.
@@ -91,6 +92,8 @@ struct CrossCallReturn {
   // The array of extended values.
   MultiType extended[kExtendedReturnCount];
 };
+
+uint32_t GetOffsetOfFirstMemberOfActualCallParams(uint32_t param_count);
 
 // CrossCallParams base class that models the input params all packed in a
 // single compact memory blob. The representation can vary but in general a
@@ -276,6 +279,8 @@ class ActualCallParams : public CrossCallParams {
   char parameters_[BLOCK_SIZE - sizeof(CrossCallParams)
                    - sizeof(ParamInfo) * (NUMBER_PARAMS + 1)];
   DISALLOW_COPY_AND_ASSIGN(ActualCallParams);
+
+  friend uint32_t GetOffsetOfFirstMemberOfActualCallParams(uint32_t param_count);
 };
 
 static_assert(sizeof(ActualCallParams<1, 1024>) == 1024, "bad size buffer");
