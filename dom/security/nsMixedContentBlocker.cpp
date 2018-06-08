@@ -694,7 +694,7 @@ nsMixedContentBlocker::ShouldLoad(bool aHadInsecureImageRedirect,
     return NS_OK;
   }
 
-  // Check the parent scheme. If it is not an HTTPS page then mixed content
+  // Check the parent scheme. If it is not an HTTPS or .onion page then mixed content
   // restrictions do not apply.
   bool parentIsHttps;
   nsCOMPtr<nsIURI> innerRequestingLocation = NS_GetInnermostURI(requestingLocation);
@@ -711,8 +711,19 @@ nsMixedContentBlocker::ShouldLoad(bool aHadInsecureImageRedirect,
     return NS_OK;
   }
   if (!parentIsHttps) {
-    *aDecision = ACCEPT;
-    return NS_OK;
+    nsAutoCString parentHost;
+    rv = innerRequestingLocation->GetHost(parentHost);
+    if (NS_FAILED(rv)) {
+      NS_ERROR("requestingLocation->GetHost failed");
+      *aDecision = REJECT_REQUEST;
+      return NS_OK;
+    }
+
+    bool parentIsOnion = StringEndsWith(parentHost, NS_LITERAL_CSTRING(".onion"));
+    if (!parentIsOnion) {
+      *aDecision = ACCEPT;
+      return NS_OK;
+    }
   }
 
   nsCOMPtr<nsIDocShell> docShell = NS_CP_GetDocShellFromContext(aRequestingContext);
