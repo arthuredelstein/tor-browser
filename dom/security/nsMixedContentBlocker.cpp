@@ -694,7 +694,7 @@ nsMixedContentBlocker::ShouldLoad(bool aHadInsecureImageRedirect,
     return NS_OK;
   }
 
-  // Check the parent scheme. If it is not an HTTPS page then mixed content
+  // Check the parent scheme. If it is not an HTTPS or .onion page then mixed content
   // restrictions do not apply.
   bool parentIsHttps;
   nsCOMPtr<nsIURI> innerRequestingLocation = NS_GetInnermostURI(requestingLocation);
@@ -711,6 +711,28 @@ nsMixedContentBlocker::ShouldLoad(bool aHadInsecureImageRedirect,
     return NS_OK;
   }
   if (!parentIsHttps) {
+    nsAutoCString parentHost;
+    rv = innerRequestingLocation->GetHost(parentHost);
+    if (NS_FAILED(rv)) {
+      NS_ERROR("requestingLocation->GetHost failed");
+      *aDecision = REJECT_REQUEST;
+      return NS_OK;
+    }
+
+    bool parentIsOnion = StringEndsWith(parentHost, NS_LITERAL_CSTRING(".onion"));
+    if (!parentIsOnion) {
+      *aDecision = ACCEPT;
+      return NS_OK;
+    }
+  }
+
+  bool isHttpScheme = false;
+  rv = innerContentLocation->SchemeIs("http", &isHttpScheme);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // .onion URLs are encrypted and authenticated. Don't treat them as mixed
+  // content if potentially trustworthy (i.e. whitelisted).
+  if (isHttpScheme && IsPotentiallyTrustworthyOnion(innerContentLocation)) {
     *aDecision = ACCEPT;
     return NS_OK;
   }
@@ -735,21 +757,10 @@ nsMixedContentBlocker::ShouldLoad(bool aHadInsecureImageRedirect,
     return NS_OK;
   }
 
-  bool isHttpScheme = false;
-  rv = innerContentLocation->SchemeIs("http", &isHttpScheme);
-  NS_ENSURE_SUCCESS(rv, rv);
-
   // Loopback origins are not considered mixed content even over HTTP. See:
   // https://w3c.github.io/webappsec-mixed-content/#should-block-fetch
   if (isHttpScheme &&
       IsPotentiallyTrustworthyLoopbackURL(innerContentLocation)) {
-    *aDecision = ACCEPT;
-    return NS_OK;
-  }
-
-  // .onion URLs are encrypted and authenticated. Don't treat them as mixed
-  // content if potentially trustworthy (i.e. whitelisted).
-  if (isHttpScheme && IsPotentiallyTrustworthyOnion(innerContentLocation)) {
     *aDecision = ACCEPT;
     return NS_OK;
   }
