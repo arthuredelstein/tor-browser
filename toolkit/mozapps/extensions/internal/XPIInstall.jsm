@@ -3744,6 +3744,7 @@ var XPIInstall = {
     let addon = await loadManifestFromFile(source, location);
 
     // Make sure Torbutton, TorLauncher, EFF's HTTPS-Everywhere and meek
+    // are still working after an update.
     if (XPIDatabase.mustSign(addon.type) &&
         addon.id != "torbutton@torproject.org" &&
         addon.id != "tor-launcher@torproject.org" &&
