@@ -250,6 +250,8 @@ pref("devtools.appmanager.enabled", false);
 pref("devtools.debugger.chrome-debugging-host", "127.0.0.1");
 // Disable mozTCPSocket for sure (bug 18863)
 pref("dom.mozTCPSocket.enabled", false);
+// Disable using UNC paths (bug 26424 and Mozilla's bug 1413868)
+pref("network.file.disable_unc_paths", true);
 
 // Security slider
 pref("svg.in-content.enabled", true);
