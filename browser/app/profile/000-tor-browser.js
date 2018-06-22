@@ -252,6 +252,9 @@ pref("devtools.debugger.chrome-debugging-host", "127.0.0.1");
 pref("dom.mozTCPSocket.enabled", false);
 // Disable using UNC paths (bug 26424 and Mozilla's bug 1413868)
 pref("network.file.disable_unc_paths", true);
+// Enhance our treatment of file:// to avoid proxy bypasses (see Mozilla's bug
+// 1412081)
+pref("network.file.path_blacklist", "/net");
 
 // Security slider
 pref("svg.in-content.enabled", true);
