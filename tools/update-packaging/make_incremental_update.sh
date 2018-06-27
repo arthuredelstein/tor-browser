@@ -8,8 +8,6 @@
 # Author: Darin Fisher
 #
 
-set -e
-
 # shellcheck disable=SC1090
 . "$(dirname "$0")/common.sh"
 
