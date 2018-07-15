@@ -267,11 +267,6 @@ pref("javascript.options.asmjs", false);
 pref("gfx.font_rendering.graphite.enabled", false);
 
 // Network and performance
-pref("network.http.pipelining", true);
-pref("network.http.pipelining.aggressive", true);
-pref("network.http.pipelining.maxrequests", 12);
-pref("network.http.pipelining.ssl", true);
-pref("network.http.proxy.pipelining", true);
 pref("security.ssl.enable_false_start", true);
 pref("network.http.connection-retry-timeout", 0);
 pref("network.http.max-persistent-connections-per-proxy", 256);
