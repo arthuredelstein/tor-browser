@@ -317,11 +317,6 @@ pref("browser.search.geoSpecificDefaults", false);
 pref("browser.search.order.extra.1", "DuckDuckGo");
 pref("browser.search.order.extra.2", "YouTube");
 
-// Hacks/workarounds: Direct2D seems to crash w/ lots of video cards w/ MinGW?
-// Nvida cards also experience crashes without the second pref set to disabled
-pref("gfx.direct2d.disabled", true);
-pref("layers.acceleration.disabled", true);
-
 // Audio_data is deprecated in future releases, but still present
 // in FF24. This is a dangerous combination (spotted by iSec)
 pref("media.audio_data.enabled", false);
