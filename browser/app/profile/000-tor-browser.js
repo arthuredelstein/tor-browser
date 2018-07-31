@@ -174,15 +174,8 @@ pref("browser.cache.frecency_experiment", -1);
 // Third party stuff
 pref("privacy.firstparty.isolate", true); // Always enforce first party isolation
 pref("network.cookie.cookieBehavior", 1);
-pref("network.http.spdy.enabled", false); // Stores state and may have keepalive issues (both fixable)
-pref("network.http.spdy.enabled.v2", false); // Seems redundant, but just in case
-pref("network.http.spdy.enabled.v3", false); // Seems redundant, but just in case
-pref("network.http.spdy.enabled.v3-1", false); // Seems redundant, but just in case
-pref("network.http.spdy.enabled.http2", false); // Temporarily disabled pending implementation review
-pref("network.http.spdy.enabled.http2draft", false); // Temporarily disabled pending implementation review
+pref("network.http.spdy.allow-push", false); // Disabled for now. See https://bugs.torproject.org/27127
 pref("network.predictor.enabled", false); // Temporarily disabled. See https://bugs.torproject.org/16633
-pref("network.http.altsvc.enabled", false); // Temporarily disabled. See https://bugs.torproject.org/16673
-pref("network.http.altsvc.oe", false); // Temporarily disabled. See https://bugs.torproject.org/16673
 
 // Proxy and proxy security
 pref("network.proxy.socks", "127.0.0.1");
