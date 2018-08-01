@@ -174,7 +174,6 @@ pref("browser.cache.frecency_experiment", -1);
 // Third party stuff
 pref("privacy.firstparty.isolate", true); // Always enforce first party isolation
 pref("network.cookie.cookieBehavior", 1);
-pref("security.enable_tls_session_tickets", false);
 pref("network.http.spdy.enabled", false); // Stores state and may have keepalive issues (both fixable)
 pref("network.http.spdy.enabled.v2", false); // Seems redundant, but just in case
 pref("network.http.spdy.enabled.v3", false); // Seems redundant, but just in case
@@ -270,7 +269,6 @@ pref("network.http.pipelining.reschedule-timeout", 15000);
 pref("network.http.pipelining.read-timeout", 60000);
 // Hacked pref: Now means "Attempt to pipeline at least this many requests together"
 pref("network.http.pipelining.max-optimistic-requests", 3);
-pref("security.ssl.disable_session_identifiers", true);
 pref("network.manage-offline-status", false);
 // No need to leak things to Mozilla, see bug 21790
 pref("network.captive-portal-service.enabled", false);
