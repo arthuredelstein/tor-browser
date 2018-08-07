@@ -8,7 +8,6 @@
 ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetters(this, {
   OnboardingTourType: "resource://onboarding/modules/OnboardingTourType.jsm",
-  OnboardingTelemetry: "resource://onboarding/modules/OnboardingTelemetry.jsm",
   Services: "resource://gre/modules/Services.jsm",
   UIState: "resource://services-sync/UIState.jsm",
 });
@@ -27,6 +26,17 @@ const PREF_WHITELIST = [
 ];
 
 [
+  // Tor Browser tours:
+  "onboarding-tour-tor-welcome",
+  "onboarding-tour-tor-privacy",
+  "onboarding-tour-tor-network",
+  "onboarding-tour-tor-circuit-display",
+  "onboarding-tour-tor-security",
+  "onboarding-tour-tor-expect-differences",
+  "onboarding-tour-tor-onion-services",
+#if 0
+// Firefox tours. To reduce conflicts when rebasing against newer Firefox
+// code, we use the preprocessor to omit this code block.
   "onboarding-tour-addons",
   "onboarding-tour-customize",
   "onboarding-tour-default-browser",
@@ -36,6 +46,7 @@ const PREF_WHITELIST = [
   "onboarding-tour-screenshots",
   "onboarding-tour-singlesearch",
   "onboarding-tour-sync",
+#endif
 ].forEach(tourId => PREF_WHITELIST.push([`browser.onboarding.tour.${tourId}.completed`, PREF_BOOL]));
 
 let waitingForBrowserReady = true;
@@ -149,6 +160,8 @@ function initContentMessageListener() {
           isLoggedIn: syncTourChecker.isLoggedIn()
         });
         break;
+#if 0
+// No telemetry in Tor Browser.
       case "ping-centre":
         try {
           OnboardingTelemetry.process(msg.data.params.data);
@@ -156,6 +169,7 @@ function initContentMessageListener() {
           Cu.reportError(e);
         }
         break;
+#endif
     }
   });
 }
@@ -167,7 +181,6 @@ function onBrowserReady() {
   waitingForBrowserReady = false;
 
   OnboardingTourType.check();
-  OnboardingTelemetry.init(startupData);
   Services.mm.loadFrameScript("resource://onboarding/onboarding.js", true);
   initContentMessageListener();
 }
