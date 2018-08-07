@@ -789,6 +789,13 @@ if (typeof Mozilla == "undefined") {
   Mozilla.UITour.closeTab = function() {
     _sendEvent("closeTab");
   };
+
+  /**
+  * @summary Opens Torbutton's Security Settings (aka the Security Slider).
+  */
+  Mozilla.UITour.torBrowserOpenSecuritySettings = function() {
+    _sendEvent("torBrowserOpenSecuritySettings");
+  };
 })();
 
 // Make this library Require-able.
