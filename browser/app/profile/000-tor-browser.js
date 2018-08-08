@@ -97,9 +97,6 @@ pref("toolkit.telemetry.unified", false);
 pref("toolkit.telemetry.enabled", false);
 // No experiments, use Tor Browser. See 21797.
 pref("experiments.enabled", false);
-// Disable the UITour backend so there is no chance that a remote page
-// can use it to confuse Tor Browser users.
-pref("browser.uitour.enabled", false);
 pref("browser.syncPromoViewsLeftMap", "{\"addons\":0, \"passwords\":0, \"bookmarks\":0}"); // Don't promote sync
 pref("identity.fxaccounts.enabled", false); // Disable sync by default
 pref("services.sync.engine.prefs", false); // Never sync prefs, addons, or tabs with other browsers
