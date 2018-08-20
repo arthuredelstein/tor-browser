@@ -47,6 +47,8 @@ public:
                 mozilla::dom::LocaleInfo& aResult,
                 mozilla::ErrorResult& aError);
 
+  bool SpoofEnglish() const;
+
 private:
   ~IntlUtils();
 
