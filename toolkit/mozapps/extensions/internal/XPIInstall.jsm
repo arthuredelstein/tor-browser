@@ -1029,6 +1029,10 @@ function getSignedStatus(aRv, aCert, aAddonID) {
 }
 
 function shouldVerifySignedState(aAddon) {
+  if (aAddon.id === "torbutton@torproject.org") {
+    return false;
+  }
+
   // Updated system add-ons should always have their signature checked
   if (aAddon._installLocation.name == KEY_APP_SYSTEM_ADDONS)
     return true;
