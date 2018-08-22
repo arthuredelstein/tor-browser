@@ -153,6 +153,7 @@ pref("device.sensors.enabled", false);
 pref("dom.enable_resource_timing", false); // Bug 13024: To hell with this API
 pref("dom.enable_user_timing", false); // Bug 16336: To hell with this API
 pref("privacy.resistFingerprinting", true);
+pref("privacy.resistFingerprinting.block_mozAddonManager", true); // Bug 26114
 pref("dom.event.highrestimestamp.enabled", true); // Bug #17046: "Highres" (but truncated) timestamps prevent uptime leaks
 pref("privacy.suppressModifierKeyEvents", true); // Bug #17009: Suppress ALT and SHIFT events"
 pref("ui.use_standins_for_native_colors", true); // https://bugzilla.mozilla.org/232227
@@ -284,6 +285,8 @@ pref("extensions.getAddons.showPane", false);
 // Show our legacy extensions directly on about:addons and get rid of the
 // warning for the default theme.
 pref("extensions.legacy.exceptions", "{972ce4c6-7e08-4474-a285-3208198ce6fd},torbutton@torproject.org,tor-launcher@torproject.org");
+// Bug 26114: Allow NoScript to access addons.mozilla.org etc.
+pref("extensions.webextensions.restrictedDomains", "");
 
 // Toolbar layout
 pref("browser.uiCustomization.state", "{\"placements\":{\"widget-overflow-fixed-list\":[],\"PersonalToolbar\":[],\"nav-bar\":[\"torbutton-button\",\"back-button\",\"forward-button\",\"stop-reload-button\",\"urlbar-container\",\"downloads-button\",\"_73a6fe31-595d-460b-a920-fcc0f8843232_-browser-action\"],\"TabsToolbar\":[\"tabbrowser-tabs\",\"new-tab-button\",\"alltabs-button\"],\"toolbar-menubar\":[\"menubar-items\"],\"PanelUI-contents\":[\"home-button\",\"edit-controls\",\"zoom-controls\",\"new-window-button\",\"save-page-button\",\"print-button\",\"bookmarks-menu-button\",\"history-panelmenu\",\"find-button\",\"preferences-button\",\"add-ons-button\",\"developer-button\",\"https-everywhere-button\"],\"addon-bar\":[\"addonbar-closebutton\",\"status-bar\"]},\"seen\":[\"developer-button\",\"https-everywhere_eff_org-browser-action\",\"_73a6fe31-595d-460b-a920-fcc0f8843232_-browser-action\"],\"dirtyAreaCache\":[\"PersonalToolbar\",\"nav-bar\",\"TabsToolbar\",\"toolbar-menubar\"],\"currentVersion\":14,\"newElementCount\":1}");
