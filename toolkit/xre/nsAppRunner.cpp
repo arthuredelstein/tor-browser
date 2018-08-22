@@ -3208,6 +3208,13 @@ CheckCompatibility(nsIFile* aProfileDir, const nsCString& aVersion,
   if (NS_FAILED(rv) || !aVersion.Equals(buf))
     return false;
 
+#ifdef TOR_BROWSER_VERSION
+  nsAutoCString tbVersion(TOR_BROWSER_VERSION);
+  rv = parser.GetString("Compatibility", "LastTorBrowserVersion", buf);
+  if (NS_FAILED(rv) || !tbVersion.Equals(buf))
+    return false;
+#endif
+
   rv = parser.GetString("Compatibility", "LastOSABI", buf);
   if (NS_FAILED(rv) || !aOSABI.Equals(buf))
     return false;
@@ -3303,6 +3310,13 @@ WriteVersion(nsIFile* aProfileDir, const nsCString& aVersion,
 
   PR_Write(fd, kHeader, sizeof(kHeader) - 1);
   PR_Write(fd, aVersion.get(), aVersion.Length());
+
+#ifdef TOR_BROWSER_VERSION
+  nsAutoCString tbVersion(TOR_BROWSER_VERSION);
+  static const char kTorBrowserVersionHeader[] = NS_LINEBREAK "LastTorBrowserVersion=";
+  PR_Write(fd, kTorBrowserVersionHeader, sizeof(kTorBrowserVersionHeader) - 1);
+  PR_Write(fd, tbVersion.get(), tbVersion.Length());
+#endif
 
   static const char kOSABIHeader[] = NS_LINEBREAK "LastOSABI=";
   PR_Write(fd, kOSABIHeader, sizeof(kOSABIHeader) - 1);
