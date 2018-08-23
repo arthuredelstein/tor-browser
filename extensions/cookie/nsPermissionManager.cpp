@@ -207,7 +207,8 @@ GetOriginFromPrincipal(nsIPrincipal* aPrincipal, nsACString& aOrigin)
 }
 
 nsresult
-GetPrincipalFromOrigin(const nsACString& aOrigin, nsIPrincipal** aPrincipal)
+GetPrincipalFromOrigin(const nsACString& aOrigin, bool aAddFirstParty,
+                       nsIPrincipal** aPrincipal)
 {
   nsAutoCString originNoSuffix;
   mozilla::OriginAttributes attrs;
@@ -222,6 +223,13 @@ GetPrincipalFromOrigin(const nsACString& aOrigin, nsIPrincipal** aPrincipal)
   nsCOMPtr<nsIURI> uri;
   nsresult rv = NS_NewURI(getter_AddRefs(uri), originNoSuffix);
   NS_ENSURE_SUCCESS(rv, rv);
+
+  // aAddFirstParty is true when adding the default permissions from
+  // browser/app/permissions because those permissions refer to the
+  // first party domain.
+  if (aAddFirstParty) {
+    attrs.SetFirstPartyDomain(true, uri);
+  }
 
   nsCOMPtr<nsIPrincipal> principal = mozilla::BasePrincipal::CreateCodebasePrincipal(uri, attrs);
   principal.forget(aPrincipal);
@@ -419,7 +427,7 @@ public:
          int64_t aModificationTime) final
   {
     nsCOMPtr<nsIPrincipal> principal;
-    nsresult rv = GetPrincipalFromOrigin(aOrigin, getter_AddRefs(principal));
+    nsresult rv = GetPrincipalFromOrigin(aOrigin, false, getter_AddRefs(principal));
     NS_ENSURE_SUCCESS(rv, rv);
 
     return mPm->AddInternal(principal, aType, aPermission, mID,
@@ -2250,7 +2258,7 @@ nsPermissionManager::GetPermissionObject(nsIPrincipal* aPrincipal,
   }
 
   nsCOMPtr<nsIPrincipal> principal;
-  nsresult rv = GetPrincipalFromOrigin(entry->GetKey()->mOrigin, getter_AddRefs(principal));
+  nsresult rv = GetPrincipalFromOrigin(entry->GetKey()->mOrigin, false, getter_AddRefs(principal));
   NS_ENSURE_SUCCESS(rv, rv);
 
   PermissionEntry& perm = entry->GetPermissions()[idx];
@@ -2498,7 +2506,7 @@ NS_IMETHODIMP nsPermissionManager::GetEnumerator(nsISimpleEnumerator **aEnum)
       }
 
       nsCOMPtr<nsIPrincipal> principal;
-      nsresult rv = GetPrincipalFromOrigin(entry->GetKey()->mOrigin,
+      nsresult rv = GetPrincipalFromOrigin(entry->GetKey()->mOrigin, false,
                                            getter_AddRefs(principal));
       if (NS_FAILED(rv)) {
         continue;
@@ -2593,7 +2601,7 @@ nsPermissionManager::RemoveAllModifiedSince(int64_t aModificationTime)
       }
 
       nsCOMPtr<nsIPrincipal> principal;
-      nsresult rv = GetPrincipalFromOrigin(entry->GetKey()->mOrigin,
+      nsresult rv = GetPrincipalFromOrigin(entry->GetKey()->mOrigin, false,
                                            getter_AddRefs(principal));
       if (NS_FAILED(rv)) {
         continue;
@@ -2664,7 +2672,7 @@ nsPermissionManager::RemovePermissionsWithAttributes(mozilla::OriginAttributesPa
     PermissionHashKey* entry = iter.Get();
 
     nsCOMPtr<nsIPrincipal> principal;
-    nsresult rv = GetPrincipalFromOrigin(entry->GetKey()->mOrigin,
+    nsresult rv = GetPrincipalFromOrigin(entry->GetKey()->mOrigin, false,
                                          getter_AddRefs(principal));
     if (NS_FAILED(rv)) {
       continue;
@@ -2851,7 +2859,7 @@ nsPermissionManager::Read()
     modificationTime = stmt->AsInt64(6);
 
     nsCOMPtr<nsIPrincipal> principal;
-    nsresult rv = GetPrincipalFromOrigin(origin, getter_AddRefs(principal));
+    nsresult rv = GetPrincipalFromOrigin(origin, false, getter_AddRefs(principal));
     if (NS_FAILED(rv)) {
       readError = true;
       continue;
@@ -3010,7 +3018,7 @@ nsPermissionManager::_DoImport(nsIInputStream *inputStream, mozIStorageConnectio
         continue;
 
       nsCOMPtr<nsIPrincipal> principal;
-      error = GetPrincipalFromOrigin(lineArray[3], getter_AddRefs(principal));
+      error = GetPrincipalFromOrigin(lineArray[3], true, getter_AddRefs(principal));
       if (NS_FAILED(error)) {
         NS_WARNING("Couldn't import an origin permission - malformed origin");
         continue;
@@ -3240,7 +3248,7 @@ nsPermissionManager::SetPermissionsWithKey(const nsACString& aPermissionKey,
   // Add the permissions locally to our process
   for (IPC::Permission& perm : aPerms) {
     nsCOMPtr<nsIPrincipal> principal;
-    nsresult rv = GetPrincipalFromOrigin(perm.origin, getter_AddRefs(principal));
+    nsresult rv = GetPrincipalFromOrigin(perm.origin, false, getter_AddRefs(principal));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       continue;
     }
@@ -3296,7 +3304,7 @@ nsPermissionManager::GetKeyForOrigin(const nsACString& aOrigin, nsACString& aKey
   // Parse the origin string into a principal, and extract some useful
   // information from it for assertions.
   nsCOMPtr<nsIPrincipal> dbgPrincipal;
-  MOZ_ALWAYS_SUCCEEDS(GetPrincipalFromOrigin(aOrigin, getter_AddRefs(dbgPrincipal)));
+  MOZ_ALWAYS_SUCCEEDS(GetPrincipalFromOrigin(aOrigin, false, getter_AddRefs(dbgPrincipal)));
   nsCOMPtr<nsIURI> dbgUri;
   MOZ_ALWAYS_SUCCEEDS(dbgPrincipal->GetURI(getter_AddRefs(dbgUri)));
   nsAutoCString dbgScheme;
