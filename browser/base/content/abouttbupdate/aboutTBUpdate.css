@@ -53,6 +53,31 @@ a {
   margin-bottom: 20px;
 }
 
+#new-features {
+  margin-bottom: 15px;
+  padding: 10px;
+  text-align: center;
+  /* swap text and background colors in this section */
+  color: var(--abouttor-bg-toron-color);
+  background-color: var(--abouttor-text-color);
+}
+
+#new-features-description {
+  margin: 15px auto;
+  max-width: 500px;
+  font-size: 85%;
+}
+
+#new-features button {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 3px;
+  font-size: 90%;
+  color: var(--abouttor-text-color);
+  background-color: var(--abouttor-bg-toron-color);
+  cursor: pointer;
+}
+
 #changelog-container {
   margin: 0px 20px 20px 20px;
 }
