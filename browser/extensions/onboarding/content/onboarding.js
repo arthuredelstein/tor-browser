@@ -159,17 +159,14 @@ var onboardingTourset = {
   "circuit-display": {
     id: "onboarding-tour-tor-circuit-display",
     tourNameId: "onboarding.tour-tor-circuit-display",
-    instantComplete: true,
     getPage(win) {
       let div = win.document.createElement("div");
 
       createOnboardingTourDescription(div,
         "onboarding.tour-tor-circuit-display.title", "onboarding.tour-tor-circuit-display.description");
       createOnboardingTourContent(div, "resource://onboarding/img/figure_tor-circuit-display.png");
-/* TODO: Circuit display onboarding will be implemented in bug 26962.
       createOnboardingTourButton(div,
         "onboarding-tour-tor-circuit-display-button", "onboarding.tour-tor-circuit-display.button");
-*/
 
       return div;
     },
@@ -919,6 +916,9 @@ class Onboarding {
       case "onboarding-tour-tor-network-button":
         this.gotoPage("onboarding-tour-tor-circuit-display");
         handledTourActionClick = true;
+        break;
+      case "onboarding-tour-tor-circuit-display-button":
+        sendMessageToChrome("tor-open-circuit-display-page");
         break;
     }
     if (classList.contains("onboarding-tour-item")) {

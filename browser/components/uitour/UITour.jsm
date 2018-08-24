@@ -42,7 +42,21 @@ const PREF_LOG_LEVEL      = "browser.uitour.loglevel";
 const PREF_SEENPAGEIDS    = "browser.uitour.seenPageIDs";
 
 const TOR_BROWSER_PAGE_ACTIONS_ALLOWED = new Set([
+  "showInfo",  // restricted to TOR_BROWSER_TARGETS_ALLOWED
+  "showMenu",  // restricted to TOR_BROWSER_MENUS_ALLOWED
+  "hideMenu",  // restricted to TOR_BROWSER_MENUS_ALLOWED
+  "closeTab",
   "torBrowserOpenSecuritySettings",
+]);
+
+const TOR_BROWSER_TARGETS_ALLOWED = new Set([
+  "torBrowser-circuitDisplay",
+  "torBrowser-circuitDisplay-diagram",
+  "torBrowser-circuitDisplay-newCircuitButton",
+]);
+
+const TOR_BROWSER_MENUS_ALLOWED = new Set([
+  "controlCenter",
 ]);
 
 const BACKGROUND_PAGE_ACTIONS_ALLOWED = new Set([
@@ -103,6 +117,14 @@ var UITour = {
 
   highlightEffects: ["random", "wobble", "zoom", "color"],
   targets: new Map([
+    ["torBrowser-circuitDisplay", {
+      query: "#connection-icon",
+    }],
+    ["torBrowser-circuitDisplay-diagram",
+      torBrowserCircuitDisplayTarget("circuit-display-nodes")],
+    ["torBrowser-circuitDisplay-newCircuitButton",
+      torBrowserCircuitDisplayTarget("circuit-reload-button")],
+
     ["accountStatus", {
       query: (aDocument) => {
         // If the user is logged in, use the avatar element.
@@ -945,7 +967,7 @@ var UITour = {
 
   // This function is copied to UITourListener.
   isSafeScheme(aURI) {
-    let allowedSchemes = new Set(["about"]);
+    let allowedSchemes = new Set(["about", "https"]);
 
     if (!allowedSchemes.has(aURI.scheme)) {
       log.error("Unsafe scheme:", aURI.scheme);
@@ -988,7 +1010,10 @@ var UITour = {
       return Promise.reject("Invalid target name specified");
     }
 
-    let targetObject = this.targets.get(aTargetName);
+    let targetObject;
+    if (TOR_BROWSER_TARGETS_ALLOWED.has(aTargetName)) {
+      targetObject = this.targets.get(aTargetName);
+    }
     if (!targetObject) {
       log.warn("getTarget: The specified target name is not in the allowed set");
       return Promise.reject("The specified target name is not in the allowed set");
@@ -1389,6 +1414,10 @@ var UITour = {
   },
 
   showMenu(aWindow, aMenuName, aOpenCallback = null) {
+    if (!TOR_BROWSER_MENUS_ALLOWED.has(aMenuName)) {
+      return;
+    }
+
     log.debug("showMenu:", aMenuName);
     function openMenuButton(aMenuBtn) {
       if (!aMenuBtn || !aMenuBtn.boxObject || aMenuBtn.open) {
@@ -1485,6 +1514,10 @@ var UITour = {
   },
 
   hideMenu(aWindow, aMenuName) {
+    if (!TOR_BROWSER_MENUS_ALLOWED.has(aMenuName)) {
+      return;
+    }
+
     log.debug("hideMenu:", aMenuName);
     function closeMenuButton(aMenuBtn) {
       if (aMenuBtn && aMenuBtn.boxObject)
@@ -1867,6 +1900,20 @@ function controlCenterTrackingToggleTarget(aUnblock) {
         buttonId = "tracking-action-block";
       }
       let element = aDocument.getElementById(buttonId);
+      return UITour.isElementVisible(element) ? element : null;
+    },
+  };
+}
+
+function torBrowserCircuitDisplayTarget(aElemID) {
+  return {
+    infoPanelPosition: "rightcenter topleft",
+    query(aDocument) {
+      let popup = aDocument.defaultView.gIdentityHandler._identityPopup;
+      if (popup.state != "open") {
+        return null;
+      }
+      let element = aDocument.getElementById(aElemID);
       return UITour.isElementVisible(element) ? element : null;
     },
   };
