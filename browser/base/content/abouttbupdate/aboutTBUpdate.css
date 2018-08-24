@@ -1,7 +1,20 @@
+/*
+ * Copyright (c) 2018, The Tor Project, Inc.
+ * See LICENSE for licensing information.
+ *
+ * vim: set sw=2 sts=2 ts=8 et syntax=css:
+ */
+
+:root {
+  --abouttor-text-color: white;
+  --abouttor-bg-toron-color: #420C5D;
+}
+
 body {
-  font-family: sans-serif;
+  font-family: Helvetica, Arial, sans-serif;
   font-size: 110%;
-  background-image: -moz-linear-gradient(top, #ffffff, #ffffff 10%, #d5ffd5 50%, #d5ffd5);
+  color: var(--abouttor-text-color);
+  background-color: var(--abouttor-bg-toron-color);
   background-attachment: fixed;
   background-size: 100% 100%;
 }
@@ -13,11 +26,13 @@ body {
   right: 6px;
   height: 30px;
   width: 200px;
+  font-size: 15px;
   white-space: pre-wrap;
   text-align: right;
-  color: #4d4d4d;
-  font-family: "Liberation Sans", Arial, Helvetica, sans-serif;
-  font-size: 14px;
+}
+
+a {
+  color: var(--abouttor-text-color);
 }
 
 #logo {
@@ -35,7 +50,6 @@ body {
 
 #msg-updated {
   font-size: 120%;
-  font-weight: bold;
   margin-bottom: 20px;
 }
 
@@ -44,7 +58,6 @@ body {
 }
 
 #changelog-heading {
-  font-weight: bold;
   margin-bottom: 4px;
 }
 
