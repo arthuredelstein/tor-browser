@@ -256,10 +256,6 @@ pref("gfx.font_rendering.graphite.enabled", false);
 pref("security.ssl.enable_false_start", true);
 pref("network.http.connection-retry-timeout", 0);
 pref("network.http.max-persistent-connections-per-proxy", 256);
-pref("network.http.pipelining.reschedule-timeout", 15000);
-pref("network.http.pipelining.read-timeout", 60000);
-// Hacked pref: Now means "Attempt to pipeline at least this many requests together"
-pref("network.http.pipelining.max-optimistic-requests", 3);
 pref("network.manage-offline-status", false);
 // No need to leak things to Mozilla, see bug 21790
 pref("network.captive-portal-service.enabled", false);
