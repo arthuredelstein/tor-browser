@@ -80,7 +80,6 @@ let expectedPrefs = [
    ["general.useragent.vendor", ""],
    ["general.useragent.vendorSub", ""],
    ["dom.enable_performance", false],
-   ["plugin.expose_full_path", false],
    ["browser.zoom.siteSpecific", false],
    ["intl.charset.default", "windows-1252"],
    //["intl.accept_languages", "en-us, en"], // Set by Torbutton
