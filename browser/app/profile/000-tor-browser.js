@@ -9,8 +9,6 @@ pref("browser.search.update", false);
 pref("browser.rights.3.shown", true);
 pref("startup.homepage_welcome_url", "");
 pref("startup.homepage_welcome_url.additional", "");
-// Not set Windows 10 users would get a special introduction on first start.
-pref("browser.usedOnWindows10", true);
 
 // Set a generic, default URL that will be opened in a tab after an update.
 // Typically, this will not be used; instead, the <update> element within
@@ -89,10 +87,8 @@ pref("datareporting.policy.dataSubmissionEnabled", false);
 // Don't fetch a localized remote page that Tor Browser interacts with, see
 // #16727. And, yes, it is "reportUrl" and not "reportURL".
 pref("datareporting.healthreport.about.reportUrl", "data:text/plain,");
-// Make sure Selfsupport and Unified Telemetry are really disabled, see: #18738.
 pref("datareporting.healthreport.about.reportUrlUnified", "data:text/plain,");
-pref("browser.selfsupport.enabled", false);
-pref("browser.selfsupport.url", "");
+// Make sure Unified Telemetry is really disabled, see: #18738.
 pref("toolkit.telemetry.unified", false);
 pref("toolkit.telemetry.enabled", false);
 // No experiments, use Tor Browser. See 21797.
@@ -103,12 +99,7 @@ pref("services.sync.engine.prefs", false); // Never sync prefs, addons, or tabs 
 pref("services.sync.engine.addons", false);
 pref("services.sync.engine.tabs", false);
 pref("extensions.getAddons.cache.enabled", false); // https://blog.mozilla.org/addons/how-to-opt-out-of-add-on-metadata-updates/
-pref("browser.newtabpage.directory.ping", "data:text/plain,"); // Bug 16316 - Avoid potential confusion over tiles for now.
-pref("browser.newtabpage.directory.source", "data:text/plain,"); // Bug 16316 - Avoid potential confusion over tiles for now.
-pref("browser.newtabpage.enhanced", false); // Bug 16316 - Avoid potential confusion over tiles for now.
-pref("browser.newtabpage.introShown", true); // Bug 16316 - Avoid potential confusion over tiles for now.
 pref("browser.newtabpage.preload", false); // Bug 16316 - Avoid potential confusion over tiles for now.
-pref("browser.newtabpage.remote", false); // Bug 21685: Disable remote new tab pages
 pref("browser.search.countryCode", "US"); // The next three prefs disable GeoIP search lookups (#16254)
 pref("browser.search.region", "US");
 pref("browser.search.geoip.url", "");
@@ -138,7 +129,6 @@ pref("browser.startup.homepage_override.buildID", "20100101");
 pref("general.useragent.vendor", "");
 pref("general.useragent.vendorSub", "");
 pref("dom.enable_performance", false);
-pref("plugin.expose_full_path", false);
 pref("browser.zoom.siteSpecific", false);
 pref("intl.charset.default", "windows-1252");
 pref("browser.link.open_newwindow.restriction", 0); // Bug 9881: Open popups in new tabs (to avoid fullscreen popups)
@@ -197,8 +187,6 @@ pref("network.gio.supported-protocols", "");
 pref("plugin.disable", true); // Disable to search plugins on first start
 pref("plugins.click_to_play", true);
 pref("plugin.state.flash", 1);
-pref("plugins.hide_infobar_for_missing_plugin", true);
-pref("plugins.hideMissingPluginsNotification", true);
 pref("media.peerconnection.enabled", false); // Disable WebRTC interfaces
 // Disables media devices but only if `media.peerconnection.enabled` is set to
 // `false` as well. (see bug 16328 for this defense-in-depth measure)
@@ -233,8 +221,6 @@ pref("devtools.appmanager.enabled", false);
 // restrictive DNS look-up policy. We use "127.0.0.1" instead of "localhost" as
 // a workaround. See bug 16523 for more details.
 pref("devtools.debugger.chrome-debugging-host", "127.0.0.1");
-// Disable mozTCPSocket for sure (bug 18863)
-pref("dom.mozTCPSocket.enabled", false);
 // Disable using UNC paths (bug 26424 and Mozilla's bug 1413868)
 pref("network.file.disable_unc_paths", true);
 // Enhance our treatment of file:// to avoid proxy bypasses (see Mozilla's bug
