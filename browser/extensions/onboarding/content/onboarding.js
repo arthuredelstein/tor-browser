@@ -218,7 +218,7 @@ var onboardingTourset = {
                         "onboarding-tour-tor-onion-services-button",
                         "onboarding.tour-tor-onion-services.button", "a");
       let anchor = button.querySelector("a");
-      anchor.setAttribute("href", "https://www.nytimes3xbfgragh.onion/");
+      anchor.setAttribute("href", "https://3g2upl4pq6kufc4m.onion/");
       anchor.setAttribute("target", "_blank");
 
       return div;

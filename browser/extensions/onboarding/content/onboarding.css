@@ -315,15 +315,15 @@
   line-height: 22px;
   padding-inline-start: 40px;
   padding-inline-end: 28px;
-  max-height: 360px;
+  max-height: 370px;
   overflow: auto;
 }
 
 .onboarding-tour-description > h1 {
-  font-size: 36px;
-  margin-top: 16px;
+  font-size: 30px;
+  margin: 16px 0px 10px 0px;
   font-weight: 300;
-  line-height: 44px;
+  line-height: 36px;
   color: #420c5d;
 }
 
