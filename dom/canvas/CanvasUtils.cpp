@@ -1,3 +1,4 @@
+
 /* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,8 +59,13 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
     // Documents with system principal can always extract canvas data.
     nsPIDOMWindowOuter *win = aDocument->GetWindow();
     nsCOMPtr<nsIScriptObjectPrincipal> sop(do_QueryInterface(win));
-    if (sop && nsContentUtils::IsSystemPrincipal(sop->GetPrincipal())) {
-        return true;
+    if (!sop) {
+      return false;
+    }
+
+    nsCOMPtr<nsIPrincipal> principal(sop->GetPrincipal());
+    if (principal && nsContentUtils::IsSystemPrincipal(principal)) {
+      return true;
     }
 
     // Always give permission to chrome scripts (e.g. Page Inspector).
@@ -127,9 +133,9 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
     // Check if the site has permission to extract canvas data.
     // Either permit or block extraction if a stored permission setting exists.
     uint32_t permission;
-    rv = permissionManager->TestPermission(topLevelDocURI,
-                                           PERMISSION_CANVAS_EXTRACT_DATA,
-                                           &permission);
+    rv = permissionManager->TestPermissionFromPrincipal(principal,
+                                                        PERMISSION_CANVAS_EXTRACT_DATA,
+                                                        &permission);
     NS_ENSURE_SUCCESS(rv, false);
     switch (permission) {
     case nsIPermissionManager::ALLOW_ACTION:
@@ -164,17 +170,17 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
     }
     nsContentUtils::LogMessageToConsole(message.get());
 
+    IPC::Principal ipcPrincipal(principal);
     // Prompt the user (asynchronous).
     if (XRE_IsContentProcess()) {
         TabChild* tabChild = TabChild::GetFrom(win);
         if (tabChild) {
-            tabChild->SendShowCanvasPermissionPrompt(topLevelDocURISpec);
+            tabChild->SendShowCanvasPermissionPrompt(ipcPrincipal);
         }
     } else {
         nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
         if (obs) {
-            obs->NotifyObservers(win, TOPIC_CANVAS_PERMISSIONS_PROMPT,
-                                 NS_ConvertUTF8toUTF16(topLevelDocURISpec).get());
+          obs->NotifyObservers(principal, TOPIC_CANVAS_PERMISSIONS_PROMPT, nullptr);
         }
     }
 

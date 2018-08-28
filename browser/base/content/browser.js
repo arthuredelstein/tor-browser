@@ -6823,40 +6823,37 @@ var CanvasPermissionPromptHelper = {
     Services.obs.removeObserver(this, this._permissionsPrompt);
   },
 
-  // aSubject is an nsIBrowser (e10s) or an nsIDOMWindow (non-e10s).
-  // aData is an URL string.
+  // aSubject is a principal.
   observe(aSubject, aTopic, aData) {
     if (aTopic != this._permissionsPrompt) {
       return;
     }
 
-    let browser;
-    if (aSubject instanceof Ci.nsIDOMWindow) {
-      let contentWindow = aSubject.QueryInterface(Ci.nsIDOMWindow);
-      browser = gBrowser.getBrowserForContentWindow(contentWindow);
-    } else {
-      browser = aSubject.QueryInterface(Ci.nsIBrowser);
-    }
+    let principal = aSubject;
+    let principalHost = principal.originAttributes.firstPartyDomain ||
+                        principal.URI.host;
+    let browserHost = gBrowser.selectedBrowser.contentPrincipal
+                              .originAttributes.firstPartyDomain ||
+                      gBrowser.currentURI.host;
 
-    let uri = Services.io.newURI(aData);
-    if (gBrowser.selectedBrowser !== browser) {
-      // Must belong to some other window.
+    if (principalHost !== browserHost) {
+      // We are on a different host; ignore.
       return;
     }
 
     let message = gNavigatorBundle.getFormattedString("canvas.siteprompt", ["<>"], 1);
 
-    function setCanvasPermission(aURI, aPerm, aPersistent) {
-      Services.perms.add(aURI, "canvas", aPerm,
-                          aPersistent ? Ci.nsIPermissionManager.EXPIRE_NEVER
-                                      : Ci.nsIPermissionManager.EXPIRE_SESSION);
+    function setCanvasPermission(principal, aPerm, aPersistent) {
+      Services.perms.addFromPrincipal(principal, "canvas", aPerm,
+                                      aPersistent ? Ci.nsIPermissionManager.EXPIRE_NEVER
+                                                  : Ci.nsIPermissionManager.EXPIRE_SESSION);
     }
 
     let mainAction = {
       label: gNavigatorBundle.getString("canvas.allow"),
       accessKey: gNavigatorBundle.getString("canvas.allow.accesskey"),
       callback(state) {
-        setCanvasPermission(uri, Ci.nsIPermissionManager.ALLOW_ACTION,
+        setCanvasPermission(principal, Ci.nsIPermissionManager.ALLOW_ACTION,
                             state && state.checkboxChecked);
       }
     };
@@ -6865,7 +6862,7 @@ var CanvasPermissionPromptHelper = {
       label: gNavigatorBundle.getString("canvas.notAllow"),
       accessKey: gNavigatorBundle.getString("canvas.notAllow.accesskey"),
       callback(state) {
-        setCanvasPermission(uri, Ci.nsIPermissionManager.DENY_ACTION,
+        setCanvasPermission(principal, Ci.nsIPermissionManager.DENY_ACTION,
                             state && state.checkboxChecked);
       }
     }];
@@ -6881,10 +6878,10 @@ var CanvasPermissionPromptHelper = {
 
     let options = {
       checkbox,
-      name: uri.asciiHost,
+      name: principalHost,
       learnMoreURL: Services.urlFormatter.formatURLPref("app.support.baseURL") + "fingerprint-permission",
     };
-    PopupNotifications.show(browser, aTopic, message, this._notificationIcon,
+    PopupNotifications.show(gBrowser.selectedBrowser, aTopic, message, this._notificationIcon,
                             mainAction, secondaryActions, options);
   }
 };

@@ -3567,9 +3567,14 @@ TabParent::RecvLookUpDictionary(const nsString& aText,
 }
 
 mozilla::ipc::IPCResult
-TabParent::RecvShowCanvasPermissionPrompt(const nsCString& aFirstPartyURI)
+TabParent::RecvShowCanvasPermissionPrompt(const Principal& aPrincipal)
 {
   nsCOMPtr<nsIBrowser> browser = do_QueryInterface(mFrameElement);
+  nsCOMPtr<nsIPrincipal> principal(aPrincipal);
+  if (!principal) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+
   if (!browser) {
     // If the tab is being closed, the browser may not be available.
     // In this case we can ignore the request.
@@ -3579,8 +3584,7 @@ TabParent::RecvShowCanvasPermissionPrompt(const nsCString& aFirstPartyURI)
   if (!os) {
     return IPC_FAIL_NO_REASON(this);
   }
-  nsresult rv = os->NotifyObservers(browser, "canvas-permissions-prompt",
-                                    NS_ConvertUTF8toUTF16(aFirstPartyURI).get());
+  nsresult rv = os->NotifyObservers(principal, "canvas-permissions-prompt", nullptr);
   if (NS_FAILED(rv)) {
     return IPC_FAIL_NO_REASON(this);
   }
