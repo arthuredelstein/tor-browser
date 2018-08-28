@@ -146,10 +146,6 @@ pref("privacy.resistFingerprinting.block_mozAddonManager", true); // Bug 26114
 pref("dom.event.highrestimestamp.enabled", true); // Bug #17046: "Highres" (but truncated) timestamps prevent uptime leaks
 pref("privacy.suppressModifierKeyEvents", true); // Bug #17009: Suppress ALT and SHIFT events"
 pref("ui.use_standins_for_native_colors", true); // https://bugzilla.mozilla.org/232227
-// Make Reader View users uniform if they really want to use that feature. See
-// bug 18950 for more details.
-pref("browser.reader.detectedFirstArticle", true);
-pref("reader.parse-on-load.enabled", false);
 pref("privacy.use_utc_timezone", true);
 pref("media.webspeech.synth.enabled", false); // Bug 10283: Disable SpeechSynthesis API
 pref("dom.webaudio.enabled", false); // Bug 13017: Disable Web Audio API
