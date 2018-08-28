@@ -11,8 +11,8 @@ pref("app.update.interval", 43200); // 12 hours
 // background (in seconds)
 // 0 means "download everything at once"
 pref("app.update.download.backgroundInterval", 0);
-// Give the user x seconds to react before showing the big UI. default=48 hours
-pref("app.update.promptWaitTime", 172800);
+// Give the user x seconds to react before showing the big UI. default=1 hour
+pref("app.update.promptWaitTime", 3600);
 // app.update.url.manual: URL user can browse to manually if for some reason
 // all update installation attempts fail.
 // app.update.url.details: a default value for the "More information about this
