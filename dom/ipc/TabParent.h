@@ -621,7 +621,7 @@ protected:
                                                     const int32_t& aX, const int32_t& aY,
                                                     const int32_t& aCx, const int32_t& aCy) override;
 
-  virtual mozilla::ipc::IPCResult RecvShowCanvasPermissionPrompt(const nsCString& aFirstPartyURI) override;
+  virtual mozilla::ipc::IPCResult RecvShowCanvasPermissionPrompt(const nsCString& aOrigin) override;
 
   mozilla::ipc::IPCResult
   RecvSetSystemFont(const nsCString& aFontName) override;
