@@ -633,7 +633,7 @@ protected:
 
   virtual mozilla::ipc::IPCResult RecvGetTabCount(uint32_t* aValue) override;
 
-  virtual mozilla::ipc::IPCResult RecvShowCanvasPermissionPrompt(const nsCString& aFirstPartyURI) override;
+  virtual mozilla::ipc::IPCResult RecvShowCanvasPermissionPrompt(const nsCString& aOrigin) override;
 
   ContentCacheInParent mContentCache;
 
