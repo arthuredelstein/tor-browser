@@ -3578,7 +3578,7 @@ TabParent::RecvLookUpDictionary(const nsString& aText,
 }
 
 mozilla::ipc::IPCResult
-TabParent::RecvShowCanvasPermissionPrompt(const nsCString& aFirstPartyURI)
+TabParent::RecvShowCanvasPermissionPrompt(const nsCString& aOrigin)
 {
   nsCOMPtr<nsIBrowser> browser = do_QueryInterface(mFrameElement);
   if (!browser) {
@@ -3591,7 +3591,7 @@ TabParent::RecvShowCanvasPermissionPrompt(const nsCString& aFirstPartyURI)
     return IPC_FAIL_NO_REASON(this);
   }
   nsresult rv = os->NotifyObservers(browser, "canvas-permissions-prompt",
-                                    NS_ConvertUTF8toUTF16(aFirstPartyURI).get());
+                                    NS_ConvertUTF8toUTF16(aOrigin).get());
   if (NS_FAILED(rv)) {
     return IPC_FAIL_NO_REASON(this);
   }
