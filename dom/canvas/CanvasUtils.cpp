@@ -127,9 +127,9 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx, nsIPrincip
     // Check if the site has permission to extract canvas data.
     // Either permit or block extraction if a stored permission setting exists.
     uint32_t permission;
-    rv = permissionManager->TestPermission(topLevelDocURI,
-                                           PERMISSION_CANVAS_EXTRACT_DATA,
-                                           &permission);
+    rv = permissionManager->TestPermissionFromPrincipal(principal,
+                                                        PERMISSION_CANVAS_EXTRACT_DATA,
+                                                        &permission);
     NS_ENSURE_SUCCESS(rv, false);
     switch (permission) {
     case nsIPermissionManager::ALLOW_ACTION:
@@ -167,16 +167,20 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx, nsIPrincip
 
     // Prompt the user (asynchronous).
     nsPIDOMWindowOuter *win = aDocument->GetWindow();
+    nsAutoCString origin;
+    rv = principal->GetOrigin(origin);
+    NS_ENSURE_SUCCESS(rv, false);
+
     if (XRE_IsContentProcess()) {
         TabChild* tabChild = TabChild::GetFrom(win);
         if (tabChild) {
-            tabChild->SendShowCanvasPermissionPrompt(topLevelDocURISpec);
+            tabChild->SendShowCanvasPermissionPrompt(origin);
         }
     } else {
         nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
         if (obs) {
             obs->NotifyObservers(win, TOPIC_CANVAS_PERMISSIONS_PROMPT,
-                                 NS_ConvertUTF8toUTF16(topLevelDocURISpec).get());
+                                 NS_ConvertUTF8toUTF16(origin).get());
         }
     }
 
