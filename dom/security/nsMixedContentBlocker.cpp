@@ -726,6 +726,17 @@ nsMixedContentBlocker::ShouldLoad(bool aHadInsecureImageRedirect,
     }
   }
 
+  bool isHttpScheme = false;
+  rv = innerContentLocation->SchemeIs("http", &isHttpScheme);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // .onion URLs are encrypted and authenticated. Don't treat them as mixed
+  // content if potentially trustworthy (i.e. whitelisted).
+  if (isHttpScheme && IsPotentiallyTrustworthyOnion(innerContentLocation)) {
+    *aDecision = ACCEPT;
+    return NS_OK;
+  }
+
   nsCOMPtr<nsIDocShell> docShell = NS_CP_GetDocShellFromContext(aRequestingContext);
   NS_ENSURE_TRUE(docShell, NS_OK);
 
@@ -746,21 +757,10 @@ nsMixedContentBlocker::ShouldLoad(bool aHadInsecureImageRedirect,
     return NS_OK;
   }
 
-  bool isHttpScheme = false;
-  rv = innerContentLocation->SchemeIs("http", &isHttpScheme);
-  NS_ENSURE_SUCCESS(rv, rv);
-
   // Loopback origins are not considered mixed content even over HTTP. See:
   // https://w3c.github.io/webappsec-mixed-content/#should-block-fetch
   if (isHttpScheme &&
       IsPotentiallyTrustworthyLoopbackURL(innerContentLocation)) {
-    *aDecision = ACCEPT;
-    return NS_OK;
-  }
-
-  // .onion URLs are encrypted and authenticated. Don't treat them as mixed
-  // content if potentially trustworthy (i.e. whitelisted).
-  if (isHttpScheme && IsPotentiallyTrustworthyOnion(innerContentLocation)) {
     *aDecision = ACCEPT;
     return NS_OK;
   }
