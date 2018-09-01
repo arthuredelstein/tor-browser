@@ -642,7 +642,11 @@ class Onboarding {
   }
 
   _resizeUI() {
-    this._windowWidth = this._window.document.body.getBoundingClientRect().width;
+    // In Tor Browser we check against innerWidth instead of against the
+    // body's bounding rect because about:tor keeps its body hidden until
+    // the Tor status is known, and the bounding rect is zero while the
+    // body is hidden.
+    this._windowWidth = this._window.innerWidth;
     if (this._windowWidth < ONBOARDING_MIN_WIDTH_PX) {
       // Don't show the overlay UI before we get to a better, responsive design.
       this.destroy();

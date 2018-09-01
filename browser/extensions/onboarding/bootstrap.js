@@ -14,7 +14,11 @@ XPCOMUtils.defineLazyModuleGetters(this, {
 
 const {PREF_STRING, PREF_BOOL, PREF_INT} = Ci.nsIPrefBranch;
 
-const BROWSER_READY_NOTIFICATION = "browser-delayed-startup-finished";
+// In Tor Browser we initialize onboarding upon "final-ui-startup" instead
+// of waiting for "browser-delayed-startup-finished"; otherwise, on first
+// run the onboarding frame script's "onload" listener is installed too
+// late to detect that about:tor is loaded.
+const BROWSER_READY_NOTIFICATION = "final-ui-startup";
 const BROWSER_SESSION_STORE_NOTIFICATION = "sessionstore-windows-restored";
 const PREF_WHITELIST = [
   ["browser.onboarding.enabled", PREF_BOOL],
