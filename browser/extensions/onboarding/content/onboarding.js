@@ -23,8 +23,8 @@ const BRAND_SHORT_NAME = Services.strings
 const PROMPT_COUNT_PREF = "browser.onboarding.notification.prompt-count";
 const NOTIFICATION_FINISHED_PREF = "browser.onboarding.notification.finished";
 const ONBOARDING_DIALOG_ID = "onboarding-overlay-dialog";
-const ONBOARDING_MIN_WIDTH_PX = 960;
-const SPEECH_BUBBLE_MIN_WIDTH_PX = 960;
+const ONBOARDING_MIN_WIDTH_PX = 200;
+const SPEECH_BUBBLE_MIN_WIDTH_PX = 200;
 const SPEECH_BUBBLE_NEWTOUR_STRING_ID = "onboarding.overlay-icon-tooltip2";
 const SPEECH_BUBBLE_UPDATETOUR_STRING_ID = "onboarding.overlay-icon-tooltip-updated2";
 const ICON_STATE_WATERMARK = "watermark";
@@ -629,6 +629,7 @@ class Onboarding {
       tour_type: this._tourType,
     });
 
+    this._resizeUI();
     this._window.addEventListener("beforeunload", this);
     this._window.addEventListener("unload", this);
     this._window.addEventListener("resize", this);
@@ -642,7 +643,7 @@ class Onboarding {
   }
 
   _resizeUI() {
-    this._windowWidth = this._window.document.body.getBoundingClientRect().width;
+    this._windowWidth = this._window.innerWidth;
     if (this._windowWidth < ONBOARDING_MIN_WIDTH_PX) {
       // Don't show the overlay UI before we get to a better, responsive design.
       this.destroy();
