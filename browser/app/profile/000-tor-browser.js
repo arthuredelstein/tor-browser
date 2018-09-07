@@ -113,7 +113,6 @@ pref("browser.pocket.site", "");
 pref("network.http.referer.hideOnionSource", true);
 
 // Fingerprinting
-pref("webgl.min_capability_mode", true);
 pref("webgl.disable-extensions", true);
 pref("webgl.disable-fail-if-major-performance-caveat", true);
 pref("webgl.enable-webgl2", false);
