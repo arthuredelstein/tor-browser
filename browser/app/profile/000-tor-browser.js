@@ -154,6 +154,9 @@ pref("dom.vr.enabled", false); // Bug 21607: Disable WebVR for now
 // Disable randomised Firefox HTTP cache decay user test groups (Bug: 13575)
 pref("security.webauth.webauthn", false); // Bug 26614: Disable Web Authentication API for now
 pref("browser.cache.frecency_experiment", -1);
+// Until https://bugzilla.mozilla.org/show_bug.cgi?id=1446472 is solved fall
+// back to old canvas behavior.
+pref("privacy.resistFingerprinting.autoDeclineNoUserInputCanvasPrompts", false);
 
 // Third party stuff
 pref("privacy.firstparty.isolate", true); // Always enforce first party isolation
