@@ -1029,7 +1029,8 @@ function getSignedStatus(aRv, aCert, aAddonID) {
 }
 
 function shouldVerifySignedState(aAddon) {
-  if (aAddon.id === "torbutton@torproject.org") {
+  if (AppConstants.platform === "android" &&
+      aAddon.id === "torbutton@torproject.org") {
     return false;
   }
 
