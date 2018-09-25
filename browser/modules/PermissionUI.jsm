@@ -275,9 +275,9 @@ var PermissionPromptPrototype = {
       // If we're reading and setting permissions, then we need
       // to check to see if we already have a permission setting
       // for this particular principal.
-      let {state} = SitePermissions.get(requestingURI,
-                                        this.permissionKey,
-                                        this.browser);
+      let {state} = SitePermissions.getForPrincipal(this.principal,
+                                                    this.permissionKey,
+                                                    this.browser);
 
       if (state == SitePermissions.BLOCK) {
         // If the request is blocked by a global setting then we record
@@ -286,11 +286,11 @@ var PermissionPromptPrototype = {
         // Currently only applies to autoplay-media
         if (state == SitePermissions.getDefault(this.permissionKey) &&
             SitePermissions.showGloballyBlocked(this.permissionKey)) {
-          SitePermissions.set(this.principal.URI,
-                              this.permissionKey,
-                              state,
-                              SitePermissions.SCOPE_GLOBAL,
-                              this.browser);
+          SitePermissions.setForPrincipal(this.principal,
+                                          this.permissionKey,
+                                          state,
+                                          SitePermissions.SCOPE_GLOBAL,
+                                          this.browser);
         }
 
         this.cancel();
@@ -334,21 +334,21 @@ var PermissionPromptPrototype = {
               if (PrivateBrowsingUtils.isBrowserPrivate(this.browser)) {
                 scope = SitePermissions.SCOPE_SESSION;
               }
-              SitePermissions.set(this.principal.URI,
-                                  this.permissionKey,
-                                  promptAction.action,
-                                  scope);
+              SitePermissions.setForPrincipal(this.principal,
+                                              this.permissionKey,
+                                              promptAction.action,
+                                              scope);
             } else if (promptAction.action == SitePermissions.BLOCK ||
                        SitePermissions.permitTemporaryAllow(this.permissionKey)) {
               // Temporarily store BLOCK permissions only unless permission object
               // sets permitTemporaryAllow: true
               // SitePermissions does not consider subframes when storing temporary
               // permissions on a tab, thus storing ALLOW could be exploited.
-              SitePermissions.set(this.principal.URI,
-                                  this.permissionKey,
-                                  promptAction.action,
-                                  SitePermissions.SCOPE_TEMPORARY,
-                                  this.browser);
+              SitePermissions.setForPrincipal(this.principal,
+                                              this.permissionKey,
+                                              promptAction.action,
+                                              SitePermissions.SCOPE_TEMPORARY,
+                                              this.browser);
             }
 
             // Grant permission if action is ALLOW.
