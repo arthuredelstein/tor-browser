@@ -42,27 +42,27 @@ const TemporaryPermissions = {
   // This is a three level deep map with the following structure:
   //
   // Browser => {
-  //   <prePath>: {
+  //   <key>: {
   //     <permissionID>: {Number} <timeStamp>
   //   }
   // }
   //
   // Only the top level browser elements are stored via WeakMap. The WeakMap
-  // value is an object with URI prePaths as keys. The keys of that object
-  // are ids that identify permissions that were set for the specific URI.
+  // value is an object with principal origin+suffix as keys. The keys of that object
+  // are ids that identify permissions that were set for the specific principal.
   // The final value is an object containing the timestamp of when the permission
   // was set (in order to invalidate after a certain amount of time has passed).
   _stateByBrowser: new WeakMap(),
 
   // Private helper method that bundles some shared behavior for
   // get() and getAll(), e.g. deleting permissions when they have expired.
-  _get(entry, prePath, id, permission) {
+  _get(entry, key, id, permission) {
     if (permission == null || permission.timeStamp == null) {
-      delete entry[prePath][id];
+      delete entry[key][id];
       return null;
     }
     if (permission.timeStamp + SitePermissions.temporaryPermissionExpireTime < Date.now()) {
-      delete entry[prePath][id];
+      delete entry[key][id];
       return null;
     }
     return {id, state: permission.state, scope: SitePermissions.SCOPE_TEMPORARY};
@@ -77,11 +77,11 @@ const TemporaryPermissions = {
       this._stateByBrowser.set(browser, {});
     }
     let entry = this._stateByBrowser.get(browser);
-    let prePath = browser.currentURI.prePath;
-    if (!entry[prePath]) {
-      entry[prePath] = {};
+    let key = _keyForPrincipal(browser.contentPrincipal);
+    if (!entry[key]) {
+      entry[key] = {};
     }
-    entry[prePath][id] = {timeStamp: Date.now(), state};
+    entry[key][id] = {timeStamp: Date.now(), state};
   },
 
   // Removes a permission with the specified id for the specified browser.
@@ -90,22 +90,22 @@ const TemporaryPermissions = {
       return;
     }
     let entry = this._stateByBrowser.get(browser);
-    let prePath = browser.currentURI.prePath;
-    if (entry && entry[prePath]) {
-      delete entry[prePath][id];
+    let key = _keyForPrincipal(browser.contentPrincipal);
+    if (entry && entry[key]) {
+      delete entry[key][id];
     }
   },
 
   // Gets a permission with the specified id for the specified browser.
   get(browser, id) {
-    if (!browser || !browser.currentURI) {
+    if (!browser || !browser.contentPrincipal) {
       return null;
     }
     let entry = this._stateByBrowser.get(browser);
-    let prePath = browser.currentURI.prePath;
-    if (entry && entry[prePath]) {
-      let permission = entry[prePath][id];
-      return this._get(entry, prePath, id, permission);
+    let key = _keyForPrincipal(browser.contentPrincipal);
+    if (entry && entry[key]) {
+      let permission = entry[key][id];
+      return this._get(entry, key, id, permission);
     }
     return null;
   },
@@ -116,11 +116,11 @@ const TemporaryPermissions = {
   getAll(browser) {
     let permissions = [];
     let entry = this._stateByBrowser.get(browser);
-    let prePath = browser.currentURI.prePath;
-    if (entry && entry[prePath]) {
-      let timeStamps = entry[prePath];
+    let key = _keyForPrincipal(browser.contentPrincipal);
+    if (entry && entry[key]) {
+      let timeStamps = entry[key];
       for (let id of Object.keys(timeStamps)) {
-        let permission = this._get(entry, prePath, id, timeStamps[id]);
+        let permission = this._get(entry, key, id, timeStamps[id]);
         // _get() returns null when the permission has expired.
         if (permission) {
           permissions.push(permission);
@@ -161,12 +161,12 @@ const GloballyBlockedPermissions = {
       this._stateByBrowser.set(browser, {});
     }
     let entry = this._stateByBrowser.get(browser);
-    let prePath = browser.currentURI.prePath;
-    if (!entry[prePath]) {
-      entry[prePath] = {};
+    let key = _keyForPrincipal(browser.contentPrincipal);
+    if (!entry[key]) {
+      entry[key] = {};
     }
 
-    entry[prePath][id] = true;
+    entry[key][id] = true;
 
     // Listen to any top level navigations, once we see one clear the flag
     // and remove the listener.
@@ -185,9 +185,9 @@ const GloballyBlockedPermissions = {
   // Removes a permission with the specified id for the specified browser.
   remove(browser, id) {
     let entry = this._stateByBrowser.get(browser);
-    let prePath = browser.currentURI.prePath;
-    if (entry && entry[prePath]) {
-      delete entry[prePath][id];
+    let key = _keyForPrincipal(browser.contentPrincipal);
+    if (entry && entry[key]) {
+      delete entry[key][id];
     }
   },
 
@@ -197,9 +197,9 @@ const GloballyBlockedPermissions = {
   getAll(browser) {
     let permissions = [];
     let entry = this._stateByBrowser.get(browser);
-    let prePath = browser.currentURI.prePath;
-    if (entry && entry[prePath]) {
-      let timeStamps = entry[prePath];
+    let key = _keyForPrincipal(browser.contentPrincipal);
+    if (entry && entry[key]) {
+      let timeStamps = entry[key];
       for (let id of Object.keys(timeStamps)) {
         permissions.push({
           id,
