@@ -1106,16 +1106,16 @@ var gIdentityHandler = {
           // If we set persistent permissions or the sharing has
           // started due to existing persistent permissions, we need
           // to handle removing these even for frames with different hostnames.
-          let uris = browser._devicePermissionURIs || [];
-          for (let uri of uris) {
+          let principal = browser._devicePermissionPrincipals || [];
+          for (let principal of principals) {
             // It's not possible to stop sharing one of camera/microphone
             // without the other.
             for (let id of ["camera", "microphone"]) {
               if (this._sharingState[id]) {
-                let perm = SitePermissions.get(uri, id);
+                let perm = SitePermissions.getForPrincipal(principal, id);
                 if (perm.state == SitePermissions.ALLOW &&
                     perm.scope == SitePermissions.SCOPE_PERSISTENT) {
-                  SitePermissions.remove(uri, id);
+                  SitePermissions.removeFromPrincipal(principal, id);
                 }
               }
             }
