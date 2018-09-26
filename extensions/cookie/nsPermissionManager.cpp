@@ -206,8 +206,7 @@ GetOriginFromPrincipal(nsIPrincipal* aPrincipal, nsACString& aOrigin)
   attrs.mPrivateBrowsingId = 0;
 
   // Disable userContext and firstParty isolation for permissions.
-  attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID |
-                        mozilla::OriginAttributes::STRIP_FIRST_PARTY_DOMAIN);
+  attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID);
 
   attrs.CreateSuffix(suffix);
   aOrigin.Append(suffix);
@@ -228,8 +227,7 @@ GetPrincipalFromOrigin(const nsACString& aOrigin, nsIPrincipal** aPrincipal)
   attrs.mPrivateBrowsingId = 0;
 
   // Disable userContext and firstParty isolation for permissions.
-  attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID |
-                        mozilla::OriginAttributes::STRIP_FIRST_PARTY_DOMAIN);
+  attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID);
 
   nsCOMPtr<nsIURI> uri;
   nsresult rv = NS_NewURI(getter_AddRefs(uri), originNoSuffix);
@@ -333,8 +331,7 @@ GetNextSubDomainPrincipal(nsIPrincipal* aPrincipal)
   mozilla::OriginAttributes attrs = aPrincipal->OriginAttributesRef();
 
   // Disable userContext and firstParty isolation for permissions.
-  attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID |
-                        mozilla::OriginAttributes::STRIP_FIRST_PARTY_DOMAIN);
+  attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID);
 
   nsCOMPtr<nsIPrincipal> principal =
     mozilla::BasePrincipal::CreateCodebasePrincipal(newURI, attrs);
@@ -3328,8 +3325,7 @@ nsPermissionManager::GetKeyForOrigin(const nsACString& aOrigin, nsACString& aKey
   attrs.mPrivateBrowsingId = 0;
 
   // Disable userContext and firstParty isolation for permissions.
-  attrs.StripAttributes(OriginAttributes::STRIP_USER_CONTEXT_ID |
-                        OriginAttributes::STRIP_FIRST_PARTY_DOMAIN);
+  attrs.StripAttributes(OriginAttributes::STRIP_USER_CONTEXT_ID);
 
 #ifdef DEBUG
   // Parse the origin string into a principal, and extract some useful
