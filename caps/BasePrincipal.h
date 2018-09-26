@@ -146,7 +146,7 @@ public:
 
   PrincipalKind Kind() const { return mKind; }
 
-  already_AddRefed<BasePrincipal> CloneStrippingUserContextIdAndFirstPartyDomain();
+  already_AddRefed<BasePrincipal> CloneStrippingUserContextId();
 
   // If this is an add-on content script principal, returns its AddonPolicy.
   // Otherwise returns null.
