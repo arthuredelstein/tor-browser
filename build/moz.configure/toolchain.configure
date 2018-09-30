@@ -1382,8 +1382,10 @@ option(env='RUSTFLAGS',
        help='Rust compiler flags')
 set_config('RUSTFLAGS', depends('RUSTFLAGS')(lambda flags: flags))
 
-
-imply_option('--enable-release', mozilla_official)
+if target.os != 'WINNT':
+    imply_option('--enable-release', mozilla_official)
+else:
+    imply_option('--enable-release', False)
 imply_option('--enable-release', depends_if('MOZ_AUTOMATION')(lambda x: True))
 
 js_option('--enable-release',
