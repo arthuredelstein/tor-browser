@@ -1050,9 +1050,9 @@ var gIdentityHandler = {
 
       // Avoiding listening to the "select" event on purpose. See Bug 1404262.
       menulist.addEventListener("command", () => {
-        SitePermissions.set(gBrowser.currentURI,
-                            aPermission.id,
-                            menulist.selectedItem.value);
+        SitePermissions.setForPrincipal(gBrowser.contentPrincipal,
+                                        aPermission.id,
+                                        menulist.selectedItem.value);
       });
 
       container.appendChild(img);
@@ -1124,7 +1124,7 @@ var gIdentityHandler = {
         browser.messageManager.sendAsyncMessage("webrtc:StopSharing", windowId);
         webrtcUI.forgetActivePermissionsFromBrowser(gBrowser.selectedBrowser);
       }
-      SitePermissions.remove(gBrowser.currentURI, aPermission.id, browser);
+      SitePermissions.removeFromPrincipal(gBrowser.contentPrincipal, aPermission.id, browser);
 
       this._permissionReloadHint.removeAttribute("hidden");
       PanelView.forNode(this._identityPopupMainView)
