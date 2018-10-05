@@ -161,7 +161,7 @@ var WebrtcUI = {
       aSubject.callID);
   },
 
-  getDeviceButtons: function(audioDevices, videoDevices, aCallID, aUri) {
+  getDeviceButtons: function(audioDevices, videoDevices, aCallID, aPrincipal) {
     return [{
       label: Strings.browser.GetStringFromName("getUserMedia.denyRequest.label"),
       callback: function() {
@@ -187,7 +187,7 @@ var WebrtcUI = {
           let perms = Services.perms;
           // Although the lifetime is "session" it will be removed upon
           // use so it's more of a one-shot.
-          perms.add(aUri, "MediaManagerVideo", perms.ALLOW_ACTION, perms.EXPIRE_SESSION);
+          perms.addFromPrincipal(aPrincipal, "MediaManagerVideo", perms.ALLOW_ACTION, perms.EXPIRE_SESSION);
         }
 
         Services.obs.notifyObservers(allowedDevices, "getUserMedia:response:allow", aCallID);
@@ -317,7 +317,7 @@ var WebrtcUI = {
       return;
 
     let chromeWin = this.getChromeWindow(aContentWindow);
-    let uri = aContentWindow.document.documentURIObject;
+    let principal = aContentWindow.document.nodePrincipal;
     let host = uri.host;
     let requestor = (chromeWin.BrowserApp && chromeWin.BrowserApp.manifest) ?
           "'" + chromeWin.BrowserApp.manifest.name + "'" : host;
@@ -333,7 +333,7 @@ var WebrtcUI = {
       this._addDevicesToOptions(audioDevices, "audioDevice", options);
     }
 
-    let buttons = this.getDeviceButtons(audioDevices, videoDevices, aCallID, uri);
+    let buttons = this.getDeviceButtons(audioDevices, videoDevices, aCallID, principal);
 
     DoorHanger.show(aContentWindow, message, "webrtc-request", buttons, options, "WEBRTC");
   }

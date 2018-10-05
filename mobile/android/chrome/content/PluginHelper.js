@@ -15,10 +15,11 @@ var PluginHelper = {
     aTab.shouldShowPluginDoorhanger = false;
 
     let uri = aTab.browser.currentURI;
+    let principal = aTab.browser.contentPrincipal;
 
     // If the user has previously set a plugins permission for this website,
     // either play or don't play the plugins instead of showing a doorhanger.
-    let permValue = Services.perms.testPermission(uri, "plugins");
+    let permValue = Services.perms.testPermissionFromPrincipal(principal, "plugins");
     if (permValue != Services.perms.UNKNOWN_ACTION) {
       if (permValue == Services.perms.ALLOW_ACTION)
         PluginHelper.playAllPlugins(aTab.browser.contentWindow);
@@ -34,7 +35,7 @@ var PluginHelper = {
         callback: function(aChecked) {
           // If the user checked "Don't ask again", make a permanent exception
           if (aChecked)
-            Services.perms.add(uri, "plugins", Ci.nsIPermissionManager.DENY_ACTION);
+            Services.perms.addFromPrincipal(principal, "plugins", Ci.nsIPermissionManager.DENY_ACTION);
 
           // Other than that, do nothing
         }
@@ -44,7 +45,7 @@ var PluginHelper = {
         callback: function(aChecked) {
           // If the user checked "Don't ask again", make a permanent exception
           if (aChecked)
-            Services.perms.add(uri, "plugins", Ci.nsIPermissionManager.ALLOW_ACTION);
+            Services.perms.addFromPrincipal(principal, "plugins", Ci.nsIPermissionManager.ALLOW_ACTION);
 
           PluginHelper.playAllPlugins(aTab.browser.contentWindow);
         },
@@ -160,7 +161,7 @@ var PluginHelper = {
         // Check if plugins have already been activated for this page, or if
         // the user has set a permission to always play plugins on the site
         if (aTab.clickToPlayPluginsActivated ||
-            Services.perms.testPermission(aTab.browser.currentURI, "plugins") ==
+            Services.perms.testPermissionFromPrincipal(aTab.browser.contentPrincipal, "plugins") ==
             Services.perms.ALLOW_ACTION) {
           PluginHelper.playPlugin(plugin);
           return;
