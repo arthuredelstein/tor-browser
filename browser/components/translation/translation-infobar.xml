@@ -388,11 +388,11 @@
             item.disabled = neverForLangs.split(",").includes(lang);
 
             // Check if translation is disabled for the domain:
-            let uri = this.translation.browser.currentURI;
+            let principal = this.translation.browser.contentPrincipal;
             let perms = Services.perms;
             item = this._getAnonElt("neverForSite");
             item.disabled =
-              perms.testExactPermission(uri, "translate") == perms.DENY_ACTION;
+              perms.testExactPermissionForPrincipal(principal, "translate") == perms.DENY_ACTION;
           ]]>
         </body>
       </method>
@@ -417,9 +417,9 @@
       <method name="neverForSite">
         <body>
           <![CDATA[
-            let uri = this.translation.browser.currentURI;
+            let principal = this.translation.browser.contentPrincipal;
             let perms = Services.perms;
-            perms.add(uri, "translate", perms.DENY_ACTION);
+            perms.addFromPrincipal(principal, "translate", perms.DENY_ACTION);
 
             this.closeCommand();
           ]]>
