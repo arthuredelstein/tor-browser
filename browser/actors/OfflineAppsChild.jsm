@@ -58,9 +58,9 @@ class OfflineAppsChild extends ActorChild {
       return;
     }
 
-    let currentURI = aContentWindow.document.documentURIObject;
+    let principal = aContentWindow.document.nodePrincipal;
     // don't bother showing UI if the user has already made a decision
-    if (Services.perms.testExactPermission(currentURI, "offline-app") != Services.perms.UNKNOWN_ACTION)
+    if (Services.perms.testExactPermissionForPrincipal(principal, "offline-app") != Services.perms.UNKNOWN_ACTION)
       return;
 
     try {

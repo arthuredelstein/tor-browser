@@ -3178,9 +3178,9 @@ var BrowserOnClick = {
       flags: Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_CLASSIFIER,
     });
 
-    Services.perms.add(gBrowser.currentURI, "safe-browsing",
-                       Ci.nsIPermissionManager.ALLOW_ACTION,
-                       Ci.nsIPermissionManager.EXPIRE_SESSION);
+    Services.perms.addFromPrincipal(gBrowser.contentPrincipal, "safe-browsing",
+                                    Ci.nsIPermissionManager.ALLOW_ACTION,
+                                    Ci.nsIPermissionManager.EXPIRE_SESSION);
 
     let buttons = [{
       label: gNavigatorBundle.getString("safebrowsing.getMeOutOfHereButton.label"),
@@ -6636,8 +6636,8 @@ var OfflineApps = {
 
     // Now that we've warned once, prevent the warning from showing up
     // again.
-    Services.perms.add(uri, "offline-app",
-                       Ci.nsIOfflineCacheUpdateService.ALLOW_NO_WARN);
+    Services.perms.addFromPrincipal(principal, "offline-app",
+                                    Ci.nsIOfflineCacheUpdateService.ALLOW_NO_WARN);
   },
 
   // XXX: duplicated in preferences/advanced.js
