@@ -13,7 +13,7 @@ var OfflineApps = {
     let currentURI = aContentWindow.document.documentURIObject;
 
     // Don't bother showing UI if the user has already made a decision
-    if (Services.perms.testExactPermission(principal, "offline-app") != Services.perms.UNKNOWN_ACTION)
+    if (Services.perms.testExactPermissionFromPrincipal(principal, "offline-app") != Services.perms.UNKNOWN_ACTION)
       return;
 
     try {
