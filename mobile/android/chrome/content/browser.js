@@ -5325,7 +5325,7 @@ var PopupBlockerObserver = {
     if (!browser.blockedPopups)
       return;
 
-    let result = Services.perms.testExactPermission(BrowserApp.selectedBrowser.contentPrincipal, "popup");
+    let result = Services.perms.testExactPermissionFromPrincipal(BrowserApp.selectedBrowser.contentPrincipal, "popup");
     if (result == Ci.nsIPermissionManager.DENY_ACTION)
       return;
 
